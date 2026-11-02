@@ -1,0 +1,238 @@
+# THE MARGIN — Technical Design Document
+
+> Owner: Principal Game Architect. Covers system architecture, the monorepo, Godot architecture, web/game integration, and browser deployment. The database, save format and API have their own documents: [DATABASE.md](DATABASE.md), [SAVE_SCHEMA.md](SAVE_SCHEMA.md), [../api/API_CONTRACT.md](../api/API_CONTRACT.md).
+
+## 1. System architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    subgraph Next["Next.js site (apps/web)"]
+      UI[Pages: landing, play, chapters, profile, settings]
+      Adapter[GameBridge adapter<br/>window.TheMarginBridge]
+      Sync[Save sync client]
+    end
+    subgraph Godot["Godot 4.7 Web export (apps/game)"]
+      Runtime[Gameplay runtime]
+      Local[(user:// to IndexedDB)]
+      WB[WebBridge autoload]
+    end
+  end
+  CDN[(S3 + CDN<br/>game builds, assets)]
+  API[NestJS API (apps/api)]
+  DB[(PostgreSQL)]
+
+  UI --> Adapter
+  Adapter <-- versioned JSON messages --> WB
+  Runtime --> Local
+  Sync -- HTTPS REST, cookie session --> API
+  Adapter --> Sync
+  API --> DB
+  Godot -. loads .wasm/.pck .-> CDN
+```
+
+**Ownership boundaries**
+
+| Concern | Owner | Must not |
+|---|---|---|
+| Physics, puzzles, world state, local saves | Godot | Know about HTTP, accounts or Next.js |
+| Accounts, launcher UI, cloud sync orchestration | Next.js | Touch Godot's scene tree or simulate gameplay |
+| Persistence, auth, validation, progression rules | NestJS | Contain gameplay simulation |
+| Message and payload shapes | `packages/contracts` | Be duplicated by hand elsewhere |
+
+## 2. Monorepo
+
+```text
+the-margin/
+├── apps/
+│   ├── game/        Godot project. Not part of the JS package graph.
+│   ├── web/         Next.js (App Router) + TypeScript
+│   └── api/         NestJS + Prisma
+├── packages/
+│   ├── contracts/   Zod schemas: bridge messages, save envelope, API DTOs (source of truth)
+│   └── config/      Shared tsconfig / eslint presets
+├── infrastructure/
+│   ├── docker/      docker-compose for Postgres (local)
+│   └── scripts/     export-game, serve-game, verify-export
+├── docs/            Design, architecture, ADRs, status
+└── .github/workflows/
+```
+
+- **Package manager:** pnpm workspaces (pnpm 9 is installed). No Turborepo or Nx until build times justify one (ADR-0006).
+- **Godot is not a JS package.** `infrastructure/scripts/export-game.ps1|sh` runs the headless export into `apps/game/build/web`, and CI uploads that folder as an artifact. The web app consumes a game build by URL (`NEXT_PUBLIC_GAME_BUILD_URL`), never by import, which keeps the two release cycles independent.
+- `packages/shared-types` from the brief is folded into `packages/contracts`: types are inferred from the Zod schemas (`z.infer`), so a separate types package would only duplicate them.
+
+## 3. Godot architecture
+
+### 3.1 Engine configuration (ADR-0001, ADR-0002)
+
+| Setting | Value | Why |
+|---|---|---|
+| Version | Godot 4.7.2-stable | Current 4.x maintenance release (2026-08-18) |
+| Renderer | Compatibility (OpenGL ES 3 / WebGL 2) | The only renderer supported for Web export |
+| Threads | Off (`variant/thread_support=false`) | No SharedArrayBuffer, so no COOP/COEP headers. The site, embeds and CDN stay simple. |
+| Base resolution | 640×360 | One comic page per screen at a size where 5×7 lettering is legible. Scales ×2 to 720p and ×3 to 1080p. |
+| Stretch | `mode=viewport`, `aspect=keep`, `scale_mode=integer` | True pixel-perfect output, letterboxed on paper colour |
+| Textures | Nearest filter, no mipmaps | No blur |
+| 2D snapping | `snap_2d_transforms_to_pixel` and `snap_2d_vertices_to_pixel` on | No sub-pixel shimmer |
+| Physics | 60 Hz | Matches the display target |
+
+### 3.2 Project layout
+
+```text
+apps/game/
+├── project.godot
+├── export_presets.cfg
+├── autoload/                 Genuinely global services only
+│   ├── event_bus.gd          Typed signals between decoupled systems
+│   ├── settings.gd           Volume, reduced motion, input map; user://settings.json
+│   ├── audio.gd              SFX voice pool + ambience; owns synthesized streams
+│   ├── save_manager.gd       Versioned save I/O, validation, migrations, backup (user://)
+│   ├── game_state.gd         The save document; coalesces dirty events into one write/frame
+│   └── web_bridge.gd         JavaScriptBridge adapter; no-op outside web
+├── scenes/main.tscn          main.gd: game flow (title → page → turn → end), pause, reset
+├── scripts/
+│   ├── art/                  palette, pixel_font (original 5×7), sprites (text grids), ink, draw_layer
+│   ├── audio/                sfx_synth (procedural, license-clean)
+│   ├── page/                 page.gd (builder + runtime), comic_panel.gd, panel_links.gd (pure)
+│   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd
+│   ├── player/               player.gd (movement), player_interaction.gd
+│   ├── words/                word_library.gd (data), word_slot.gd, speech_bubble.gd, caption.gd
+│   ├── objects/              door.gd, npc.gd, prop_painter.gd
+│   └── ui/                   title_screen, overlays (pause + end card), pixel_menu, page_turn, hud
+├── data/
+│   ├── words.json            Word definitions (data-driven)
+│   └── pages/ch01_p01.json   Page definitions: panels, openings, solids, objects, bubbles, triggers
+├── shaders/                  paper.gdshader, page_turn.gdshader
+└── tests/                    Headless test runner + suites
+```
+
+### 3.3 Why pages are data, not hand-built scenes
+
+A page is a JSON document that `page.gd` builds into nodes at runtime (ADR-0003). This keeps puzzles **configurable rather than coded**, lets tests load and validate every page headlessly, keeps diffs reviewable, and leaves room for a future level editor. Reusable *behaviour* (doors, NPCs, slots) is code; *composition* is data.
+
+### 3.4 The panel model
+
+- All panels share **one physics space** in page coordinates. Panels never overlap; the drag controller keeps at least one gutter between them. No sub-viewports and no per-panel physics worlds.
+- Each panel is a `Node2D` that draws its paper and halftone and clips its contents (`clip_children`). It has one `StaticBody2D` for its border and one for its solids.
+- **Border collision is generated** from the panel rect minus any linked opening spans, and rebuilt whenever links change.
+- **`PanelLinks` is a pure function** (`compute(panels) -> Array[Link]`) with no node dependencies, so it is fully unit-tested. Rules:
+  - *Horizontal link:* `A.right + gutter == B.left`, both have facing openings, the opening bottoms (floor lines) are equal in page space, and the vertical overlap is at least `MIN_PASSAGE_H`.
+  - *Vertical link:* `A.bottom + gutter == B.top`, both have facing openings, and the horizontal overlap is at least `MIN_PASSAGE_W`.
+  - Each link produces a **gutter bridge**: a floor and ceiling (horizontal) or two walls (vertical) spanning the gutter, so the character can never escape into the void.
+- **Moving panels:** `panel_drag.gd` moves a lifted panel along its track in 8 px steps, rejects positions that come closer than one gutter to another panel, and refuses (with shake + deny sound) while the player is inside a gutter bridge. When a panel moves, everything inside it moves by the same delta, including the player, who is translated explicitly instead of being reparented.
+
+### 3.5 The word model (ADR-0004)
+
+- `words.json`: `{ "OPEN": { "category": "state", "open": true }, ... }`.
+- A **WordSlot** is anything that can hold one word: a token in a speech bubble, or an object's label. Each slot has a stable id (`<owner>:<index>` or `<object>:label`), an `accepts` list of categories (bubble gaps accept everything), and a `loose` flag.
+- Objects implement `apply_word(def: Dictionary)` and `clear_word()` and react **by category**, never by word text. A door reads `def.open`; a crate reads `def.dir`.
+- World state for words is just `slot_id -> word_id`, plus the carried word. That is trivially serialisable and restores deterministically.
+
+### 3.6 Interaction
+
+`player_interaction.gd` keeps a list of `WordSlot`s registered with the current page. Each frame it picks the best candidate in reach (same panel, within an x/y radius of the slot's interaction anchor; for bubbles, the anchor is the speaker), then resolves the verb from the hand/slot state:
+
+| Hand | Slot | Verb |
+|---|---|---|
+| empty | has loose word | take |
+| word | empty and accepts | place |
+| word | has loose word and accepts | swap |
+| any | other | none (no prompt) |
+
+The player controller never knows what a door or a bubble is.
+
+### 3.7 Story triggers
+
+Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+
+### 3.8 Autoloads
+
+Only six, each with a single responsibility (see §3.2). Game flow lives in `main.gd`, not an autoload, because nothing else needs to reach it. Gameplay systems (panels, words, interaction) are **not** autoloads; they live in the page scene and are discovered through the page.
+
+### 3.9 Testing (ADR-0005)
+
+A small in-house headless runner (`godot --headless --path apps/game -s res://tests/run_tests.gd`) runs `test_*.gd` suites and exits non-zero on failure. It covers the link solver, word library, slot verbs, save round-trip and migration, page-data validation for every page, and a scripted **solution playthrough** that builds the real page, drives the solution through public APIs, and asserts the exit opens. Browser behaviour is covered separately by Playwright against the real export (§5.4).
+
+## 4. Web ↔ game integration
+
+### 4.1 Message contract (`packages/contracts/src/bridge.ts`)
+
+Every message is `{ v: 1, type, payload }`, serialised as JSON.
+
+**Game → web:** `GAME_READY`, `GAME_STARTED`, `GAME_PAUSED`, `GAME_RESUMED`, `SAVE_UPDATED {save}`, `CHAPTER_COMPLETED {chapterId}`, `PAGE_COMPLETED {pageId}`, `ACHIEVEMENT_UNLOCKED {code}`, `GAME_EXITED`, `GAME_ERROR {message}`.
+
+**Web → game:** `LOAD_CLOUD_SAVE {save}`, `SET_SETTINGS {settings}`, `PAUSE`, `RESUME`, `REQUEST_SAVE`.
+
+### 4.2 Mechanism
+
+- The host page defines `window.TheMarginBridge = { onGameMessage(json) {}, _inbox: [] }` **before** loading the engine.
+- **Game → web:** `web_bridge.gd` gets the bridge with `JavaScriptBridge.get_interface("TheMarginBridge")` and calls `onGameMessage(json)` on it (no `eval`: no string-escaping risk). If the interface is missing, the game sends nothing, so the export also runs standalone.
+- **Web → game:** on start, the game registers a callback (`JavaScriptBridge.create_callback`) as `window.TheMarginBridge.deliver`, then drains `_inbox` for messages queued before it was ready. The adapter calls `deliver(json)` after that.
+- Both sides validate: the web side with Zod; the game side checks `v`, `type` and the payload shape, and ignores unknown types.
+- No WebSockets. Cloud sync is plain HTTPS from the web app; the game never makes network requests.
+
+### 4.3 Save flow
+
+```mermaid
+sequenceDiagram
+  participant G as Godot
+  participant L as user:// (IndexedDB)
+  participant W as Next.js adapter
+  participant A as API
+  G->>L: write save (revision+1, pending=true)
+  G->>W: SAVE_UPDATED {save}
+  W->>A: PUT /v1/saves/main {baseRevision, save}
+  alt accepted
+    A-->>W: 200 {revision}
+  else conflict
+    A-->>W: 409 {server save}
+    W->>W: resolve deterministically (SAVE_SCHEMA §5)
+    W->>G: LOAD_CLOUD_SAVE (only if server wins)
+  end
+```
+
+Local save is always written first. Cloud is an asynchronous mirror and a failure there never blocks play. Pending syncs retry with exponential backoff (2 s doubling to 5 min) and on `online` / `visibilitychange`.
+
+## 5. Browser deployment strategy
+
+### 5.1 Build
+
+- `godot --headless --path apps/game --export-release "Web" build/web/index.html` produces `index.html`, `index.js`, `index.wasm` (~35 MB uncompressed, ~9 MB Brotli), `index.pck`, `index.audio.worklet.js`, and icons.
+- The template is single-threaded, so it needs **no** cross-origin isolation headers.
+- CI validates that the artifacts exist, their size budget, and a boot smoke test in headless Chromium.
+
+### 5.2 Hosting
+
+| Piece | Host | Notes |
+|---|---|---|
+| Game builds | S3 bucket `the-margin-builds/<env>/<buildId>/` behind CloudFront | Immutable build folders, `Cache-Control: max-age=31536000, immutable`. Brotli/gzip at the edge. `.wasm` served as `application/wasm`. |
+| Web | Vercel (recommended) or AWS Amplify | `NEXT_PUBLIC_GAME_BUILD_URL` selects the build, so rollback is an env change |
+| API | AWS App Runner or Fly.io (decided in Phase 8) | One container, health check at `/v1/health` |
+| DB | Managed Postgres (RDS or Neon) | Daily snapshots + PITR |
+
+### 5.3 Embedding
+
+The `/play` page loads the engine script from the CDN and runs it on a `<canvas>` inside a launcher shell (loading bar from Godot's `onProgress`, error state, fullscreen button, mute, back to site). It does **not** use the exported `index.html`; it drives the `Engine` API directly. The game iframe/canvas gets focus on click; keyboard events are prevented from scrolling the page.
+
+### 5.4 Browser verification
+
+Playwright runs against the actual export served locally: boot, `GAME_READY` received, screenshot sanity, a scripted solution through real input, a reload that verifies IndexedDB persistence, and console error capture. Targets: Chromium, Firefox and WebKit.
+
+## 6. Security posture (summary)
+
+- Sessions use an opaque random token in an `HttpOnly; Secure; SameSite=Lax` cookie, stored **hashed** in Postgres (ADR-0007). CSRF uses the double-submit token for state-changing requests plus an Origin check.
+- Argon2id password hashing, rate limiting on auth routes, Helmet headers, a strict CORS allowlist, and Zod validation with payload size limits (saves ≤ 64 KB).
+- All client game state is treated as untrusted. The server validates progression transitions (no completing chapter N+1 before N) but does not attempt anti-cheat.
+- No secrets in `NEXT_PUBLIC_*` or game assets.
+
+## 7. Performance budgets
+
+| Metric | Budget |
+|---|---|
+| Frame time | ≤ 16.6 ms on integrated GPUs (Intel Iris Xe class) |
+| Draw calls per page | < 150 |
+| Initial download (compressed) | < 15 MB |
+| Page build time | < 50 ms |
+| Memory after 30 min | No growth beyond ±5 % of the post-load baseline |
+| Network during gameplay | 0 requests from the game; sync only from the site |

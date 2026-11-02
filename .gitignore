@@ -1,0 +1,30 @@
+# Tooling downloaded locally (Godot editor), never committed
+.tools/
+
+# Godot
+apps/game/.godot/
+apps/game/build/
+*.translation
+*.import.tmp
+
+# Node
+node_modules/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Test output
+test-results/
+playwright-report/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json

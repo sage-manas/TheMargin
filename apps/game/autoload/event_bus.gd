@@ -1,0 +1,16 @@
+extends Node
+## Decoupled gameplay events. Gameplay systems emit; story triggers, audio,
+## saving and the web bridge listen. Nothing here holds state.
+
+signal page_entered(page_id: String)
+signal page_completed(page_id: String)
+signal panel_moved(panel_id: String, position: Vector2i)
+signal panel_released(panel_id: String)
+signal link_formed(a: String, b: String)
+signal link_broken(a: String, b: String)
+signal word_taken(slot_id: String, word: String)
+signal word_placed(slot_id: String, word: String)
+signal door_opened(object_id: String)
+signal achievement_unlocked(code: String)
+## Something worth persisting changed; GameState coalesces these into one save.
+signal state_dirty

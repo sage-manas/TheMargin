@@ -1,0 +1,31 @@
+{
+  "id": "ch01_p02",
+  "chapter": "ch01",
+  "number": 2,
+  "next": "",
+  "spawn": [320, 120],
+  "panels": [
+    {
+      "id": "q1",
+      "rect": [112, 48, 416, 264],
+      "bg": "plain",
+      "solids": [[0, 232, 416, 32]],
+      "captions": [{ "id": "artist", "at": [104, 24], "text": "", "style": "artist" }]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "who_moved",
+      "on": "page_entered",
+      "persist": false,
+      "do": [
+        { "action": "wait", "sec": 1.6 },
+        { "action": "write_caption", "caption": "artist", "text": "WHO MOVED|MY PANELS?" },
+        { "action": "wait", "sec": 1.8 },
+        { "action": "shake_panel", "panel": "q1" },
+        { "action": "wait", "sec": 1.8 },
+        { "action": "end_card" }
+      ]
+    }
+  ]
+}

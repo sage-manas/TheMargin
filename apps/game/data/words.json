@@ -1,0 +1,7 @@
+{
+  "OPEN": { "category": "state", "open": true },
+  "SHUT": { "category": "state", "open": false },
+  "UP": { "category": "motion", "dir": [0, -1] },
+  "DOWN": { "category": "motion", "dir": [0, 1] },
+  "STOP": { "category": "halt" }
+}

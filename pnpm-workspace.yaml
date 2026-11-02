@@ -1,0 +1,5 @@
+packages:
+  - "packages/*"
+  - "tests/*"
+  # apps/web (Next.js) and apps/api (NestJS) join the workspace in Phases 5
+  # and 6 (ADR-0008). apps/game is a Godot project, not a JS package.

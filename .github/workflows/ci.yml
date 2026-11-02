@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm --filter @the-margin/contracts test
+
+  game:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Godot + web export templates
+        run: |
+          V=$(cat .godot-version)
+          curl -sSLo godot.zip "https://github.com/godotengine/godot/releases/download/${V}/Godot_v${V}_linux.x86_64.zip"
+          unzip -q godot.zip && mv "Godot_v${V}_linux.x86_64" /usr/local/bin/godot
+          curl -sSLo templates.tpz "https://github.com/godotengine/godot/releases/download/${V}/Godot_v${V}_export_templates.tpz"
+          DEST="$HOME/.local/share/godot/export_templates/${V/-/.}"
+          mkdir -p "$DEST"
+          unzip -q -j templates.tpz 'templates/web_nothreads_*' 'templates/version.txt' -d "$DEST"
+          rm templates.tpz godot.zip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Godot tests (headless)
+        run: GODOT=godot node infrastructure/scripts/godot.mjs test
+      - name: Web export + artifact checks
+        run: GODOT=godot node infrastructure/scripts/godot.mjs export
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-web-${{ github.sha }}
+          path: apps/game/build/web
+          retention-days: 14
+
+  browser:
+    needs: game
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/download-artifact@v4
+        with:
+          name: game-web-${{ github.sha }}
+          path: apps/game/build/web
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @the-margin/e2e exec playwright install --with-deps chromium firefox
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: tests/e2e/test-results

@@ -1,0 +1,117 @@
+{
+  "id": "ch01_p01",
+  "chapter": "ch01",
+  "number": 1,
+  "next": "ch01_p02",
+  "spawn": [76, 144],
+  "hint": "A/D WALK   SPACE HOP   E TAKE/PLACE   DRAG LIFTED PANELS (OR Q)   HOLD R RESET",
+  "panels": [
+    {
+      "id": "p1",
+      "rect": [16, 16, 192, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "props": [
+        { "type": "bed", "at": [14, 112] },
+        { "type": "frame", "at": [74, 64] },
+        { "type": "window", "at": [130, 44] }
+      ],
+      "captions": [{ "id": "cap1", "at": [6, 6], "text": "ONCE, THERE WAS|A LITTLE ROOM." }]
+    },
+    {
+      "id": "p2",
+      "rect": [216, 16, 192, 144],
+      "bg": "room_warm",
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 192, 16]],
+      "props": [
+        { "type": "lamp", "at": [30, 96] },
+        { "type": "table", "at": [96, 112] },
+        { "type": "rug", "at": [70, 126] }
+      ],
+      "captions": [{ "id": "cap2", "at": [6, 6], "text": "AND THAT WAS|ALL THERE WAS." }]
+    },
+    {
+      "id": "p3",
+      "rect": [416, 16, 208, 120],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 72 },
+      "openings": [
+        { "side": "left", "from": 80, "to": 104 },
+        { "side": "bottom", "from": 120, "to": 144 }
+      ],
+      "solids": [[0, 104, 120, 16], [144, 104, 64, 16]],
+      "props": [
+        { "type": "stool", "at": [70, 94] },
+        { "type": "window", "at": [164, 40] }
+      ],
+      "npcs": [
+        {
+          "id": "neighbor",
+          "sprite": "neighbor",
+          "at": [96, 104],
+          "bubble": { "id": "nb", "at": [12, 10], "text": "THIS DOOR WON'T *OPEN*.|NOT ONCE. NOT EVER." }
+        }
+      ]
+    },
+    {
+      "id": "p4",
+      "rect": [16, 168, 392, 176],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [
+        { "type": "stairs_sketch", "at": [200, 150] },
+        { "type": "ghost_nib", "at": [150, 134] }
+      ],
+      "notes": [{ "at": [20, 20], "text": "LATER." }]
+    },
+    {
+      "id": "p5",
+      "rect": [416, 200, 208, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "top", "from": 120, "to": 144 }],
+      "solids": [[0, 128, 208, 16]],
+      "props": [{ "type": "plant", "at": [28, 112] }],
+      "objects": [
+        { "type": "door", "id": "door1", "at": [168, 96], "label": "SHUT", "loose": true, "exit": true }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "caption_doubt",
+      "on": "link_formed",
+      "when": { "a": "p2", "b": "p3" },
+      "do": [
+        { "action": "wait", "sec": 0.6 },
+        { "action": "rewrite_caption", "caption": "cap2", "text": "AND THAT WAS ALL|THERE WAS...|WASN'T IT?" },
+        { "action": "achievement", "code": "FIRST_SLIDE" }
+      ]
+    },
+    {
+      "id": "neighbor_confused",
+      "on": "word_taken",
+      "when": { "slot": "nb:0" },
+      "once": false,
+      "do": [{ "action": "emote", "npc": "neighbor", "text": "...?" }]
+    },
+    {
+      "id": "first_word",
+      "on": "word_taken",
+      "do": [{ "action": "achievement", "code": "FIRST_WORD" }]
+    },
+    {
+      "id": "wont_shut",
+      "on": "word_placed",
+      "when": { "slot": "nb:0", "word": "SHUT" },
+      "do": [
+        { "action": "emote", "npc": "neighbor", "text": "!" },
+        { "action": "achievement", "code": "WONT_SHUT" }
+      ]
+    }
+  ]
+}

@@ -21,13 +21,15 @@ export default defineConfig({
   projects: [
     // WebGL in headless Chromium needs a software GL backend on CI machines.
     { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 }, launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } } },
-    // Headless Firefox on GPU-less Linux runners blocklists WebGL2
-    // ("AllowWebgl2:false"); force it on so Mesa's software renderer is used.
+    // Headless Firefox on GPU-less Linux has no WebGL2 at all, so CI runs it
+    // headed inside xvfb (E2E_HEADED=1) where Mesa's software GL is available;
+    // the prefs stop that software renderer from being blocklisted.
     {
       name: "firefox",
       use: {
         ...devices["Desktop Firefox"],
         viewport: { width: 1280, height: 720 },
+        headless: process.env.E2E_HEADED !== "1",
         launchOptions: { firefoxUserPrefs: { "webgl.force-enabled": true, "webgl.enable-webgl2": true } },
       },
     },

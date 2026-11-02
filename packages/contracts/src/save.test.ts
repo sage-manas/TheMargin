@@ -54,3 +54,12 @@ test("bridge messages are validated", () => {
   assert.throws(() => parseGameMessage(JSON.stringify({ v: 2, type: "GAME_READY", payload: {} })));
   assert.throws(() => parseGameMessage(JSON.stringify({ v: 1, type: "HACK", payload: {} })));
 });
+
+test("crate positions are optional, so saves written before crates still parse", () => {
+  const old = base();
+  old.pages = { ch01_p01: { panels: {}, slots: {}, fired: [] } as never };
+  assert.deepEqual(parseSave(old).pages.ch01_p01.objects, {});
+  const withCrate = { ...base(), pages: { ch01_p01: { panels: {}, slots: {}, objects: { crate1: [40, 112] }, fired: [] } } };
+  assert.deepEqual(parseSave(withCrate).pages.ch01_p01.objects, { crate1: [40, 112] });
+  assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { objects: { crate1: [40.5, 112] } } } }));
+});

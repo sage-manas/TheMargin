@@ -88,7 +88,7 @@ func _set_cursor() -> void:
 
 
 func _begin_drag(p: ComicPanel) -> void:
-	if page.is_player_in_gutter():
+	if page.is_player_in_gutter() or p.is_pinned():
 		_refuse(p)
 		return
 	dragging = p

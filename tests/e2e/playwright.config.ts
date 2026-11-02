@@ -33,5 +33,8 @@ export default defineConfig({
         launchOptions: { firefoxUserPrefs: { "webgl.force-enabled": true, "webgl.enable-webgl2": true } },
       },
     },
+    // Safari's engine (Risk R3). Opt-in with E2E_WEBKIT=1: it is run on macOS,
+    // where WebKit has a real GL backend.
+    ...(process.env.E2E_WEBKIT === "1" ? [{ name: "webkit", use: { ...devices["Desktop Safari"], viewport: { width: 1280, height: 720 } } }] : []),
   ],
 });

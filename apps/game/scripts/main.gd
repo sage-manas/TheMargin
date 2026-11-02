@@ -50,11 +50,34 @@ func _ready() -> void:
 	WebBridge.resume_requested.connect(func() -> void: _set_paused(false))
 	EventBus.achievement_unlocked.connect(func(code: String) -> void: WebBridge.send("ACHIEVEMENT_UNLOCKED", {"code": code}))
 
+	var sandbox := _sandbox_arg()
+	if sandbox != "":
+		_play_sandbox(sandbox)
+		return
 	_show_title()
 	WebBridge.send("GAME_READY", {
 		"version": str(ProjectSettings.get_setting("application/config/version")),
 		"hasSave": SaveManager.has_save(),
 	})
+
+
+## `godot --path apps/game -- --page=sb_mechanics` opens a sandbox page
+## directly. Sandbox pages never touch the save.
+func _sandbox_arg() -> String:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--page="):
+			return a.trim_prefix("--page=")
+	return ""
+
+
+func _play_sandbox(id: String) -> void:
+	title.visible = false
+	title.menu.active = false
+	GameState.sandbox = true
+	GameState.new_game()
+	GameState.playing = true
+	Audio.start_ambience()
+	await _load_page(id, false)
 
 
 func _show_title() -> void:

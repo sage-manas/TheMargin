@@ -97,12 +97,13 @@ apps/game/
 │   ├── page/                 page.gd (builder + runtime), comic_panel.gd, panel_links.gd (pure)
 │   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd
 │   ├── player/               player.gd (movement), player_interaction.gd
-│   ├── words/                word_library.gd (data), word_slot.gd, speech_bubble.gd, caption.gd
-│   ├── objects/              door.gd, npc.gd, prop_painter.gd
+│   ├── words/                word_library.gd (data), word_slot.gd, lettering.gd, speech_bubble.gd, caption.gd
+│   ├── objects/              door.gd, crate.gd, npc.gd, prop_painter.gd
 │   └── ui/                   title_screen, overlays (pause + end card), pixel_menu, page_turn, hud
 ├── data/
 │   ├── words.json            Word definitions (data-driven)
 │   └── pages/ch01_p01.json   Page definitions: panels, openings, solids, objects, bubbles, triggers
+│                             (sb_*.json are mechanic sandboxes, opened with `-- --page=<id>`, never saved)
 ├── shaders/                  paper.gdshader, page_turn.gdshader
 └── tests/                    Headless test runner + suites
 ```
@@ -120,13 +121,14 @@ A page is a JSON document that `page.gd` builds into nodes at runtime (ADR-0003)
   - *Horizontal link:* `A.right + gutter == B.left`, both have facing openings, the opening bottoms (floor lines) are equal in page space, and the vertical overlap is at least `MIN_PASSAGE_H`.
   - *Vertical link:* `A.bottom + gutter == B.top`, both have facing openings, and the horizontal overlap is at least `MIN_PASSAGE_W`.
   - Each link produces a **gutter bridge**: a floor and ceiling (horizontal) or two walls (vertical) spanning the gutter, so the character can never escape into the void.
-- **Moving panels:** `panel_drag.gd` moves a lifted panel along its track in 8 px steps, rejects positions that come closer than one gutter to another panel, and refuses (with shake + deny sound) while the player is inside a gutter bridge. When a panel moves, everything inside it moves by the same delta, including the player, who is translated explicitly instead of being reparented.
+- **Moving panels:** `panel_drag.gd` moves a lifted panel along its track in 8 px steps, rejects positions that come closer than one gutter to another panel, and refuses (with shake + deny sound) while the player is inside a gutter bridge or the panel is **pinned** by a word on its caption (`halt`, or `mass` > 1). When a panel moves, everything inside it moves by the same delta, including the player, who is translated explicitly instead of being reparented.
 
 ### 3.5 The word model (ADR-0004)
 
 - `words.json`: `{ "OPEN": { "category": "state", "open": true }, ... }`.
-- A **WordSlot** is anything that can hold one word: a token in a speech bubble, or an object's label. Each slot has a stable id (`<owner>:<index>` or `<object>:label`), an `accepts` list of categories (bubble gaps accept everything), and a `loose` flag.
-- Objects implement `apply_word(def: Dictionary)` and `clear_word()` and react **by category**, never by word text. A door reads `def.open`; a crate reads `def.dir`.
+- A **WordSlot** is anything that can hold one word: a token in a speech bubble or a narrator caption (both lettered by `lettering.gd`), or an object's label. Caption slots are words written *on the panel*, and the panel obeys them; Nib reaches them from the caption's `reach_at` floor point. Each slot has a stable id (`<owner>:<index>` or `<object>:label`), an `accepts` list of categories (bubble gaps accept everything), and a `loose` flag.
+- Objects react in `on_slot_changed(slot)` **by category**, never by word text. A door reads `def.open`; a crate reads `def.dir`; a panel reads `def.mass` from its captions.
+- **Crates** (`crate.gd`, `AnimatableBody2D`) move in whole pixels: a `motion` word moves the crate until it is blocked, `halt` holds it (even in mid air), and no label means it falls. A crate never leaves its panel. Nib sits on its own collision layer (`Player.LAYER`), so a crate's collision probes ignore Nib. The crate handles Nib itself: it carries Nib when Nib stands on top, stops when Nib's head would hit something, and never moves into Nib. Crate resting positions are saved as `pages.<id>.objects`.
 - World state for words is just `slot_id -> word_id`, plus the carried word. That is trivially serialisable and restores deterministically.
 
 ### 3.6 Interaction
@@ -217,7 +219,7 @@ The `/play` page loads the engine script from the CDN and runs it on a `<canvas>
 
 ### 5.4 Browser verification
 
-Playwright runs against the actual export served locally: boot, `GAME_READY` received, screenshot sanity, a scripted solution through real input, a reload that verifies IndexedDB persistence, and console error capture. Targets: Chromium, Firefox and WebKit.
+Playwright runs against the actual export served locally: boot, `GAME_READY` received, screenshot sanity, a scripted solution through real input, a reload that verifies IndexedDB persistence, and console error capture. Targets: Chromium, Firefox and WebKit (WebKit is opt-in with `E2E_WEBKIT=1` and is run on macOS).
 
 ## 6. Security posture (summary)
 

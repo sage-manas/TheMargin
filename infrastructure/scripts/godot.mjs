@@ -1,6 +1,6 @@
 // Runs the pinned Godot version against apps/game.
 // Usage: node infrastructure/scripts/godot.mjs <test|export|import>
-// Godot binary: $GODOT, else .tools/godot/ (Windows), else `godot` on PATH.
+// Godot binary: $GODOT, else .tools/godot/ (Windows exe or macOS app), else `godot` on PATH.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -8,8 +8,12 @@ import { join, resolve } from "node:path";
 const repo = resolve(import.meta.dirname, "../..");
 const game = join(repo, "apps/game");
 const pinned = readFileSync(join(repo, ".godot-version"), "utf8").trim();
-const local = join(repo, ".tools/godot", `Godot_v${pinned}_win64_console.exe`);
-const godot = process.env.GODOT ?? (existsSync(local) ? local : "godot");
+const tools = join(repo, ".tools/godot");
+const local = [
+  join(tools, `Godot_v${pinned}_win64_console.exe`),
+  join(tools, "Godot.app/Contents/MacOS/Godot"),
+].find((p) => existsSync(p));
+const godot = process.env.GODOT ?? local ?? "godot";
 
 function run(args) {
   const r = spawnSync(godot, ["--headless", "--path", game, ...args], { stdio: "inherit" });

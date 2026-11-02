@@ -2,7 +2,8 @@ extends Node
 ## Developer tool: renders pages to PNG for art review (not a test; needs a
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
-## Captures the page start state and the solved positions of page 1.
+## Captures the page start state and the solved positions of page 1, and
+## the Phase 3 sandbox.
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -13,6 +14,9 @@ func _ready() -> void:
 	await _shot(out, "p01_dropped", "ch01_p01", {"panels": {"p3": [416, 72]}, "slots": {"nb:0": null}}, [600, 328], "OPEN")
 	await _shot(out, "p01_open", "ch01_p01", {"panels": {"p3": [416, 72]}, "slots": {"nb:0": null, "door1:label": "OPEN"}}, [560, 328], "SHUT")
 	await _shot(out, "p02", "ch01_p02", {})
+	await _shot(out, "sb_start", "sb_mechanics", {})
+	await _shot(out, "sb_risen", "sb_mechanics", {"slots": {"cap_s1:0": null, "c1:label": "UP"}, "objects": {"c1": [172, 16]}}, [200, 32])
+	await _shot(out, "sb_lowered", "sb_mechanics", {"panels": {"s2": [320, 112]}, "slots": {"cap_s1:0": null, "c1:label": "UP", "cap_s2:0": null}, "objects": {"c1": [172, 16]}}, [450, 200], "HEAVY")
 	await _turn_shot(out)
 	get_tree().quit()
 

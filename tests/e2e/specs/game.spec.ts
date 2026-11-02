@@ -18,8 +18,20 @@ async function boot(page: Page): Promise<void> {
       },
     };
   });
+  // Godot reports missing browser features (e.g. WebGL2) on the console and
+  // never starts; surface that immediately instead of timing out.
+  let unsupported = "";
+  page.on("console", (m) => {
+    if (m.type() === "error" && m.text().includes("required to run Godot")) unsupported = m.text();
+  });
   await page.goto("/");
-  await waitFor(page, (m) => m.type === "GAME_READY", 90_000);
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    if (unsupported) throw new Error(`Browser cannot run the game: ${unsupported}`);
+    if ((await messages(page)).some((m) => m.type === "GAME_READY")) return;
+    await page.waitForTimeout(100);
+  }
+  throw new Error("Timed out waiting for GAME_READY");
 }
 
 async function messages(page: Page): Promise<Msg[]> {

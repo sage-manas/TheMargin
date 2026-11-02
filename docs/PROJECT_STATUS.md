@@ -51,7 +51,7 @@ _Last updated: 2026-11-02, end of the Phase 0–2 session._
 4. The keyboard alternative for panels (Q) exists but has only been unit-checked through the shared movement API, not exercised in a browser test.
 5. WebKit/Safari not verified. Tested on Windows only.
 6. The 38 MB `index.wasm` is the stock engine template (≈9 MB with Brotli). A custom slim template is a Phase 8 optimisation.
-7. CI is written but has never run (no remote configured).
+7. CI first run (commit `7598e25`): `game` (Godot tests and web export on Linux) and `contracts` passed, and Chromium e2e passed 3/3 on Linux. Firefox e2e failed because headless Firefox on the GPU-less runner blocklists WebGL2. Fix: force-enable WebGL in Playwright's Firefox prefs, plus a fast failure on unsupported browsers. This passes locally; the Linux CI result is pending the next push.
 
 ## Architectural decisions (this session)
 

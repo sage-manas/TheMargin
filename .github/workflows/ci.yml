@@ -66,7 +66,10 @@ jobs:
           path: apps/game/build/web
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @the-margin/e2e exec playwright install --with-deps chromium firefox
-      - run: pnpm e2e
+      # Firefox runs headed inside a virtual display; see playwright.config.ts.
+      - run: xvfb-run -a pnpm e2e
+        env:
+          E2E_HEADED: "1"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

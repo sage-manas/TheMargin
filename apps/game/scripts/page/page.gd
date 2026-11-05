@@ -18,6 +18,7 @@ var captions: Dictionary = {}
 var npcs: Dictionary = {}
 var doors: Array[Door] = []
 var crates: Dictionary = {}
+var buttons: Dictionary = {}
 var links: Array = []
 var player: Player
 var interaction: PlayerInteraction
@@ -67,6 +68,7 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	player.page = self
 	player.position = _restore_position(player_state.get("position"))
 	add_child(player)
+	_wire_buttons()
 
 	var carried: Variant = player_state.get("carrying")
 	interaction = PlayerInteraction.new()
@@ -121,8 +123,28 @@ func _build_panel(pd: Dictionary) -> void:
 				p.content.add_child(c)
 				crates[c.crate_id] = c
 				_register_slot(c.slot, p)
+			"button":
+				var b := PlateButton.new()
+				b.setup(o)
+				b.page = self
+				p.content.add_child(b)
+				buttons[b.button_id] = b
+				_register_slot(b.slot, p)
 			_:
 				push_warning("Unknown object type: %s" % o["type"])
+
+
+## Settles every button against where things already rest, without sound,
+## then lets wired doors follow their buttons from here on.
+func _wire_buttons() -> void:
+	for b: PlateButton in buttons.values():
+		b.refresh(false)
+	for d in doors:
+		var b: PlateButton = buttons.get(d.button_id)
+		if b == null:
+			continue
+		d.set_powered(b.pressed, false)
+		b.changed.connect(d.set_powered)
 
 
 func _register_slot(s: WordSlot, p: ComicPanel) -> void:

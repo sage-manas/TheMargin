@@ -2,7 +2,9 @@ class_name Crate
 extends AnimatableBody2D
 ## A crate that obeys its label (GDD §4.2). A `motion` word moves it that way
 ## until something stops it; a `halt` word holds it where it is, even in mid
-## air; with no label it is as drawn and falls. It moves in whole pixels and
+## air; with no label it is as drawn and falls. A `mass` word leaves it as
+## drawn (it falls) but changes what it weighs on a button; a LIGHT crate
+## drifts down slowly. It moves in whole pixels and
 ## never leaves its panel, so where it rests is a plain page fact the save
 ## can store.
 ##
@@ -34,7 +36,7 @@ func setup(def: Dictionary) -> void:
 	cs.shape = rect
 	cs.position = SIZE / 2.0
 	add_child(cs)
-	slot = WordSlot.make("%s:label" % crate_id, def.get("label", ""), def.get("loose", true), ["motion", "halt"], self, self, Vector2(SIZE.x / 2.0, SIZE.y))
+	slot = WordSlot.make("%s:label" % crate_id, def.get("label", ""), def.get("loose", true), ["motion", "halt", "mass"], self, self, Vector2(SIZE.x / 2.0, SIZE.y))
 	# Reachable from beside the crate or from standing on it.
 	slot.reach = Vector2(22, 20)
 
@@ -45,10 +47,32 @@ static func heading_for(word: String) -> Vector2i:
 	if word == "":
 		return Vector2i.DOWN
 	var def := WordLibrary.get_def(word)
-	if def.get("category") == "motion":
-		var d: Array = def.get("dir", [0, 0])
-		return Vector2i(int(d[0]), int(d[1]))
+	match def.get("category"):
+		"motion":
+			var d: Array = def.get("dir", [0, 0])
+			return Vector2i(int(d[0]), int(d[1]))
+		"mass":
+			return Vector2i.DOWN
 	return Vector2i.ZERO
+
+
+## What a label makes a crate weigh: its `mass` parameter, or 1 as drawn.
+static func weight_for(word: String) -> float:
+	var def := WordLibrary.get_def(word)
+	return float(def.get("mass", 1.0)) if def.get("category") == "mass" else 1.0
+
+
+func weight() -> float:
+	return weight_for(slot.word)
+
+
+## Fall and travel speed. Lighter crates drift; nothing falls faster than
+## FALL_SPEED.
+func speed() -> float:
+	var category := WordLibrary.category(slot.word)
+	if category == "motion":
+		return SPEED
+	return FALL_SPEED * minf(weight(), 1.0)
 
 
 func rect() -> Rect2:
@@ -72,7 +96,7 @@ func _physics_process(delta: float) -> void:
 	var dir := heading_for(slot.word)
 	var blocked := dir == Vector2i.ZERO or page == null
 	if not blocked:
-		_acc += (FALL_SPEED if slot.word == "" else SPEED) * delta
+		_acc += speed() * delta
 		while _acc >= 1.0:
 			_acc -= 1.0
 			if not step(dir):

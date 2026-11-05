@@ -32,7 +32,7 @@ pnpm test             # contract tests
 pnpm e2e              # Playwright: boot, full solution, reload persistence
 ```
 
-To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5. To open a mechanic sandbox page directly (it never touches the save), run `godot --path apps/game -- --page=sb_mechanics`.
+To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5. To open a mechanic sandbox page directly (it never touches the save), run `godot --path apps/game -- --page=sb_mechanics` (crates and panel words) or `--page=sb_weight` (pressure plates).
 
 `pnpm e2e` runs Chromium and Firefox. On macOS, add WebKit with `E2E_WEBKIT=1 pnpm e2e`.
 

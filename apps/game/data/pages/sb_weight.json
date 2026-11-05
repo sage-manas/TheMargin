@@ -1,0 +1,37 @@
+{
+  "id": "sb_weight",
+  "chapter": "sandbox",
+  "next": "",
+  "spawn": [56, 168],
+  "hint": "SANDBOX   PLATES NEED WEIGHT   NIB WEIGHS ONE   CRATES WEIGH WHAT THEY SAY",
+  "panels": [
+    {
+      "id": "w1",
+      "rect": [16, 16, 296, 168],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 128, "to": 152 }],
+      "solids": [[0, 152, 296, 16]],
+      "props": [{ "type": "window", "at": [60, 40] }],
+      "captions": [{ "id": "cap_w1", "at": [6, 6], "text": "*HEAVY* THINGS|PRESS HARDER.", "reach_at": [40, 152] }],
+      "objects": [
+        { "type": "button", "id": "b1", "at": [116, 152], "needs": 2 },
+        { "type": "crate", "id": "c1", "at": [120, 128] },
+        { "type": "door", "id": "d1", "at": [248, 120], "button": "b1" }
+      ]
+    },
+    {
+      "id": "w2",
+      "rect": [328, 16, 296, 168],
+      "bg": "room_blue",
+      "openings": [{ "side": "left", "from": 128, "to": 152 }],
+      "solids": [[0, 152, 296, 16]],
+      "captions": [{ "id": "cap_w2", "at": [6, 6], "text": "LIGHT THINGS|DRIFT. *STOP*.", "reach_at": [40, 152] }],
+      "objects": [
+        { "type": "button", "id": "b2", "at": [116, 152] },
+        { "type": "crate", "id": "c2", "at": [120, 128], "label": "LIGHT" },
+        { "type": "door", "id": "d2", "at": [248, 120], "button": "b2" }
+      ]
+    }
+  ],
+  "triggers": []
+}

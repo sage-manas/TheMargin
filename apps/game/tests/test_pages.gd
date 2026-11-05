@@ -4,9 +4,9 @@ extends RefCounted
 ## story actions, reachable `next`.
 
 const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released"]
 ## Object type -> word categories its label accepts.
-const OBJECTS := {"door": ["state"], "crate": ["motion", "halt"]}
+const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"]}
 
 
 func _pages() -> Array:
@@ -45,6 +45,8 @@ func test_ids_and_references(t) -> void:
 		var ids := {}
 		var captions := {}
 		var npcs := {}
+		var buttons := {}
+		var wired := []
 		for pd: Dictionary in d.panels:
 			t.ok(not ids.has(pd.id), "unique panel id %s" % pd.id)
 			ids[pd.id] = true
@@ -63,6 +65,14 @@ func test_ids_and_references(t) -> void:
 				if o.type == "crate":
 					var inner := Rect2i(Vector2i.ONE * PageConst.BORDER, Vector2i(int(pd.rect[2]), int(pd.rect[3])) - Vector2i.ONE * PageConst.BORDER * 2)
 					t.ok(inner.encloses(Rect2i(Vector2i(int(o.at[0]), int(o.at[1])), Vector2i(Crate.SIZE))), "%s inside its panel" % o.id)
+				if o.type == "button":
+					buttons[o.id] = true
+					t.ok(float(o.get("needs", 1.0)) > 0.0, "%s needs some weight" % o.id)
+					t.ok(int(o.at[0]) >= PageConst.BORDER and int(o.at[0]) + int(PlateButton.SIZE.x) <= int(pd.rect[2]) - PageConst.BORDER, "%s inside its panel" % o.id)
+				if o.type == "door" and o.has("button"):
+					wired.append(o.button)
+		for b: String in wired:
+			t.ok(buttons.has(b), "%s: wired button exists: %s" % [d.id, b])
 		for tr: Dictionary in d.get("triggers", []):
 			t.ok(tr["on"] in EVENTS, "known event %s" % tr["on"])
 			for a: Dictionary in tr["do"]:

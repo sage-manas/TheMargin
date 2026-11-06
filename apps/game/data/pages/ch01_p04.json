@@ -1,0 +1,79 @@
+{
+  "id": "ch01_p04",
+  "chapter": "ch01",
+  "number": 4,
+  "next": "ch01_p05",
+  "spawn": [56, 144],
+  "panels": [
+    {
+      "id": "s",
+      "rect": [16, 16, 176, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 176, 16]],
+      "props": [
+        { "type": "bed", "at": [14, 112] },
+        { "type": "window", "at": [110, 44] }
+      ],
+      "captions": [{ "id": "cap_s", "at": [6, 6], "text": "SOME ROOMS|NEVER MOVED." }]
+    },
+    {
+      "id": "l",
+      "rect": [200, 16, 200, 144],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 200 },
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 200, 16]],
+      "props": [
+        { "type": "stool", "at": [140, 118] },
+        { "type": "frame", "at": [130, 60] }
+      ],
+      "captions": [{ "id": "cap_l", "at": [6, 6], "text": "THIS ROOM WAS *HEAVY*.", "reach_at": [48, 128] }]
+    },
+    {
+      "id": "t",
+      "rect": [408, 16, 216, 168],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [{ "type": "ghost_nib", "at": [150, 134] }],
+      "notes": [{ "at": [20, 20], "text": "HEAVY ROOMS|STAY PUT." }]
+    },
+    {
+      "id": "b",
+      "rect": [16, 168, 176, 176],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 136, "to": 160 }],
+      "solids": [[0, 160, 176, 16], [0, 112, 48, 16]],
+      "props": [{ "type": "lamp", "at": [120, 128] }],
+      "captions": [{ "id": "cap_b", "at": [6, 6], "text": "THE OLD BOX WAS|NEVER HEAVY ENOUGH." }],
+      "objects": [
+        { "type": "button", "id": "plate4", "at": [2, 160], "needs": 2 },
+        { "type": "crate", "id": "box4", "at": [10, 136] }
+      ]
+    },
+    {
+      "id": "x",
+      "rect": [408, 192, 216, 152],
+      "bg": "room_warm",
+      "openings": [{ "side": "left", "from": 112, "to": 136 }],
+      "solids": [[0, 136, 216, 16]],
+      "props": [{ "type": "plant", "at": [24, 120] }],
+      "captions": [{ "id": "cap_x", "at": [6, 6], "text": "THE DOOR WAITED|FOR THE BOX." }],
+      "objects": [{ "type": "door", "id": "door4", "at": [176, 104], "button": "plate4", "exit": true }]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "until_now",
+      "on": "word_taken",
+      "when": { "slot": "cap_l:0" },
+      "do": [
+        { "action": "wait", "sec": 0.5 },
+        { "action": "rewrite_caption", "caption": "cap_s", "text": "SOME ROOMS|NEVER MOVED.|UNTIL NOW." }
+      ]
+    }
+  ]
+}

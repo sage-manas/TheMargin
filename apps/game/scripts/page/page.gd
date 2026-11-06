@@ -440,11 +440,19 @@ func _physics_process(_delta: float) -> void:
 		player.velocity = Vector2.ZERO
 	for d in doors:
 		if d.exit and d.is_open and d.doorway_rect().has_point(player.global_position + Vector2(0, -4)):
-			_exited = true
-			player.input_locked = true
-			player.velocity = Vector2.ZERO
-			exit_requested.emit()
+			turn()
 			return
+
+
+## Leaves the page for `next`, once: through an exit door, or when the story
+## turns the page itself (`turn_page`).
+func turn() -> void:
+	if _exited:
+		return
+	_exited = true
+	player.input_locked = true
+	player.velocity = Vector2.ZERO
+	exit_requested.emit()
 
 
 ## The page's save state (SAVE_SCHEMA §2, pages.<id>).

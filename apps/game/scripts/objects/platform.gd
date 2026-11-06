@@ -156,7 +156,7 @@ func step(dir: int) -> bool:
 		if motion.y <= 0.0:
 			for c in riders:
 				player.add_collision_exception_with(c)
-			var nib_hit := player.test_move(player.global_transform, probe, null, PROBE_MARGIN)
+			var nib_hit := player.test_move(player.global_transform, probe, null, Player.HEADROOM if motion.y < 0.0 else PROBE_MARGIN)
 			for c in riders:
 				player.remove_collision_exception_with(c)
 			if nib_hit:

@@ -1,0 +1,60 @@
+{
+  "id": "ch01_p05",
+  "chapter": "ch01",
+  "number": 5,
+  "next": "",
+  "spawn": [56, 328],
+  "panels": [
+    {
+      "id": "k1",
+      "rect": [16, 16, 176, 328],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 288, "to": 312 }],
+      "solids": [[0, 312, 176, 16]],
+      "props": [
+        { "type": "window", "at": [100, 120] },
+        { "type": "frame", "at": [40, 200] },
+        { "type": "plant", "at": [140, 296] }
+      ],
+      "captions": [{ "id": "cap_k1", "at": [6, 6], "text": "THE ONLY WAY|LEFT WAS *UP*.", "reach_at": [56, 312] }]
+    },
+    {
+      "id": "k2",
+      "rect": [200, 16, 208, 200],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 144 },
+      "openings": [
+        { "side": "left", "from": 160, "to": 184 },
+        { "side": "right", "from": 40, "to": 64 }
+      ],
+      "solids": [[0, 184, 208, 16], [160, 64, 48, 16], [128, 0, 32, 40]],
+      "props": [
+        { "type": "lamp", "at": [24, 152] },
+        { "type": "window", "at": [40, 60] }
+      ],
+      "captions": [{ "id": "cap_k2", "at": [6, 6], "text": "THE STAIRS WERE|NEVER FINISHED." }],
+      "objects": [{ "type": "crate", "id": "box5", "at": [132, 160] }]
+    },
+    {
+      "id": "k3",
+      "rect": [416, 16, 208, 80],
+      "bg": "room_warm",
+      "openings": [{ "side": "left", "from": 40, "to": 64 }],
+      "solids": [[0, 64, 208, 16]],
+      "captions": [{ "id": "cap_k3", "at": [6, 6], "text": "AT THE TOP,|A DOOR." }],
+      "objects": [{ "type": "door", "id": "door5", "at": [176, 32], "label": "OPEN", "loose": false, "exit": true }]
+    },
+    {
+      "id": "k4",
+      "rect": [416, 104, 208, 240],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [
+        { "type": "stairs_sketch", "at": [60, 210] },
+        { "type": "ghost_nib", "at": [28, 194] }
+      ],
+      "notes": [{ "at": [20, 20], "text": "STILL LATER." }]
+    }
+  ],
+  "triggers": []
+}

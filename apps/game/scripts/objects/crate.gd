@@ -16,6 +16,9 @@ const SIZE := Vector2(24, 24)
 const SPEED := 48.0
 const FALL_SPEED := 150.0
 const PROBE_MARGIN := 0.05
+## Where Nib's feet can be to reach the label, from the crate's top.
+const REACH_ABOVE := -2.0
+const REACH_BELOW := SIZE.y + 20.0
 
 var crate_id := ""
 var slot: WordSlot
@@ -36,9 +39,11 @@ func setup(def: Dictionary) -> void:
 	cs.shape = rect
 	cs.position = SIZE / 2.0
 	add_child(cs)
-	slot = WordSlot.make("%s:label" % crate_id, def.get("label", ""), def.get("loose", true), ["motion", "halt", "mass"], self, self, Vector2(SIZE.x / 2.0, SIZE.y))
-	# Reachable from beside the crate or from standing on it.
-	slot.reach = Vector2(22, 20)
+	slot = WordSlot.make("%s:label" % crate_id, def.get("label", ""), def.get("loose", true), ["motion", "halt", "mass"], self, self, Vector2(SIZE.x / 2.0, (REACH_ABOVE + REACH_BELOW) / 2.0))
+	# Reachable from standing on the crate, from beside it, or from below a
+	# crate a little off the floor (riding a plank): Nib's feet anywhere from
+	# REACH_ABOVE over its top down to REACH_BELOW under it.
+	slot.reach = Vector2(22, (REACH_BELOW - REACH_ABOVE) / 2.0)
 
 
 ## Which way a label sends a crate, one pixel per step. Data only: the word's
@@ -137,7 +142,8 @@ func can_step(dir: Vector2i, nib_shift := Vector2.ZERO) -> bool:
 		return false
 	var player := page.player
 	if player != null and carries(player):
-		if dir.y <= 0 and player.test_move(player.global_transform, probe, null, PROBE_MARGIN):
+		var margin := Player.HEADROOM if dir.y < 0 else PROBE_MARGIN
+		if dir.y <= 0 and player.test_move(player.global_transform, probe, null, margin):
 			return false
 	elif player != null:
 		var body := player.collision_rect().grow(-0.01)

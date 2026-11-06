@@ -153,7 +153,7 @@ The player controller never knows what a door or a bubble is. The eraser (X) and
 
 ### 3.7 Story triggers
 
-Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `turn_page` (leave for `next`, as an exit door does), `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
 
 ### 3.7a Music
 

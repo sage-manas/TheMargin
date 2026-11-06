@@ -91,6 +91,8 @@ func _run(actions: Array) -> void:
 				EventBus.achievement_unlocked.emit(a["code"])
 			"end_card":
 				page.end_reached.emit()
+			"turn_page":
+				page.turn()
 			_:
 				push_warning("Unknown story action: %s" % a["action"])
 

@@ -2,7 +2,7 @@
   "id": "ch01_p02",
   "chapter": "ch01",
   "number": 2,
-  "next": "",
+  "next": "ch01_p03",
   "spawn": [320, 120],
   "panels": [
     {
@@ -24,7 +24,7 @@
         { "action": "wait", "sec": 1.8 },
         { "action": "shake_panel", "panel": "q1" },
         { "action": "wait", "sec": 1.8 },
-        { "action": "end_card" }
+        { "action": "turn_page" }
       ]
     }
   ]

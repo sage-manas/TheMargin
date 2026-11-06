@@ -1,0 +1,78 @@
+{
+  "id": "ch01_p03",
+  "chapter": "ch01",
+  "number": 3,
+  "next": "ch01_p04",
+  "spawn": [56, 144],
+  "panels": [
+    {
+      "id": "a",
+      "rect": [16, 16, 160, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 160, 16]],
+      "props": [
+        { "type": "window", "at": [96, 44] },
+        { "type": "plant", "at": [10, 112] }
+      ],
+      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "NEXT DOOR, THERE|WAS ANOTHER ROOM." }]
+    },
+    {
+      "id": "h",
+      "rect": [296, 16, 160, 144],
+      "bg": "room_blue",
+      "track": { "axis": "x", "min": 184, "max": 296 },
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 160, 16]],
+      "props": [
+        { "type": "lamp", "at": [24, 96] },
+        { "type": "rug", "at": [60, 126] }
+      ],
+      "captions": [{ "id": "cap_h", "at": [6, 6], "text": "IT NEVER STAYED|WHERE IT WAS PUT." }]
+    },
+    {
+      "id": "v",
+      "rect": [464, 192, 160, 152],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 192 },
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 160, 24]],
+      "props": [
+        { "type": "stool", "at": [104, 118] },
+        { "type": "window", "at": [100, 40] }
+      ],
+      "captions": [{ "id": "cap_v", "at": [6, 6], "text": "THE LAST ROOM|WENT UP AND DOWN." }]
+    },
+    {
+      "id": "e",
+      "rect": [16, 192, 440, 152],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 440, 24]],
+      "props": [
+        { "type": "table", "at": [200, 112] },
+        { "type": "frame", "at": [210, 60] },
+        { "type": "window", "at": [320, 44] }
+      ],
+      "captions": [{ "id": "cap_e", "at": [6, 6], "text": "AND DOWNSTAIRS,|A WAY OUT." }],
+      "objects": [
+        { "type": "door", "id": "door3", "at": [48, 96], "label": "OPEN", "loose": false, "exit": true }
+      ]
+    }
+  ],
+  "notes": [{ "at": [192, 172], "text": "LEAVE THESE WHERE I PUT THEM." }],
+  "triggers": [
+    {
+      "id": "another_room",
+      "on": "link_formed",
+      "when": { "a": "a", "b": "h" },
+      "do": [
+        { "action": "wait", "sec": 0.6 },
+        { "action": "rewrite_caption", "caption": "cap_a", "text": "NEXT DOOR, THERE|WAS ANOTHER ROOM.|WASN'T THERE?" }
+      ]
+    }
+  ]
+}

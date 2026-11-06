@@ -2,7 +2,7 @@ extends Node
 ## Developer tool: renders pages to PNG for art review (not a test; needs a
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
-## Captures the page start state and the solved positions of page 1, and
+## Captures the page start state and the solved positions of pages 1 and 3–5, and
 ## the Phase 3 sandboxes (mechanics, weight, eraser, ink, platforms).
 
 func _ready() -> void:
@@ -14,6 +14,13 @@ func _ready() -> void:
 	await _shot(out, "p01_dropped", "ch01_p01", {"panels": {"p3": [416, 72]}, "slots": {"nb:0": null}}, [600, 328], "OPEN")
 	await _shot(out, "p01_open", "ch01_p01", {"panels": {"p3": [416, 72]}, "slots": {"nb:0": null, "door1:label": "OPEN"}}, [560, 328], "SHUT")
 	await _shot(out, "p02", "ch01_p02", {})
+	await _shot(out, "p03_start", "ch01_p03", {})
+	await _shot(out, "p03_ferried", "ch01_p03", {"panels": {"v": [464, 16]}}, [420, 144])
+	await _shot(out, "p03_down", "ch01_p03", {}, [540, 320])
+	await _shot(out, "p04_start", "ch01_p04", {})
+	await _shot(out, "p04_pressed", "ch01_p04", {"panels": {"l": [200, 200]}, "slots": {"cap_l:0": null, "box4:label": "HEAVY"}}, [80, 328])
+	await _shot(out, "p05_start", "ch01_p05", {})
+	await _shot(out, "p05_risen", "ch01_p05", {"panels": {"k2": [200, 144]}, "slots": {"cap_k1:0": null, "box5:label": "UP"}, "objects": {"box5": [132, 54]}}, [345, 197])
 	await _shot(out, "sb_start", "sb_mechanics", {})
 	await _shot(out, "sb_risen", "sb_mechanics", {"slots": {"cap_s1:0": null, "c1:label": "UP"}, "objects": {"c1": [172, 16]}}, [200, 32])
 	await _shot(out, "sb_lowered", "sb_mechanics", {"panels": {"s2": [320, 112]}, "slots": {"cap_s1:0": null, "c1:label": "UP", "cap_s2:0": null}, "objects": {"c1": [172, 16]}}, [450, 200], "HEAVY")

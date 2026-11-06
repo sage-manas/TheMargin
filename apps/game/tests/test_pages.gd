@@ -5,7 +5,7 @@ extends RefCounted
 ## within what the eraser can hold, platforms on rails that stay inside
 ## their panels.
 
-const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card"]
+const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page"]
 const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
 ## Object type -> word categories its label accepts.
 const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"]}

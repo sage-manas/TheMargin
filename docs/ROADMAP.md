@@ -7,8 +7,8 @@
 | 0 Discovery | Design and architecture documents | Docs in `docs/` reviewed; prototype scoped ✅ |
 | 1 Foundation | Monorepo, Godot project, contracts, CI | `pnpm -r build` passes; Godot tests pass headless; web export builds in CI ✅ |
 | 2 Prototype | Browser-playable pages 1.1–1.2 | A first-time player solves 1.1 in the **browser export** without help; save/refresh restores state; all automated tests green (automated ✅, human playtest pending) |
-| **3 Mechanic framework** (in progress) | Panels (resize/swap), words (all categories), eraser, ink, triggers, music | Each system has unit tests plus one sandbox page |
-| 4 Chapter 1 | Pages 1.1–1.8, audio, polish | Playtest: ≥ 70 % unaided completion, median 20–35 min |
+| 3 Mechanic framework (done for Chapter 1; resize/swap deferred to Chapter 2) | Panels (resize/swap), words (all categories), eraser, ink, triggers, music | Each system has unit tests plus one sandbox page |
+| **4 Chapter 1** (in progress) | Pages 1.1–1.8, audio, polish | Playtest: ≥ 70 % unaided completion, median 20–35 min |
 | 5 Web platform | Landing, launcher, auth UI, chapters, settings | The game launches reliably from `/play` in 3 browsers; Lighthouse ≥ 90 performance and accessibility on the landing page |
 | 6 Backend | Auth, saves, progression, achievements, settings | API integration tests green; offline→online sync and conflict tests green |
 | 7 Expansion | Chapters 2+, art and audio pass | Per-chapter playtest bars |
@@ -57,7 +57,7 @@
 25. Music system with per-chapter loops and ducking ✅ (scores as data in `data/music.json`, synthesised incrementally; chapter 1 "Margins"; ducks while the artist letters or shakes; MUSIC volume in settings; sandbox `sb_music`).
 
 ### Later
-26. Pages 1.3–1.8 and the chapter finale.
+26. Pages 1.3–1.8 and the chapter finale. 1.3–1.5 ✅ (`ch01_p03`–`ch01_p05`, each with a real-physics solution test; 1.2 now turns to 1.3). Next: 1.6–1.8.
 27. Next.js app: landing, `/play` launcher with the bridge adapter.
 28. NestJS app: auth, saves, progression, achievements, settings; Prisma schema and migrations.
 29. E2E: register → play → save → second session restores from cloud.

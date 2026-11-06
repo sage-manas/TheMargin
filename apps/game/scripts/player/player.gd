@@ -19,6 +19,9 @@ const BUFFER := 0.12
 ## world bodies that move themselves (crates) don't collide with Nib and
 ## resolve Nib explicitly instead.
 const LAYER := 2
+## How close a crate or platform lifts Nib's head to a ceiling. Touching it
+## would wedge Nib's body between ceiling and carrier, unable to walk off.
+const HEADROOM := 1.0
 
 var page: ComicPage
 var facing := 1

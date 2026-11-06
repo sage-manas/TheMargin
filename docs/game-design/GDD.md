@@ -169,6 +169,14 @@ A single large panel on an otherwise blank page. Nib lands, and a caption writes
 - 1.3 Two lifted panels, one on a horizontal track and one vertical, must be arranged in sequence.
 - 1.4 A panel can only be lowered after a word is removed from it (HEAVY on the panel's caption). The first light combination of words and panels.
 - 1.5 A three-panel staircase: floor alignments form a path upward, using UP on a crate.
+
+Page 1.2 no longer ends the build: after the artist writes WHO MOVED MY PANELS? and shakes the panel, the page turns itself (story action `turn_page`).
+
+**Built (Phase 4):**
+
+- **1.3 "Next Door".** Nib wakes in A (fixed). H, on a horizontal track, sits away from A; V, on a vertical track, starts down beside the exit room E, so the way out is visible from the start. The reader slides H over to A, rides H back across with Nib inside, raises V (empty) to meet H, then rides V down to E. The sequence is forced: H must fetch Nib before it can deliver them, and V can only bring Nib down if it went up empty first. Linking A and H makes the narrator add WASN'T THERE? A pencil note in the gutter reads LEAVE THESE WHERE I PUT THEM.
+- **1.4 "The Heavy Room".** The middle room L is captioned THIS ROOM WAS **HEAVY**, so it lies flat and won't slide. Taking HEAVY frees it; riding L down links it to two rooms. The exit door is wired to a plate under an old box, and the box is tucked under a shelf too low for Nib to stand on it. Nib weighs 1, the plate needs 2, and only HEAVY on the box presses it, so the word that freed the room is the key. A pencil panel notes HEAVY ROOMS STAY PUT.
+- **1.5 "The Stairs".** UP is in the tall start room's caption. Lifted K2 starts aligned with the exit room at the top, so the reader lowers it to the start room. Nib hops onto the crate in K2, labels it UP from on top and rides it up under a beam onto a ledge; the reader then raises K2 back to the top. The pencil stairs from page 1.1 return, still unfinished (STILL LATER.). Recovery: an UP placed from beside the crate sends it up empty, out of reach, so that needs R (page reset).
 - 1.6 A narrative page: the neighbour's panel is empty, and their bubble lies on the floor.
 - 1.7 Combination set-piece: carry a word through three rearranged panels.
 - 1.8 Chapter finale: the artist erases P1, the little room where Nib woke up, while Nib watches from the next panel.

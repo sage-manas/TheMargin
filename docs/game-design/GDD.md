@@ -86,6 +86,7 @@ Adding a word means adding a data row. Adding a category means writing one handl
 - **Rule:** you can only erase *pencil* (thin grey lines), never ink. Ink is permanent. That gives an instantly readable language for what can be erased.
 - Every erasure leaves **eraser crumbs**, and crumbs are the restoration resource: brushing them back over an erased spot restores it. Erasing is *borrowing*, not destroying; you can't erase more than you can put back.
 - Erasing a pencil platform removes its collision. Erasing a pencil wall opens a path. Erasing a sketched ceiling reveals the artist's underdrawing.
+- *Implemented (Phase 3 sandbox `sb_eraser`):* "can't erase more than you can put back" is a capacity. The eraser holds a page-set number of crumbs (`eraser_holds`), and a full eraser refuses to erase until crumbs are spent on a smudge. Nib carries crumbs as pips above the head. Erasing is never blocked; drawing back over Nib or a crate is.
 
 ### 4.4 Ink (Chapter 5)
 
@@ -207,6 +208,7 @@ A single large panel on an otherwise blank page. Nib lands, and a caption writes
 | Move | A/D or ←/→ |
 | Hop | W, Space or ↑ |
 | Interact (take, place or swap a word) | E |
+| Erase pencil / draw it back with crumbs (once the eraser is found) | X |
 | Move a panel | Drag a lifted panel with the mouse |
 | Panel mode (keyboard alternative) | Q selects the next lifted panel; arrows/WASD slide it; Q or Esc exits |
 | Reset page | R |

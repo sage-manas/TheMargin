@@ -3,7 +3,7 @@ extends Node
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
 ## Captures the page start state and the solved positions of page 1, and
-## the Phase 3 sandboxes.
+## the Phase 3 sandboxes (mechanics, weight, eraser).
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -19,6 +19,10 @@ func _ready() -> void:
 	await _shot(out, "sb_lowered", "sb_mechanics", {"panels": {"s2": [320, 112]}, "slots": {"cap_s1:0": null, "c1:label": "UP", "cap_s2:0": null}, "objects": {"c1": [172, 16]}}, [450, 200], "HEAVY")
 	await _shot(out, "sbw_start", "sb_weight", {})
 	await _shot(out, "sbw_pressed", "sb_weight", {"slots": {"cap_w1:0": null, "c1:label": "HEAVY"}}, [200, 168])
+	await _shot(out, "sbe_start", "sb_eraser", {})
+	await _shot(out, "sbe_reach", "sb_eraser", {}, [184, 168], "", ["eraser"])
+	await _shot(out, "sbe_full", "sb_eraser", {"sketches": {"wall": false}}, [420, 168], "", ["eraser"])
+	await _shot(out, "sbe_done", "sb_eraser", {"sketches": {"wall": false, "shelf": false, "step1": true, "step2": true}, "objects": {"box": [44, 128]}}, [568, 104], "", ["eraser"])
 	await _turn_shot(out)
 	get_tree().quit()
 
@@ -44,10 +48,10 @@ func _turn_shot(dir: String) -> void:
 	page.queue_free()
 
 
-func _shot(dir: String, name: String, page_id: String, state: Dictionary, pos: Variant = null, carrying := "") -> void:
+func _shot(dir: String, name: String, page_id: String, state: Dictionary, pos: Variant = null, carrying := "", found := []) -> void:
 	var page := ComicPage.new()
 	add_child(page)
-	page.build(ComicPage.load_def(page_id), state, {"position": pos, "carrying": carrying})
+	page.build(ComicPage.load_def(page_id), state, {"position": pos, "carrying": carrying}, found)
 	for i in 20:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw

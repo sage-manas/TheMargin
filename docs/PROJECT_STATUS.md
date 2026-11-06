@@ -1,15 +1,15 @@
 # Project Status
 
-_Last updated: 2026-11-05: Phase 3 pressure plates and crate weight._
+_Last updated: 2026-11-06: Phase 3 eraser sandbox (pencil, crumbs)._
 
 ## Current phase
 
-**Phase 2 is done except for the human playtest. Phase 3 (mechanic framework) has started.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates and pressure plates. Chapter 1 pages 1.4 and 1.5 need them whatever the playtest finds, so this work is low-regret.
+**Phase 2 is done except for the human playtest. Phase 3 (mechanic framework) has started.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates and the eraser. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser is a Chapter 4 mechanic, built now as its sandbox so the framework's data model covers it.
 
-| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates |
+| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, eraser |
 |---|---|---|
-| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`) |
-| Automated tests (Godot headless) | ✅ | ✅ 12 new tests (37 total) |
+| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_eraser`) |
+| Automated tests (Godot headless) | ✅ | ✅ 18 new tests (43 total) |
 | Browser-tested, Chromium + Firefox (Windows, 2026-11-02) | ✅ 6/6 | Not yet (sandbox pages aren't reachable from the title) |
 | Browser-tested, Chromium + WebKit (macOS, 2026-11-03) | ✅ 8/8, including the new keyboard panel-mode test | n/a |
 | Human playtest | ❌ Required before Phase 3 proper (Risk R1, R2) | ❌ |
@@ -31,14 +31,21 @@ _Last updated: 2026-11-05: Phase 3 pressure plates and crate weight._
   - Doors can be wired to a plate (`"button": "<id>"`) and stand open while it is held; the door's own label still wins. New story events `button_pressed` / `button_released`.
   - Plate state is derived from positions, so the save format is unchanged; restoring a page settles plates silently.
   - Sandbox page `sb_weight` (`-- --page=sb_weight`) + 6 headless tests; page validation checks plate bounds and door→button references.
+- **Phase 3 (2026-11-06): the eraser (GDD §4.3).**
+  - **Pencil sketches** (`sketches` in panel data): graphite lines, solid while drawn. Ink is never a sketch, so ink can't be erased. A sketch can start `erased` (a smudge).
+  - **The eraser is found, not given:** an `eraser` object Nib walks into. It becomes an ability (`progress.abilities: ["eraser"]`), so it is never drawn again on any page.
+  - **X erases** the pencil line in reach, which removes its collision and leaves its crumbs; X on a smudge draws it back for those crumbs. The prompt explains refusals: ERASER FULL, NEEDS N CRUMBS, SOMETHING IS IN THE WAY (never over Nib or a crate). Crumbs show as pips above Nib.
+  - **Crumbs are derived, never saved:** each sketch's difference from how it was drawn. The eraser holds `eraser_holds` (default 3), so you can't erase more than you can put back. Saves store `pages.<id>.sketches` (id → drawn, optional, so older v1 saves still load); a save implying an impossible crumb count resets that page's sketches.
+  - New story events `eraser_found`, `sketch_erased`, `sketch_restored`; a "rub" SFX; the artist's pink `Palette.ERASER`.
+  - Sandbox page `sb_eraser` (`-- --page=sb_eraser`): rub out a pencil wall (which fills the 2-crumb eraser), draw a step back to make room, erase the shelf so its crate drops on a plate and opens the door, and draw the second step to reach it. 6 headless tests; page validation checks sketch bounds, unique ids and crumb costs within capacity; the contracts schema and a contract test cover `sketches`.
 
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthrough, crate/panel-word and plate tests) | `pnpm game:test` | 37 passed |
-| Contracts (save schema incl. optional `objects`, conflict resolution, bridge) | `pnpm --filter @the-margin/contracts test` | 6 passed |
-| Browser e2e: boot; solving page 1; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (re-run 2026-11-05 after the plate changes). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Godot unit + integration (incl. real-physics playthrough, crate/panel-word, plate and eraser tests) | `pnpm game:test` | 43 passed |
+| Contracts (save schema incl. optional `objects` and `sketches`, conflict resolution, bridge) | `pnpm --filter @the-margin/contracts test` | 7 passed |
+| Browser e2e: boot; solving page 1; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (re-run 2026-11-06 after the eraser changes; one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
@@ -49,8 +56,9 @@ _Last updated: 2026-11-05: Phase 3 pressure plates and crate weight._
 5. Captions that hold words can't be rewritten by story actions (validated by `test_pages`).
 6. The sandbox page can only be opened from the command line or editor, not from the web build.
 7. The 38 MB `index.wasm` is the stock engine template (≈9 MB with Brotli). A custom slim template is a Phase 8 optimisation.
-8. Firefox e2e has not been re-run since the Phase 3 changes; it runs on the Phase 3 PR. CI was last green on PR #1 (Godot tests, web export, contracts, Chromium + Firefox on Linux). Headless Firefox on the GPU-less runner has no WebGL2, so CI runs Firefox headed under `xvfb-run` (`E2E_HEADED=1`).
+8. CI was green on PR #2 and its merge to `main` (2026-11-06: Godot tests, web export, contracts, Chromium + Firefox on Linux). Firefox has not run against the eraser changes yet; it runs on their PR. Headless Firefox on the GPU-less runner has no WebGL2, so CI runs Firefox headed under `xvfb-run` (`E2E_HEADED=1`).
 9. The workflow's actions (`checkout`, `setup-node`, `pnpm/action-setup`, `upload/download-artifact`, all v4) still target the deprecated Node 20 runtime; bumping them is a small follow-up.
+10. The eraser targets only whole sketches (no partial rubbing), and sketches are axis-aligned rects. Erasing a crate's support while Nib stands underneath leaves the crate hovering above Nib until Nib steps away (crates never crush Nib). The "underdrawing revealed by erasing" (GDD §4.3) isn't built yet.
 
 ## Architectural decisions
 
@@ -59,6 +67,6 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 ## Next recommended tasks
 
 1. **Playtest the prototype with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). Measure the time to the first slide and whether players discover bold words unaided. This still gates the rest of Phase 3.
-2. Push so CI runs Firefox and Chromium against the Phase 3 build.
-3. Phase 3 remainder: the eraser sandbox (pencil layer, crumbs); the ink trace prototype; the music system; moving platforms. Panel resize/swap is a Chapter 2 mechanic and follows Chapter 1 (R7).
+2. Push the eraser branch so CI runs Firefox and Chromium against it.
+3. Phase 3 remainder: the ink trace prototype (it can reuse `sketches`: tracing turns a pencil line into permanent ink); the music system; moving platforms. Panel resize/swap is a Chapter 2 mechanic and follows Chapter 1 (R7).
 4. Phase 4: pages 1.3–1.8 (GDD §6). Pages 1.4 (HEAVY caption) and 1.5 (UP crate staircase) can now be built from data alone.

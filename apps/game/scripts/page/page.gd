@@ -19,9 +19,15 @@ var npcs: Dictionary = {}
 var doors: Array[Door] = []
 var crates: Dictionary = {}
 var buttons: Dictionary = {}
+var sketches: Dictionary = {}
+## Abilities Nib has found so far (`progress.abilities`), e.g. "eraser".
+var abilities: Array = []
+## Crumbs the eraser can hold on this page (`eraser_holds`).
+var eraser_holds := PlayerEraser.HOLDS
 var links: Array = []
 var player: Player
 var interaction: PlayerInteraction
+var eraser: PlayerEraser
 var drag: PanelDrag
 var story: StoryRunner
 var spawn := Vector2.ZERO
@@ -39,10 +45,13 @@ static func load_def(id: String) -> Dictionary:
 	return parsed if parsed is Dictionary else {}
 
 
-## `state` is this page's saved state; `player_state` is {position, carrying}.
-func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionary = {}) -> void:
+## `state` is this page's saved state; `player_state` is {position, carrying};
+## `found` is `progress.abilities`.
+func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionary = {}, found: Array = []) -> void:
 	def = page_def
 	page_id = def["id"]
+	abilities = found.duplicate()
+	eraser_holds = int(def.get("eraser_holds", PlayerEraser.HOLDS))
 	var bg := ColorRect.new()
 	bg.size = Vector2(PageConst.PAGE_SIZE)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -74,6 +83,9 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	interaction = PlayerInteraction.new()
 	interaction.setup(self, player, carried if carried is String and WordLibrary.exists(carried) else "")
 	add_child(interaction)
+	eraser = PlayerEraser.new()
+	eraser.setup(self, player)
+	add_child(eraser)
 	drag = PanelDrag.new()
 	drag.page = self
 	add_child(drag)
@@ -96,6 +108,12 @@ func _build_panel(pd: Dictionary) -> void:
 		for s in cap.slots:
 			_register_slot(s, p)
 			p.caption_slots.append(s)
+	for sd: Dictionary in pd.get("sketches", []):
+		var sk := Sketch.new()
+		sk.setup(sd)
+		sk.panel = p
+		p.content.add_child(sk)
+		sketches[sk.sketch_id] = sk
 	for n: Dictionary in pd.get("npcs", []):
 		var npc := Npc.new()
 		npc.setup(n)
@@ -130,6 +148,12 @@ func _build_panel(pd: Dictionary) -> void:
 				p.content.add_child(b)
 				buttons[b.button_id] = b
 				_register_slot(b.slot, p)
+			"eraser":
+				if not has_eraser():
+					var e := EraserPickup.new()
+					e.setup(o)
+					e.page = self
+					p.content.add_child(e)
 			_:
 				push_warning("Unknown object type: %s" % o["type"])
 
@@ -182,6 +206,17 @@ func _apply_state(state: Dictionary) -> void:
 			var inner := Rect2(Vector2.ONE * PageConst.BORDER, Vector2(c.panel.size) - Vector2.ONE * PageConst.BORDER * 2)
 			if inner.encloses(Rect2(at, Crate.SIZE)):
 				c.position = at
+	var saved_sketches: Dictionary = state.get("sketches", {})
+	for id: String in saved_sketches:
+		var sk: Sketch = sketches.get(id)
+		if sk and saved_sketches[id] is bool:
+			sk.set_drawn(saved_sketches[id])
+	# Crumbs are derived, so a save can't hold more than the eraser does or
+	# owe crumbs it never had. If one does, the sketches start over.
+	var crumbs_now := crumbs()
+	if crumbs_now < 0 or crumbs_now > eraser_holds:
+		for sk: Sketch in sketches.values():
+			sk.set_drawn(sk.initially_drawn)
 
 
 func _restore_position(pos: Variant) -> Vector2:
@@ -278,6 +313,41 @@ func is_player_in_gutter() -> bool:
 	return player != null and player_panel() == null
 
 
+# --- eraser ----------------------------------------------------------------
+
+func has_eraser() -> bool:
+	return abilities.has("eraser")
+
+
+func find_eraser() -> void:
+	if has_eraser():
+		return
+	abilities.append("eraser")
+	Audio.play("take")
+	EventBus.eraser_found.emit()
+	EventBus.state_dirty.emit()
+
+
+## Crumbs in hand: what rubbing sketches out has left, less what drawing
+## smudges back has used (GDD §4.3). Derived, so it is never saved.
+func crumbs() -> int:
+	var total := 0
+	for sk: Sketch in sketches.values():
+		total += sk.crumb_balance()
+	return total
+
+
+## Drawing a sketch back over Nib or a crate would trap them inside it.
+func sketch_blocked(sk: Sketch) -> bool:
+	var r := sk.rect().grow(-0.01)
+	if player and r.intersects(player.collision_rect()):
+		return true
+	for c: Crate in crates.values():
+		if r.intersects(c.rect()):
+			return true
+	return false
+
+
 # --- runtime ---------------------------------------------------------------
 
 func _physics_process(_delta: float) -> void:
@@ -298,7 +368,7 @@ func _physics_process(_delta: float) -> void:
 
 ## The page's save state (SAVE_SCHEMA §2, pages.<id>).
 func capture_state() -> Dictionary:
-	var st := {"panels": {}, "slots": {}, "objects": {}, "fired": story.persisted_fired()}
+	var st := {"panels": {}, "slots": {}, "objects": {}, "sketches": {}, "fired": story.persisted_fired()}
 	for p in panel_list:
 		if p.is_lifted():
 			st["panels"][p.panel_id] = [int(p.position.x), int(p.position.y)]
@@ -308,6 +378,8 @@ func capture_state() -> Dictionary:
 	for id: String in crates:
 		var c: Crate = crates[id]
 		st["objects"][id] = [int(c.position.x), int(c.position.y)]
+	for id: String in sketches:
+		st["sketches"][id] = sketches[id].drawn
 	return st
 
 
@@ -320,6 +392,7 @@ func snapshot() -> Dictionary:
 		"page_state": capture_state(),
 		"player_position": pos,
 		"carrying": interaction.carrying if interaction.carrying != "" else null,
+		"abilities": abilities.duplicate(),
 	}
 
 

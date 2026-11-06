@@ -1,0 +1,47 @@
+{
+  "id": "sb_eraser",
+  "chapter": "sandbox",
+  "next": "",
+  "spawn": [40, 168],
+  "eraser_holds": 2,
+  "hint": "SANDBOX   X ERASES PENCIL   CRUMBS DRAW IT BACK   THE ERASER HOLDS TWO",
+  "panels": [
+    {
+      "id": "e1",
+      "rect": [16, 16, 296, 168],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 128, "to": 152 }],
+      "solids": [[0, 152, 296, 16], [96, 128, 8, 24]],
+      "sketches": [{ "id": "wall", "rect": [176, 40, 8, 112], "crumbs": 2 }],
+      "captions": [{ "id": "cap_e1", "at": [6, 6], "text": "PENCIL RUBS OUT.|INK NEVER DOES." }],
+      "objects": [{ "type": "eraser", "id": "eraser", "at": [64, 152] }]
+    },
+    {
+      "id": "e2",
+      "rect": [328, 16, 296, 168],
+      "bg": "room_blue",
+      "openings": [{ "side": "left", "from": 128, "to": 152 }],
+      "solids": [[0, 152, 296, 16], [224, 88, 72, 64]],
+      "sketches": [
+        { "id": "shelf", "rect": [32, 120, 48, 4] },
+        { "id": "step1", "rect": [136, 128, 40, 4], "erased": true },
+        { "id": "step2", "rect": [176, 104, 40, 4], "erased": true }
+      ],
+      "captions": [{ "id": "cap_e2", "at": [6, 6], "text": "CRUMBS DRAW|IT BACK." }],
+      "objects": [
+        { "type": "button", "id": "plate", "at": [40, 152] },
+        { "type": "crate", "id": "box", "at": [44, 96] },
+        { "type": "door", "id": "door", "at": [256, 56], "button": "plate" }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "found",
+      "on": "eraser_found",
+      "once": true,
+      "persist": false,
+      "do": [{ "action": "rewrite_caption", "caption": "cap_e1", "text": "SOMEONE LEFT|THEIR ERASER." }]
+    }
+  ]
+}

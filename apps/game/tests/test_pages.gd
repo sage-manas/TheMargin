@@ -1,12 +1,13 @@
 extends RefCounted
 ## Every page in data/pages must be well formed: geometry on the grid,
 ## panels inside the page and a gutter apart, unique ids, known props and
-## story actions, reachable `next`.
+## story actions, reachable `next`, pencil sketches inside their panels and
+## within what the eraser can hold.
 
 const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored"]
 ## Object type -> word categories its label accepts.
-const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"]}
+const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": []}
 
 
 func _pages() -> Array:
@@ -47,9 +48,19 @@ func test_ids_and_references(t) -> void:
 		var npcs := {}
 		var buttons := {}
 		var wired := []
+		var sketch_ids := {}
+		var holds := int(d.get("eraser_holds", PlayerEraser.HOLDS))
 		for pd: Dictionary in d.panels:
 			t.ok(not ids.has(pd.id), "unique panel id %s" % pd.id)
 			ids[pd.id] = true
+			var inner := Rect2i(Vector2i.ONE * PageConst.BORDER, Vector2i(int(pd.rect[2]), int(pd.rect[3])) - Vector2i.ONE * PageConst.BORDER * 2)
+			for sk: Dictionary in pd.get("sketches", []):
+				t.ok(not sketch_ids.has(sk.id), "%s: unique sketch id %s" % [d.id, sk.id])
+				sketch_ids[sk.id] = true
+				var r := Rect2i(int(sk.rect[0]), int(sk.rect[1]), int(sk.rect[2]), int(sk.rect[3]))
+				t.ok(inner.encloses(r) and r.size.x > 0 and r.size.y > 0, "%s inside its panel" % sk.id)
+				# A sketch that costs more than the eraser holds could never be drawn back.
+				t.ok(int(sk.get("crumbs", 1)) >= 1 and int(sk.get("crumbs", 1)) <= holds, "%s: 1..%d crumbs" % [sk.id, holds])
 			for c: Dictionary in pd.get("captions", []):
 				# Captions that hold words are fixed text; story actions can't rewrite them.
 				captions[c.id] = not Lettering.has_slots(c.get("text", ""))
@@ -63,7 +74,6 @@ func test_ids_and_references(t) -> void:
 					t.ok(WordLibrary.exists(o.label), "label word exists: %s" % o.label)
 					t.ok(WordLibrary.category(o.label) in OBJECTS.get(o.type, []), "%s accepts its label %s" % [o.id, o.label])
 				if o.type == "crate":
-					var inner := Rect2i(Vector2i.ONE * PageConst.BORDER, Vector2i(int(pd.rect[2]), int(pd.rect[3])) - Vector2i.ONE * PageConst.BORDER * 2)
 					t.ok(inner.encloses(Rect2i(Vector2i(int(o.at[0]), int(o.at[1])), Vector2i(Crate.SIZE))), "%s inside its panel" % o.id)
 				if o.type == "button":
 					buttons[o.id] = true

@@ -63,3 +63,16 @@ test("crate positions are optional, so saves written before crates still parse",
   assert.deepEqual(parseSave(withCrate).pages.ch01_p01.objects, { crate1: [40, 112] });
   assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { objects: { crate1: [40.5, 112] } } } }));
 });
+
+test("pencil sketches are optional booleans; the eraser is an ability", () => {
+  const old = base();
+  old.pages = { ch01_p01: { panels: {}, slots: {}, fired: [] } as never };
+  assert.deepEqual(parseSave(old).pages.ch01_p01.sketches, {});
+  const erased = base();
+  erased.progress.abilities = ["eraser"];
+  erased.pages = { ch01_p01: { panels: {}, slots: {}, objects: {}, sketches: { wall: false, step1: true }, fired: [] } };
+  const parsed = parseSave(erased);
+  assert.deepEqual(parsed.pages.ch01_p01.sketches, { wall: false, step1: true });
+  assert.deepEqual(parsed.progress.abilities, ["eraser"]);
+  assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { sketches: { wall: "erased" } } } }));
+});

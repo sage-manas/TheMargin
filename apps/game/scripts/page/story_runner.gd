@@ -6,7 +6,7 @@ extends Node
 ## triggers are saved (unless persist=false) and their lasting effects are
 ## re-applied instantly on load instead of replaying.
 
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored"]
 
 var page: ComicPage
 var triggers: Array = []
@@ -30,6 +30,9 @@ func setup(owner_page: ComicPage, trigger_defs: Array, fired_ids: Array) -> void
 	EventBus.button_pressed.connect(func(b: String) -> void: _on("button_pressed", {"object": b}))
 	EventBus.button_released.connect(func(b: String) -> void: _on("button_released", {"object": b}))
 	EventBus.panel_released.connect(func(p: String) -> void: _on("panel_released", {"panel": p}))
+	EventBus.eraser_found.connect(func() -> void: _on("eraser_found", {}))
+	EventBus.sketch_erased.connect(func(s: String) -> void: _on("sketch_erased", {"sketch": s}))
+	EventBus.sketch_restored.connect(func(s: String) -> void: _on("sketch_restored", {"sketch": s}))
 
 
 ## Fired trigger ids that belong in the save.

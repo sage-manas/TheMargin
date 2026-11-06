@@ -28,6 +28,11 @@ static func build_all() -> Dictionary:
 	s["page_turn"] = _stream(_sweep(rng, 0.75, 0.04, 0.5, 0.34, 0.35))
 	s["emote"] = _stream(_tone(660, 900, 0.07, Wave.SINE, 0.14))
 	s["shake"] = _stream(_noise(rng, 0.3, 0.07, 0.26))
+	# Rubber on paper: three quick back-and-forth strokes of dull noise.
+	var rub := PackedFloat32Array()
+	for i in 3:
+		rub = _mix(rub, _sweep(rng, 0.07, 0.05, 0.18, 0.22), i * 0.08)
+	s["rub"] = _stream(rub)
 	s["blip"] = _stream(_tone(880, 880, 0.03, Wave.TRIANGLE, 0.1))
 	var scratch := PackedFloat32Array()
 	for i in 6:

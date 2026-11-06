@@ -3,7 +3,7 @@ extends Node
 ## changes mark state dirty; this coalesces them into a single write per frame,
 ## then mirrors the save to the web host for cloud sync.
 
-## Returns the live page snapshot: {page_id, page_state, player_position, carrying}.
+## Returns the live page snapshot: {page_id, page_state, player_position, carrying, abilities}.
 ## Set by the running page so saves capture the world without GameState
 ## knowing how pages are built.
 var snapshot_provider: Callable
@@ -85,5 +85,9 @@ func _commit() -> void:
 		if not snap.is_empty():
 			save["pages"][snap["page_id"]] = snap["page_state"]
 			save["player"] = {"position": snap["player_position"], "carrying": snap["carrying"]}
+			var found: Array = save["progress"]["abilities"]
+			for a: String in snap.get("abilities", []):
+				if not found.has(a):
+					found.append(a)
 	if SaveManager.write(save):
 		WebBridge.send("SAVE_UPDATED", {"save": save})

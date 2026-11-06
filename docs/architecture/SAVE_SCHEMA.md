@@ -23,7 +23,7 @@
     "page": "ch01_p01",         // page to resume on
     "completedPages": ["..."],
     "completedChapters": [],
-    "abilities": [],            // e.g. "eraser", "ink" in later chapters
+    "abilities": [],            // tools Nib has found: "eraser" (Phase 3), "ink" later
     "flags": {}                 // global story flags
   },
   "player": {
@@ -36,6 +36,7 @@
       "slots":  { "neighbor_bubble:3": null,     // slot id -> word id or null
                   "door1:label": "OPEN" },
       "objects": { "crate1": [40, 112] },        // crates' resting spots, panel-local (optional)
+      "sketches": { "wall": false },             // pencil sketch id -> drawn (optional); crumbs are derived from these
       "fired":  ["caption_doubt"]                // once-triggers already fired
     }
   }

@@ -96,9 +96,10 @@ apps/game/
 │   ├── audio/                sfx_synth (procedural, license-clean)
 │   ├── page/                 page.gd (builder + runtime), comic_panel.gd, panel_links.gd (pure)
 │   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd
-│   ├── player/               player.gd (movement), player_interaction.gd
+│   ├── player/               player.gd (movement), player_interaction.gd, player_eraser.gd
 │   ├── words/                word_library.gd (data), word_slot.gd, lettering.gd, speech_bubble.gd, caption.gd
-│   ├── objects/              door.gd, crate.gd, button.gd (pressure plate), npc.gd, prop_painter.gd
+│   ├── objects/              door.gd, crate.gd, button.gd (pressure plate), sketch.gd (pencil),
+│   │                         eraser_pickup.gd, npc.gd, prop_painter.gd
 │   └── ui/                   title_screen, overlays (pause + end card), pixel_menu, page_turn, hud
 ├── data/
 │   ├── words.json            Word definitions (data-driven)
@@ -130,6 +131,7 @@ A page is a JSON document that `page.gd` builds into nodes at runtime (ADR-0003)
 - Objects react in `on_slot_changed(slot)` **by category**, never by word text. A door reads `def.open`; a crate reads `def.dir`; a panel reads `def.mass` from its captions.
 - **Crates** (`crate.gd`, `AnimatableBody2D`) move in whole pixels: a `motion` word moves the crate until it is blocked, `halt` holds it (even in mid air), and no label means it falls. A crate never leaves its panel. Nib sits on its own collision layer (`Player.LAYER`), so a crate's collision probes ignore Nib. The crate handles Nib itself: it carries Nib when Nib stands on top, stops when Nib's head would hit something, and never moves into Nib. Crate resting positions are saved as `pages.<id>.objects`. A crate's `mass` label sets its weight (`Crate.weight_for`, 1 as drawn).
 - **Pressure plates** (`button.gd`, `PlateButton`) have no collision; things stand on the floor beneath them. Every physics frame a plate sums the weight whose bottom edge rests on it (Nib 1, each crate its weight, plus Nib if Nib rides that crate) and compares it with `needs × label mass`. A door with `"button": "<id>"` follows that plate's `changed` signal. Plate state is derived from where things rest, so it is never saved; on build the page settles every plate silently before wiring doors (no sounds or events replay).
+- **Pencil and the eraser (GDD §4.3).** A panel's `sketches` are pencil lines (`sketch.gd`, `Sketch`, a `StaticBody2D` per line), solid while drawn. Ink solids are never sketches, so ink can't be erased. The eraser is an `eraser` object Nib picks up by walking into it; that adds `"eraser"` to `progress.abilities`, and a page never draws a pickup for an eraser already found. `player_eraser.gd` mirrors `player_interaction.gd`: it targets the nearest sketch in reach in Nib's panel (the one under Nib's feet only as a fallback) and resolves `PlayerEraser.verb_for` to `erase`, `restore`, or a refusal (`full`, `short`, `blocked`) that the prompt explains. Erasing a sketch turns its collision off and leaves its `crumbs` (default 1); restoring costs them and is refused over Nib or a crate. **Crumbs are derived, never stored:** `ComicPage.crumbs()` sums each sketch's difference from how it was drawn, so the eraser can't hold more than `eraser_holds` (page data, default 3), and a save implying an impossible count resets the page's sketches.
 - World state for words is just `slot_id -> word_id`, plus the carried word. That is trivially serialisable and restores deterministically.
 
 ### 3.6 Interaction
@@ -143,11 +145,11 @@ A page is a JSON document that `page.gd` builds into nodes at runtime (ADR-0003)
 | word | has loose word and accepts | swap |
 | any | other | none (no prompt) |
 
-The player controller never knows what a door or a bubble is.
+The player controller never knows what a door or a bubble is. The eraser has its own key (X) and its own targeting (§3.5), so a word and a pencil line in reach never compete for E.
 
 ### 3.7 Story triggers
 
-Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`, `button_pressed`, `button_released`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
 
 ### 3.8 Autoloads
 

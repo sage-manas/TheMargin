@@ -17,6 +17,9 @@ export const PageStateSchema = z.object({
   // Resting positions of self-moving objects (crates), panel-local. Optional
   // and defaulted, so version-1 saves written before crates still parse.
   objects: z.record(z.string(), pagePoint).default({}),
+  // Pencil sketches: id -> drawn (false once rubbed out). Crumbs are derived
+  // from these, never stored. Optional, like `objects`.
+  sketches: z.record(z.string(), z.boolean()).default({}),
   fired: z.array(z.string()).default([]),
 });
 

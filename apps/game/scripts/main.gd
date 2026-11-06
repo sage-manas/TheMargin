@@ -123,7 +123,7 @@ func _load_page(id: String, animate: bool, fade := false) -> void:
 	var def := ComicPage.load_def(id)
 	page = ComicPage.new()
 	world.add_child(page)
-	page.build(def, GameState.page_state(id), GameState.save["player"])
+	page.build(def, GameState.page_state(id), GameState.save["player"], GameState.save["progress"]["abilities"])
 	page.exit_requested.connect(_on_page_exit)
 	page.end_reached.connect(_on_end_reached)
 	GameState.snapshot_provider = page.snapshot

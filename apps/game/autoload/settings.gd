@@ -15,6 +15,7 @@ const BINDINGS := {
 	"move_down": [KEY_S, KEY_DOWN],
 	"jump": [KEY_SPACE, KEY_W, KEY_UP],
 	"interact": [KEY_E],
+	"erase": [KEY_X],
 	"panel_mode": [KEY_Q],
 	"reset_page": [KEY_R],
 	"pause": [KEY_ESCAPE, KEY_P],

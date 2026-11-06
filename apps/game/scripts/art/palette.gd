@@ -17,6 +17,7 @@ const PENCIL := Color("8d8a86")
 const BUBBLE := Color("fffcf3")
 const WHITE := Color("fbf7ea")
 const NIGHT := Color("2f2b3d")
+const ERASER := Color("e3a6a1")        # the artist's pink rubber
 
 ## Characters used in text-grid sprites (see Sprites).
 const SPRITE_MAP := {

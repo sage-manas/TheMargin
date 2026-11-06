@@ -86,14 +86,14 @@ apps/game/
 ├── autoload/                 Genuinely global services only
 │   ├── event_bus.gd          Typed signals between decoupled systems
 │   ├── settings.gd           Volume, reduced motion, input map; user://settings.json
-│   ├── audio.gd              SFX voice pool + ambience; owns synthesized streams
+│   ├── audio.gd              SFX voice pool, ambience, chapter music (cross-fade, ducking)
 │   ├── save_manager.gd       Versioned save I/O, validation, migrations, backup (user://)
 │   ├── game_state.gd         The save document; coalesces dirty events into one write/frame
 │   └── web_bridge.gd         JavaScriptBridge adapter; no-op outside web
 ├── scenes/main.tscn          main.gd: game flow (title → page → turn → end), pause, reset
 ├── scripts/
 │   ├── art/                  palette, pixel_font (original 5×7), sprites (text grids), ink, draw_layer
-│   ├── audio/                sfx_synth (procedural, license-clean)
+│   ├── audio/                sfx_synth, music_synth (procedural, license-clean)
 │   ├── page/                 page.gd (builder + runtime), comic_panel.gd, panel_links.gd (pure)
 │   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd
 │   ├── player/               player.gd (movement), player_interaction.gd, sketch_tool.gd (base),
@@ -153,6 +153,16 @@ The player controller never knows what a door or a bubble is. The eraser (X) and
 ### 3.7 Story triggers
 
 Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+
+### 3.7a Music
+
+`data/music.json` holds one score per track: `bpm`, `bars`, `steps_per_bar`, `steps_per_beat`, an optional `volume_db`, and voices `{instrument, volume, pattern}`. A pattern has one token per step: a note or chord (`A3+E4`), `-` to hold, `.` for a rest, and `|` as a bar mark for the reader. A pattern may be shorter than the loop if it divides it evenly; it repeats. The instruments are `felt`, `pluck`, `pad` and `tap`. Each is a stateless function of time, so `MusicSynth` renders any slice of the loop independently. Notes mix into a circular buffer whose tails wrap past the loop point, so every loop is seamless.
+
+A page plays its `music` field if it has one (`""` is silence); otherwise it plays the track named after its `chapter`, if one exists. Turning to a page with the same track never restarts it; a different track cross-fades over 1.5 s.
+
+**Building without threads (ADR-0001):** a track renders a slice per frame within a time budget of 4 ms during play and 12 ms while no page runs. The title screen warms up the track for the page play will resume on. Measured on the web export, `ch01` (23 s at 16 kHz) is ready 2.8 s after boot in Chromium and 1.9 s in WebKit (macOS, 2026-11-06).
+
+**Ducking:** the music drops 12 dB while the artist intervenes. Holds nest (`Audio.duck_hold`/`duck_release`). An artist-style caption holds the duck while it is lettered and releases it if freed mid-sentence; `shake_panel` ducks for 1.5 s.
 
 ### 3.8 Autoloads
 

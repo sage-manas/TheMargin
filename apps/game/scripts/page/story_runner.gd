@@ -8,6 +8,9 @@ extends Node
 
 const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
 
+## The artist's hand shaking a panel quiets the music this long (GDD §10).
+const SHAKE_DUCK_SEC := 1.5
+
 var page: ComicPage
 var triggers: Array = []
 var fired := {}
@@ -81,6 +84,7 @@ func _run(actions: Array) -> void:
 			"shake_panel":
 				page.panels[a["panel"]].shake()
 				Audio.play("shake")
+				Audio.duck_for(SHAKE_DUCK_SEC)
 			"sfx":
 				Audio.play(a["sound"])
 			"achievement":

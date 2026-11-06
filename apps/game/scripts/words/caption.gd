@@ -7,6 +7,8 @@ extends Node2D
 ## written on a panel, which the panel obeys (GDD §4.2). Such captions are
 ## fixed text; Nib reaches their words from `reach_at` (panel-local, usually
 ## a spot on the floor below).
+## The artist lettering a caption is the artist intervening: the music ducks
+## until the last letter is down (GDD §10).
 
 const CHAR_TIME := 0.035
 
@@ -18,6 +20,7 @@ var _strike := 0.0         # 0..1 strike-through progress across the old text
 var slots: Array[WordSlot] = []
 var _lettering: Lettering
 var _time := 0.0
+var _ducking := false
 
 
 func setup(def: Dictionary) -> void:
@@ -68,6 +71,7 @@ func rewrite(new_text: String) -> void:
 	if _lettering:
 		push_warning("Caption %s holds words and cannot be rewritten" % caption_id)
 		return
+	_set_ducking(style == "artist")
 	var tween := create_tween()
 	tween.tween_method(_set_strike, 0.0, 1.0, 0.5)
 	Audio.play("scratch")
@@ -87,6 +91,7 @@ func write(new_text: String) -> void:
 	if _lettering:
 		push_warning("Caption %s holds words and cannot be rewritten" % caption_id)
 		return
+	_set_ducking(style == "artist")
 	text = new_text
 	_visible_chars = 0
 	var total := text.length()
@@ -98,6 +103,23 @@ func write(new_text: String) -> void:
 		await get_tree().create_timer(CHAR_TIME * (2.0 if style == "artist" else 1.0)).timeout
 	_visible_chars = -1
 	queue_redraw()
+	_set_ducking(false)
+
+
+## Holds the music duck at most once, and lets go if the caption is freed
+## mid-sentence (a page reset), so a hold never leaks.
+func _set_ducking(on: bool) -> void:
+	if on == _ducking:
+		return
+	_ducking = on
+	if on:
+		Audio.duck_hold()
+	else:
+		Audio.duck_release()
+
+
+func _exit_tree() -> void:
+	_set_ducking(false)
 
 
 func _shown_text() -> String:

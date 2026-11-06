@@ -1,15 +1,15 @@
 # Project Status
 
-_Last updated: 2026-11-06: Phase 3 ink sandbox (tracing pencil)._
+_Last updated: 2026-11-06: Phase 3 music system (chapter loops, ducking)._
 
 ## Current phase
 
-**Phase 2 is done except for the human playtest. Phase 3 (mechanic framework) has started.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates, the eraser and ink. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser and ink are Chapter 4 and 5 mechanics, built now as sandboxes so the framework's data model covers them.
+**Phase 2 is done except for the human playtest. Phase 3 (mechanic framework) has started.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates, the eraser, ink and music. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser and ink are Chapter 4 and 5 mechanics, built now as sandboxes so the framework's data model covers them.
 
-| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, eraser, ink |
+| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, eraser, ink, music |
 |---|---|---|
-| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_eraser`, `sb_ink`) |
-| Automated tests (Godot headless) | ✅ | ✅ 24 new tests (49 total) |
+| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_eraser`, `sb_ink`, `sb_music`) |
+| Automated tests (Godot headless) | ✅ | ✅ 34 new tests (59 total) |
 | Browser-tested, Chromium + Firefox (Windows, 2026-11-02) | ✅ 6/6 | Not yet (sandbox pages aren't reachable from the title) |
 | Browser-tested, Chromium + WebKit (macOS, 2026-11-03) | ✅ 8/8, including the new keyboard panel-mode test | n/a |
 | Human playtest | ❌ Required before Phase 3 proper (Risk R1, R2) | ❌ |
@@ -45,19 +45,27 @@ _Last updated: 2026-11-06: Phase 3 ink sandbox (tracing pencil)._
   - **Ink is derived like crumbs:** drops collected (`pages.<id>.collected`) less the cost of inked sketches. Sketch state in the save is now `true | false | "inked"`; old boolean saves still load. Impossible saves reset the page's sketches.
   - The eraser and ink share a `SketchTool` base (reach, highlight, refusal prompts, pips); their prompts stack when both have a target. New events `ink_collected`, `sketch_inked`; "ink" and "drip" SFX.
   - Sandbox page `sb_ink` (`-- --page=sb_ink`): the hat holds two, so the inkwell won't fit until a faint step is traced; trace two steps over an ink wall, then a third in the next panel to reach the door. 6 headless tests; page validation checks ink costs, drops and that faint sketches are traceable; contracts cover `"inked"` and `collected`.
+- **Phase 3 (2026-11-06): music (GDD §10, TDD §3.7a).** Ink branch pushed as PR #4 so CI runs Firefox against it.
+  - **Scores are data** (`data/music.json`): tempo, bars and step patterns for four synthesised instruments (`felt`, `pluck`, `pad`, `tap`). `MusicSynth` renders into a circular buffer, so loops are seamless. Everything is original and synthesised at runtime (ADR-0009, `ASSETS.md`).
+  - **Chapter 1 has a loop, "Margins"** (A minor, 84 bpm, 23 s). Pages play their chapter's track or name one with `music` (`""` for silence); a page in the same chapter never restarts it; a new track cross-fades.
+  - **No threads on the web, so tracks build a slice per frame** (4 ms during play, 12 ms on the title, which warms up the resume page's track). Music renders at 16 kHz. On the web export, `ch01` was ready 2.8 s after boot in Chromium and 1.9 s in WebKit.
+  - **Ducking:** −12 dB while the artist letters a caption or shakes a panel. Holds nest, and a caption freed mid-sentence (page reset) lets go, so a duck can't leak.
+  - **MUSIC volume** in the title and pause settings (the `musicVolume` setting already existed).
+  - Sandbox `sb_music` (`-- --page=sb_music`): drag the lifted panel and the artist complains, ducking the music. 10 headless tests.
+  - The test runner now fails a suite that doesn't parse instead of hanging the run.
 
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthrough, crate/panel-word, plate, eraser and ink tests) | `pnpm game:test` | 49 passed |
+| Godot unit + integration (incl. real-physics playthrough, crate/panel-word, plate, eraser, ink and music tests) | `pnpm game:test` | 59 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge) | `pnpm --filter @the-margin/contracts test` | 8 passed |
-| Browser e2e: boot; solving page 1; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (re-run 2026-11-06 after the eraser changes; one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Browser e2e: boot; solving page 1; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (re-run 2026-11-06 with music. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
 1. The `localStorage` mirror is unavailable when a browser blocks site storage (some private modes). The game still plays, with the old IndexedDB-only behaviour.
-2. Placeholder-grade art and synthesised audio. No music yet, only room-tone ambience.
+2. Placeholder-grade art and synthesised audio. Only Chapter 1 has music; the title screen plays only room tone. The music isn't cached between sessions, so it is rebuilt on every boot (caching the rendered loop in `user://` is a possible optimisation).
 3. Only Chapter 1 pages 1–2 are in the story; the end card says so.
 4. A crate can't carry another crate (a rising crate stops under one), so stacked crates don't add weight to a plate. LIGHT has no effect on panels yet. Plates have no puzzle on a story page yet.
 5. Captions that hold words can't be rewritten by story actions (validated by `test_pages`).
@@ -74,6 +82,6 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 ## Next recommended tasks
 
 1. **Playtest the prototype with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). Measure the time to the first slide and whether players discover bold words unaided. This still gates the rest of Phase 3.
-2. Push the ink branch so CI runs Firefox and Chromium against it.
-3. Phase 3 remainder: the music system (per-chapter loops, ducking); moving platforms. Tracing a sketched *character* (GDD §4.4, "wakes them") waits for Chapter 5 content. Panel resize/swap is a Chapter 2 mechanic and follows Chapter 1 (R7).
+2. Merge PR #4 (ink) once CI is green, then the music branch on top of it. Listen to "Margins" in a browser and tune by ear (levels, duck depth); none of the automated tests can judge whether it sounds good.
+3. Phase 3 remainder: moving platforms. Tracing a sketched *character* (GDD §4.4, "wakes them") waits for Chapter 5 content. Panel resize/swap is a Chapter 2 mechanic and follows Chapter 1 (R7).
 4. Phase 4: pages 1.3–1.8 (GDD §6). Pages 1.4 (HEAVY caption) and 1.5 (UP crate staircase) can now be built from data alone.

@@ -41,7 +41,13 @@ func _ready() -> void:
 	for f in files:
 		if not (f.begins_with("test_") and f.ends_with(".gd")):
 			continue
-		var suite: Object = load(DIR + f).new()
+		# A suite that doesn't parse would otherwise stop _ready and hang the run.
+		var script: GDScript = load(DIR + f)
+		if script == null or not script.can_instantiate():
+			failed += 1
+			print("  FAIL  %s (does not load)" % f.get_basename())
+			continue
+		var suite: Object = script.new()
 		for m in suite.get_method_list():
 			var name: String = m["name"]
 			if not name.begins_with("test_") or (only != "" and not name.contains(only)):

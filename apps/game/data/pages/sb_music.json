@@ -1,0 +1,40 @@
+{
+  "id": "sb_music",
+  "chapter": "sandbox",
+  "music": "ch01",
+  "next": "",
+  "spawn": [56, 168],
+  "hint": "SANDBOX   CHAPTER 1 MUSIC   MOVE THE LIFTED PANEL AND THE ARTIST SPEAKS",
+  "panels": [
+    {
+      "id": "m1",
+      "rect": [16, 16, 296, 168],
+      "bg": "room_warm",
+      "solids": [[0, 152, 296, 16]],
+      "props": [{ "type": "window", "at": [100, 40] }],
+      "captions": [{ "id": "cap_m1", "at": [6, 6], "text": "THE MUSIC DUCKS WHILE|THE ARTIST WRITES." }]
+    },
+    {
+      "id": "m2",
+      "rect": [336, 16, 288, 120],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 208 },
+      "solids": [[0, 104, 288, 16]],
+      "captions": [{ "id": "artist", "at": [24, 24], "text": "", "style": "artist" }]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "fidget",
+      "on": "panel_released",
+      "when": { "panel": "m2" },
+      "once": false,
+      "persist": false,
+      "do": [
+        { "action": "write_caption", "caption": "artist", "text": "STOP|FIDGETING." },
+        { "action": "wait", "sec": 0.6 },
+        { "action": "shake_panel", "panel": "m2" }
+      ]
+    }
+  ]
+}

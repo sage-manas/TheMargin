@@ -1,0 +1,32 @@
+{
+  "ch01": {
+    "title": "Margins",
+    "bpm": 84,
+    "bars": 8,
+    "steps_per_bar": 8,
+    "steps_per_beat": 2,
+    "volume_db": -8,
+    "voices": [
+      {
+        "instrument": "pad",
+        "volume": 0.05,
+        "pattern": "A3+C4+E4 - - - - - - - | F3+A3+C4 - - - - - - - | C3+E3+G3 - - - - - - - | G3+B3+D4 - - - - - - - | A3+C4+E4 - - - - - - - | F3+A3+C4 - - - - - - - | D3+F3+A3 - - - - - - - | E3+G#3+B3 - - - - - - -"
+      },
+      {
+        "instrument": "pluck",
+        "volume": 0.16,
+        "pattern": "A2 - - - E2 - - - | F2 - - - C3 - - - | C2 - - - G2 - - - | G2 - - - D2 - - - | A2 - - - E2 - - - | F2 - - - C3 - - - | D2 - - - A2 - - - | E2 - - - E2 - - -"
+      },
+      {
+        "instrument": "felt",
+        "volume": 0.15,
+        "pattern": "E5 - - . C5 - D5 - | C5 - A4 - - - . . | G4 - C5 - E5 - - . | D5 - - - B4 - . . | E5 - - . A5 - G5 - | F5 - E5 - C5 - - . | D5 - - . F5 - E5 - | B4 - - - G#4 - - ."
+      },
+      {
+        "instrument": "tap",
+        "volume": 0.05,
+        "pattern": ". . C4 . . . C4 ."
+      }
+    ]
+  }
+}

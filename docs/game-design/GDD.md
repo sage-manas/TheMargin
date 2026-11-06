@@ -200,7 +200,7 @@ A single large panel on an otherwise blank page. Nib lands, and a caption writes
 
 - All audio is original. Phase 2 sound effects are synthesised in-engine: license-clean and a tiny download. Later phases replace them with recorded stationery foley (paper, pencil, nib scratches) and composed music.
 - The sound palette is stationery: paper slides and taps for panels, peels for words, rubber stamps for placing words, nib scratches for captions, page turns for transitions.
-- Music: a soft, hand-made-feeling loop per chapter, which ducks when the artist intervenes.
+- Music: a soft, hand-made-feeling loop per chapter, which ducks when the artist intervenes (while the artist letters a caption or shakes a panel). Chapter 1's loop, "Margins", is in A minor and ends each pass on E major, a question that never quite resolves, like the narrator's "WASN'T IT?". Sandbox pages are quiet unless they name a track.
 
 ## 11. Controls (desktop)
 

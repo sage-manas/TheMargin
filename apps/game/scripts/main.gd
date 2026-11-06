@@ -81,7 +81,11 @@ func _play_sandbox(id: String) -> void:
 
 
 func _show_title() -> void:
-	title.refresh(not SaveManager.load_save().is_empty())
+	var s := SaveManager.load_save()
+	title.refresh(not s.is_empty())
+	# Warm up the music for where play will resume while the title is up.
+	var resume: String = (s if not s.is_empty() else SaveManager.empty_save())["progress"]["page"]
+	Audio.prepare_music(Audio.track_for_page(ComicPage.load_def(resume)))
 	title.visible = true
 	title.menu.active = true
 
@@ -124,6 +128,7 @@ func _load_page(id: String, animate: bool, fade := false) -> void:
 	page = ComicPage.new()
 	world.add_child(page)
 	page.build(def, GameState.page_state(id), GameState.save["player"], GameState.save["progress"]["abilities"])
+	Audio.play_music(Audio.track_for_page(def))
 	page.exit_requested.connect(_on_page_exit)
 	page.end_reached.connect(_on_end_reached)
 	GameState.snapshot_provider = page.snapshot
@@ -163,6 +168,7 @@ func _quit_to_title() -> void:
 	GameState.commit_now()
 	GameState.playing = false
 	GameState.snapshot_provider = Callable()
+	Audio.stop_music()
 	if page:
 		world.remove_child(page)
 		page.queue_free()

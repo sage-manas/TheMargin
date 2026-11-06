@@ -8,4 +8,5 @@ Every font, image, sound and piece of music in the game must appear here with it
 | Nib, neighbour sprites | `apps/game/scripts/art/sprites.gd` | Original text-grid pixel art | Project-owned |
 | Props, panels, page, halftone, paper texture | `scripts/objects/prop_painter.gd`, `shaders/*.gdshader` | Original, procedural | Project-owned |
 | All sound effects and ambience | `apps/game/scripts/audio/sfx_synth.gd` | Synthesised at runtime from code | Project-owned |
+| Chapter music ("Margins", Ch 1) | scores in `apps/game/data/music.json`, synthesised by `scripts/audio/music_synth.gd` | Original composition, synthesised at runtime | Project-owned |
 | Godot Engine runtime (`index.wasm`, `index.js`) | export output | Godot Engine 4.7.2 | MIT. Credit required in the about/legal page |

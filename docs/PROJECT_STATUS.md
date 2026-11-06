@@ -1,15 +1,15 @@
 # Project Status
 
-_Last updated: 2026-11-06: Phase 3 music system (chapter loops, ducking)._
+_Last updated: 2026-11-06: Phase 3 moving platforms._
 
 ## Current phase
 
-**Phase 2 is done except for the human playtest. Phase 3 (mechanic framework) has started.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates, the eraser, ink and music. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser and ink are Chapter 4 and 5 mechanics, built now as sandboxes so the framework's data model covers them.
+**Phase 2 is done except for the human playtest. Phase 3 (mechanic framework) has started.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates, moving platforms, the eraser, ink and music. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser and ink are Chapter 4 and 5 mechanics, built now as sandboxes so the framework's data model covers them.
 
-| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, eraser, ink, music |
+| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, platforms, eraser, ink, music |
 |---|---|---|
-| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_eraser`, `sb_ink`, `sb_music`) |
-| Automated tests (Godot headless) | ✅ | ✅ 34 new tests (59 total) |
+| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_platforms`, `sb_eraser`, `sb_ink`, `sb_music`) |
+| Automated tests (Godot headless) | ✅ | ✅ 42 new tests (67 total) |
 | Browser-tested, Chromium + Firefox (Windows, 2026-11-02) | ✅ 6/6 | Not yet (sandbox pages aren't reachable from the title) |
 | Browser-tested, Chromium + WebKit (macOS, 2026-11-03) | ✅ 8/8, including the new keyboard panel-mode test | n/a |
 | Human playtest | ❌ Required before Phase 3 proper (Risk R1, R2) | ❌ |
@@ -53,14 +53,21 @@ _Last updated: 2026-11-06: Phase 3 music system (chapter loops, ducking)._
   - **MUSIC volume** in the title and pause settings (the `musicVolume` setting already existed).
   - Sandbox `sb_music` (`-- --page=sb_music`): drag the lifted panel and the artist complains, ducking the music. 10 headless tests.
   - The test runner now fails a suite that doesn't parse instead of hanging the run.
+- **Phase 3 (2026-11-06): moving platforms (GDD §4.2, backlog 22).** PR #4 (ink) merged with green CI; the music branch is PR #5.
+  - **Platforms** (`platform` objects) are planks on a drawn `rail` (`{axis, min, max}`). As drawn they shuttle between the rail ends, resting 1 s at each. A `motion` word along the rail sends one to that end and holds it; STOP holds it in place. A lift refuses LEFT/RIGHT and a ferry refuses UP/DOWN (a new per-word `WordSlot.filter`), so a platform only takes words it can obey.
+  - Platforms carry Nib and crates (the crate's move is split into `can_step` and `shift` so a platform can check and carry it), never move into Nib, and a shuttling platform that meets Nib turns back.
+  - **Fixed a latent bug:** Nib picked up Godot's platform velocity from anything carrying them, so riding sideways moved Nib twice as far (a ferry ride drifted 21 px). Nib now sets `platform_floor_layers = 0`; carriers move Nib explicitly, as the Player docs always said.
+  - Restored slot words are now checked against what the slot accepts, so a tampered save can't put LEFT on a lift (or OPEN on a crate).
+  - Positions share `pages.<id>.objects` with crates (no schema change) and are restored only if on the rail.
+  - Sandbox `sb_platforms` (`-- --page=sb_platforms`) with the three GDD uses: ride a drawn lift to a ledge, take STOP off a ferry to cross a pit, and lift a crate (LEFT on the crate, UP on the lift) until it slides onto a plate that opens the door. 8 headless tests, including the whole page solved with real walking and hopping (onto a moving lift); page validation checks rails stay in their panels and labels run along them.
 
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthrough, crate/panel-word, plate, eraser, ink and music tests) | `pnpm game:test` | 59 passed |
+| Godot unit + integration (incl. real-physics playthroughs, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 67 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge) | `pnpm --filter @the-margin/contracts test` | 8 passed |
-| Browser e2e: boot; solving page 1; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (re-run 2026-11-06 with music. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Browser e2e: boot; solving page 1; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (re-run 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
@@ -74,6 +81,7 @@ _Last updated: 2026-11-06: Phase 3 music system (chapter loops, ducking)._
 8. CI was green on PR #2 and its merge to `main` (2026-11-06: Godot tests, web export, contracts, Chromium + Firefox on Linux). CI was also green on PR #3 (eraser). Firefox has not run against the ink changes yet; it runs on their PR. Headless Firefox on the GPU-less runner has no WebGL2, so CI runs Firefox headed under `xvfb-run` (`E2E_HEADED=1`).
 9. The workflow's actions (`checkout`, `setup-node`, `pnpm/action-setup`, `upload/download-artifact`, all v4) still target the deprecated Node 20 runtime; bumping them is a small follow-up.
 10. The eraser targets only whole sketches (no partial rubbing), and sketches are axis-aligned rects. Erasing a crate's support while Nib stands underneath leaves the crate hovering above Nib until Nib steps away (crates never crush Nib). The "underdrawing revealed by erasing" (GDD §4.3) isn't built yet.
+11. **Only the first bold word in a narrator caption can be reached.** Every word in a caption shares the caption's `reach_at` point, and the nearest-slot pick keeps the first on a tie, so in `sb_mechanics` ("CRATES GO *UP*. UNTIL THEY *STOP*.") STOP can never be targeted. Story pages so far have one word per caption; `sb_platforms` uses two captions. A fix needs a design call (per-word reach points, or cycling targets).
 
 ## Architectural decisions
 
@@ -82,6 +90,7 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 ## Next recommended tasks
 
 1. **Playtest the prototype with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). Measure the time to the first slide and whether players discover bold words unaided. This still gates the rest of Phase 3.
-2. Merge PR #4 (ink) once CI is green, then the music branch on top of it. Listen to "Margins" in a browser and tune by ear (levels, duck depth); none of the automated tests can judge whether it sounds good.
-3. Phase 3 remainder: moving platforms. Tracing a sketched *character* (GDD §4.4, "wakes them") waits for Chapter 5 content. Panel resize/swap is a Chapter 2 mechanic and follows Chapter 1 (R7).
-4. Phase 4: pages 1.3–1.8 (GDD §6). Pages 1.4 (HEAVY caption) and 1.5 (UP crate staircase) can now be built from data alone.
+2. Merge PR #5 (music) once CI is green, then the platforms branch. Listen to "Margins" in a browser and tune by ear (levels, duck depth); none of the automated tests can judge whether it sounds good.
+3. Decide how multi-word captions are reached (known issue 11) before Chapter 1 pages need one.
+4. Phase 3 is otherwise complete for Chapter 1's needs. Still deferred: tracing a sketched *character* (Chapter 5 content) and panel resize/swap (a Chapter 2 mechanic, after Chapter 1 per R7).
+5. Phase 4: pages 1.3–1.8 (GDD §6). Pages 1.4 (HEAVY caption) and 1.5 (UP crate staircase) can now be built from data alone.

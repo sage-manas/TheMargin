@@ -44,6 +44,9 @@ var _time := 0.0
 func _ready() -> void:
 	collision_layer = LAYER
 	collision_mask = 1
+	# Whatever carries Nib (a panel, crate or platform) moves Nib itself, so
+	# no floor may add its own velocity on top.
+	platform_floor_layers = 0
 	var cs := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
 	shape.size = SIZE

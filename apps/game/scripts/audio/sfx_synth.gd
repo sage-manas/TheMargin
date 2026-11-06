@@ -33,6 +33,9 @@ static func build_all() -> Dictionary:
 	for i in 3:
 		rub = _mix(rub, _sweep(rng, 0.07, 0.05, 0.18, 0.22), i * 0.08)
 	s["rub"] = _stream(rub)
+	# A nib dragged along a line: a bright scratch over a low wet stroke.
+	s["ink"] = _stream(_mix(_sweep(rng, 0.32, 0.5, 0.2, 0.16), _tone(180, 140, 0.3, Wave.SINE, 0.18), 0.0))
+	s["drip"] = _stream(_mix(_tone(900, 1500, 0.05, Wave.SINE, 0.22), _tone(600, 400, 0.08, Wave.SINE, 0.12), 0.04))
 	s["blip"] = _stream(_tone(880, 880, 0.03, Wave.TRIANGLE, 0.1))
 	var scratch := PackedFloat32Array()
 	for i in 6:

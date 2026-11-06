@@ -3,7 +3,7 @@ extends Node
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
 ## Captures the page start state and the solved positions of page 1, and
-## the Phase 3 sandboxes (mechanics, weight, eraser).
+## the Phase 3 sandboxes (mechanics, weight, eraser, ink).
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -23,6 +23,10 @@ func _ready() -> void:
 	await _shot(out, "sbe_reach", "sb_eraser", {}, [184, 168], "", ["eraser"])
 	await _shot(out, "sbe_full", "sb_eraser", {"sketches": {"wall": false}}, [420, 168], "", ["eraser"])
 	await _shot(out, "sbe_done", "sb_eraser", {"sketches": {"wall": false, "shelf": false, "step1": true, "step2": true}, "objects": {"box": [44, 128]}}, [568, 104], "", ["eraser"])
+	await _shot(out, "sbi_start", "sb_ink", {})
+	await _shot(out, "sbi_full", "sb_ink", {"collected": ["drop"]}, [96, 168], "", ["ink"])
+	await _shot(out, "sbi_reach", "sb_ink", {"collected": ["drop"]}, [146, 168], "", ["ink", "eraser"])
+	await _shot(out, "sbi_traced", "sb_ink", {"collected": ["drop", "well"], "sketches": {"f1": "inked", "f2": "inked", "f3": "inked"}}, [528, 128], "", ["ink"])
 	await _turn_shot(out)
 	get_tree().quit()
 

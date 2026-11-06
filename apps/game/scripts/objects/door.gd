@@ -2,6 +2,8 @@ class_name Door
 extends Node2D
 ## A door that obeys its label (GDD §4.2). Responds to the `state` word
 ## category; with no label it is as drawn (closed unless `open` in data).
+## A door wired to a button (`"button": "<id>"`) stands open while that
+## button is held down, unless a label says otherwise.
 ## An exit door turns the page when the character walks through it open.
 
 const SIZE := Vector2(24, 32)
@@ -10,6 +12,9 @@ var door_id := ""
 var exit := false
 var default_open := false
 var is_open := false
+## Id of the button that holds this door open, if any.
+var button_id := ""
+var powered := false
 var slot: WordSlot
 var _shape: CollisionShape2D
 var _swing := 0.0   # 0 closed, 1 fully open (visual only)
@@ -19,6 +24,7 @@ func setup(def: Dictionary) -> void:
 	door_id = def["id"]
 	exit = def.get("exit", false)
 	default_open = def.get("open", false)
+	button_id = def.get("button", "")
 	var at: Array = def["at"]
 	position = Vector2(at[0], at[1])
 	var body := StaticBody2D.new()
@@ -37,7 +43,7 @@ func setup(def: Dictionary) -> void:
 ## Re-applies the current label. `animate` is false when restoring a save so
 ## no events or sounds replay.
 func refresh(animate := true) -> void:
-	var want := default_open
+	var want := default_open or powered
 	if slot.word != "":
 		var def := WordLibrary.get_def(slot.word)
 		if def.get("category") == "state":
@@ -48,6 +54,11 @@ func refresh(animate := true) -> void:
 
 func on_slot_changed(_slot: WordSlot) -> void:
 	refresh(true)
+
+
+func set_powered(v: bool, animate := true) -> void:
+	powered = v
+	refresh(animate)
 
 
 func _set_open(v: bool, animate: bool) -> void:
@@ -97,6 +108,10 @@ func _draw() -> void:
 			draw_rect(Rect2(leaf.position.x + 4, 6, 1, SIZE.y - 10), Palette.SHADOW)
 			draw_rect(Rect2(leaf.position.x + leaf_w - 6, 6, 1, SIZE.y - 10), Palette.SHADOW)
 			draw_rect(Rect2(leaf.end.x - 5, SIZE.y / 2.0, 2, 2), Palette.INK)
+
+	# A wired door has a lamp on its frame, lit while its button is held.
+	if button_id != "":
+		Ink.box(self, Rect2(SIZE.x + 2, 4, 4, 4), Palette.RED if powered else Palette.PENCIL)
 
 	# Label plate above the door.
 	var bold := slot.word != ""

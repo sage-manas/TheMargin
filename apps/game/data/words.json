@@ -3,5 +3,9 @@
   "SHUT": { "category": "state", "open": false },
   "UP": { "category": "motion", "dir": [0, -1] },
   "DOWN": { "category": "motion", "dir": [0, 1] },
-  "STOP": { "category": "halt" }
+  "LEFT": { "category": "motion", "dir": [-1, 0] },
+  "RIGHT": { "category": "motion", "dir": [1, 0] },
+  "STOP": { "category": "halt" },
+  "HEAVY": { "category": "mass", "mass": 2.0 },
+  "LIGHT": { "category": "mass", "mass": 0.5 }
 }

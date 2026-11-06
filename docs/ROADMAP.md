@@ -5,9 +5,9 @@
 | Phase | Goal | Done when |
 |---|---|---|
 | 0 Discovery | Design and architecture documents | Docs in `docs/` reviewed; prototype scoped ✅ |
-| 1 Foundation | Monorepo, Godot project, contracts, CI | `pnpm -r build` passes; Godot tests pass headless; web export builds in CI |
-| **2 Prototype** | Browser-playable pages 1.1–1.2 | A first-time player solves 1.1 in the **browser export** without help; save/refresh restores state; all automated tests green |
-| 3 Mechanic framework | Panels (resize/swap), words (all categories), eraser, ink, triggers | Each system has unit tests plus one sandbox page |
+| 1 Foundation | Monorepo, Godot project, contracts, CI | `pnpm -r build` passes; Godot tests pass headless; web export builds in CI ✅ |
+| 2 Prototype | Browser-playable pages 1.1–1.2 | A first-time player solves 1.1 in the **browser export** without help; save/refresh restores state; all automated tests green (automated ✅, human playtest pending) |
+| **3 Mechanic framework** (in progress) | Panels (resize/swap), words (all categories), eraser, ink, triggers | Each system has unit tests plus one sandbox page |
 | 4 Chapter 1 | Pages 1.1–1.8, audio, polish | Playtest: ≥ 70 % unaided completion, median 20–35 min |
 | 5 Web platform | Landing, launcher, auth UI, chapters, settings | The game launches reliably from `/play` in 3 browsers; Lighthouse ≥ 90 performance and accessibility on the landing page |
 | 6 Backend | Auth, saves, progression, achievements, settings | API integration tests green; offline→online sync and conflict tests green |
@@ -50,8 +50,8 @@
 20. Project status + ADRs updated.
 
 ### Next (Phase 3)
-21. Panel resize and swap tracks; word categories `motion`, `halt`, `mass`.
-22. Crates/platforms reacting to `motion`.
+21. Word categories `motion`, `halt`, `mass` ✅ (crates; HEAVY/STOP on a panel's caption pins it; sandbox `sb_mechanics`). Panel resize and swap tracks: not started (Chapter 2 mechanic, so it follows Chapter 1 per R7).
+22. Crates reacting to `motion`/`halt` ✅. Pressure plates and crate `mass` ✅ (wired doors, plate labels; sandbox `sb_weight`). Moving platforms: not started.
 23. Eraser prototype on a sandbox page (pencil layer, crumbs).
 24. Ink trace prototype.
 25. Music system with per-chapter loops and ducking.

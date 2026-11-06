@@ -17,6 +17,8 @@ var slots: Dictionary = {}
 var captions: Dictionary = {}
 var npcs: Dictionary = {}
 var doors: Array[Door] = []
+var crates: Dictionary = {}
+var buttons: Dictionary = {}
 var links: Array = []
 var player: Player
 var interaction: PlayerInteraction
@@ -66,6 +68,7 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	player.page = self
 	player.position = _restore_position(player_state.get("position"))
 	add_child(player)
+	_wire_buttons()
 
 	var carried: Variant = player_state.get("carrying")
 	interaction = PlayerInteraction.new()
@@ -90,6 +93,9 @@ func _build_panel(pd: Dictionary) -> void:
 		cap.setup(c)
 		p.content.add_child(cap)
 		captions[cap.caption_id] = cap
+		for s in cap.slots:
+			_register_slot(s, p)
+			p.caption_slots.append(s)
 	for n: Dictionary in pd.get("npcs", []):
 		var npc := Npc.new()
 		npc.setup(n)
@@ -109,8 +115,36 @@ func _build_panel(pd: Dictionary) -> void:
 				p.content.add_child(d)
 				doors.append(d)
 				_register_slot(d.slot, p)
+			"crate":
+				var c := Crate.new()
+				c.setup(o)
+				c.page = self
+				c.panel = p
+				p.content.add_child(c)
+				crates[c.crate_id] = c
+				_register_slot(c.slot, p)
+			"button":
+				var b := PlateButton.new()
+				b.setup(o)
+				b.page = self
+				p.content.add_child(b)
+				buttons[b.button_id] = b
+				_register_slot(b.slot, p)
 			_:
 				push_warning("Unknown object type: %s" % o["type"])
+
+
+## Settles every button against where things already rest, without sound,
+## then lets wired doors follow their buttons from here on.
+func _wire_buttons() -> void:
+	for b: PlateButton in buttons.values():
+		b.refresh(false)
+	for d in doors:
+		var b: PlateButton = buttons.get(d.button_id)
+		if b == null:
+			continue
+		d.set_powered(b.pressed, false)
+		b.changed.connect(d.set_powered)
 
 
 func _register_slot(s: WordSlot, p: ComicPanel) -> void:
@@ -139,6 +173,15 @@ func _apply_state(state: Dictionary) -> void:
 			s.word = w
 			s.loose = true
 		s.holder.refresh(false)
+	var saved_objects: Dictionary = state.get("objects", {})
+	for id: String in saved_objects:
+		var c: Crate = crates.get(id)
+		var pos: Variant = saved_objects[id]
+		if c and pos is Array and pos.size() == 2:
+			var at := Vector2(int(pos[0]), int(pos[1]))
+			var inner := Rect2(Vector2.ONE * PageConst.BORDER, Vector2(c.panel.size) - Vector2.ONE * PageConst.BORDER * 2)
+			if inner.encloses(Rect2(at, Crate.SIZE)):
+				c.position = at
 
 
 func _restore_position(pos: Variant) -> Vector2:
@@ -198,7 +241,7 @@ func _panel_fits(p: ComicPanel, pos: Vector2i) -> bool:
 ## that is blocked or would pull the floor out from under the character.
 ## Returns the number of steps moved.
 func move_panel_toward(p: ComicPanel, target: Vector2i) -> int:
-	if not p.is_lifted():
+	if not p.is_lifted() or p.is_pinned():
 		return 0
 	var axis := 0 if p.track.get("axis") == "x" else 1
 	var cur := Vector2i(p.position)
@@ -255,13 +298,16 @@ func _physics_process(_delta: float) -> void:
 
 ## The page's save state (SAVE_SCHEMA §2, pages.<id>).
 func capture_state() -> Dictionary:
-	var st := {"panels": {}, "slots": {}, "fired": story.persisted_fired()}
+	var st := {"panels": {}, "slots": {}, "objects": {}, "fired": story.persisted_fired()}
 	for p in panel_list:
 		if p.is_lifted():
 			st["panels"][p.panel_id] = [int(p.position.x), int(p.position.y)]
 	for id: String in slots:
 		var w: String = slots[id].word
 		st["slots"][id] = w if w != "" else null
+	for id: String in crates:
+		var c: Crate = crates[id]
+		st["objects"][id] = [int(c.position.x), int(c.position.y)]
 	return st
 
 

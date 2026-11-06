@@ -1,0 +1,42 @@
+{
+  "id": "sb_mechanics",
+  "chapter": "sandbox",
+  "next": "",
+  "spawn": [56, 168],
+  "hint": "SANDBOX   CRATES OBEY THEIR LABELS   HEAVY OR STOPPED PANELS STAY PUT",
+  "panels": [
+    {
+      "id": "s1",
+      "rect": [16, 16, 296, 168],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 48, "to": 72 }],
+      "solids": [[0, 152, 296, 16], [200, 72, 96, 16]],
+      "props": [{ "type": "window", "at": [100, 40] }],
+      "captions": [{ "id": "cap_s1", "at": [6, 6], "text": "CRATES GO *UP*.|UNTIL THEY *STOP*.", "reach_at": [40, 152] }],
+      "objects": [{ "type": "crate", "id": "c1", "at": [172, 128] }]
+    },
+    {
+      "id": "s2",
+      "rect": [320, 16, 304, 88],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 112 },
+      "openings": [
+        { "side": "left", "from": 48, "to": 72 },
+        { "side": "bottom", "from": 240, "to": 264 }
+      ],
+      "solids": [[0, 72, 240, 16], [264, 72, 40, 16]],
+      "captions": [{ "id": "cap_s2", "at": [6, 6], "text": "THIS ROOM IS *HEAVY*.", "reach_at": [60, 72] }]
+    },
+    {
+      "id": "s3",
+      "rect": [320, 208, 304, 136],
+      "bg": "room_warm",
+      "openings": [{ "side": "top", "from": 240, "to": 264 }],
+      "solids": [[0, 120, 304, 16]],
+      "props": [{ "type": "plant", "at": [140, 104] }],
+      "captions": [{ "id": "cap_s3", "at": [6, 6], "text": "*LEFT*, *DOWN*, *LIGHT*.", "reach_at": [230, 120] }],
+      "objects": [{ "type": "crate", "id": "c2", "at": [16, 96], "label": "RIGHT" }]
+    }
+  ],
+  "triggers": []
+}

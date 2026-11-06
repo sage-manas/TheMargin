@@ -5,7 +5,7 @@
 ## 1. Principles
 
 - **One save slot per player** (`main`) in the first release; the envelope supports more later.
-- Store **decisions, not objects**: panel positions, slot→word assignments and fired story triggers. Never node paths, velocities or animation state.
+- Store **decisions, not objects**: panel positions, slot→word assignments and fired story triggers. Never node paths, velocities or animation state. The one exception is where a crate stands: a crate moves itself after a word is placed, so its position is the outcome of a decision. It is stored as integer pixels, never as a velocity.
 - Every save is **versioned** (`version`) and **revisioned** (`revision`, monotonic per device lineage).
 - The local save is authoritative for play; the cloud copy is a mirror.
 
@@ -35,6 +35,7 @@
       "panels": { "p3": [424, 40] },             // only lifted panels that moved
       "slots":  { "neighbor_bubble:3": null,     // slot id -> word id or null
                   "door1:label": "OPEN" },
+      "objects": { "crate1": [40, 112] },        // crates' resting spots, panel-local (optional)
       "fired":  ["caption_doubt"]                // once-triggers already fired
     }
   }

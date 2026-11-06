@@ -10,6 +10,8 @@ var snapshot_provider: Callable
 
 var save: Dictionary = {}
 var playing := false
+## Sandbox pages (Phase 3 mechanic test beds) are played without saving.
+var sandbox := false
 var _dirty := false
 var _playtime := 0.0
 
@@ -76,6 +78,8 @@ func _commit() -> void:
 	if not _dirty:
 		return
 	_dirty = false
+	if sandbox:
+		return
 	if snapshot_provider.is_valid():
 		var snap: Dictionary = snapshot_provider.call()
 		if not snap.is_empty():

@@ -18,7 +18,7 @@ docs/               Product, game design, architecture, ADRs, status
 
 ## Requirements
 
-- **Godot 4.7.2-stable** with Web export templates. The version is pinned in `.godot-version`. Set `GODOT` to the binary, or place it in `.tools/godot/` on Windows.
+- **Godot 4.7.2-stable** with Web export templates. The version is pinned in `.godot-version`. Set `GODOT` to the binary, or place it in `.tools/godot/` (Windows console exe or macOS `Godot.app`).
 - Node ≥ 22.6 and pnpm 9.
 
 ## Common tasks
@@ -32,7 +32,9 @@ pnpm test             # contract tests
 pnpm e2e              # Playwright: boot, full solution, reload persistence
 ```
 
-To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5.
+To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5. To open a mechanic sandbox page directly (it never touches the save), run `godot --path apps/game -- --page=sb_mechanics` (crates and panel words) or `--page=sb_weight` (pressure plates).
+
+`pnpm e2e` runs Chromium and Firefox. On macOS, add WebKit with `E2E_WEBKIT=1 pnpm e2e`.
 
 ## Controls
 

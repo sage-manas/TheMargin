@@ -186,3 +186,32 @@ test("progress survives a browser reload", async ({ page }, info) => {
   await page.waitForTimeout(300);
   expect((await lastSave(page))?.pages.ch01_p01.panels.p3).toEqual([416, 40]);
 });
+
+test("keyboard panel mode moves a panel without moving Nib", async ({ page }) => {
+  await boot(page);
+  await newGame(page);
+  const requestSave = () =>
+    page.evaluate(() => {
+      const b = (window as unknown as { TheMarginBridge: { deliver: (j: string) => void } }).TheMarginBridge;
+      b.deliver(JSON.stringify({ v: 1, type: "REQUEST_SAVE", payload: {} }));
+    });
+  await requestSave();
+  await page.waitForTimeout(300);
+  const before = (await lastSave(page))?.player.position;
+
+  // Q selects P3 (the only lifted panel); S slides it one grid step at a time.
+  await page.keyboard.press("q");
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press("s");
+    await page.waitForTimeout(100);
+  }
+  await page.keyboard.press("q"); // put it down
+  await waitFor(page, (m) => m.type === "ACHIEVEMENT_UNLOCKED" && m.payload.code === "FIRST_SLIDE", 8000);
+
+  await requestSave();
+  await page.waitForTimeout(300);
+  const save = await lastSave(page);
+  expect(save?.pages.ch01_p01.panels.p3).toEqual([416, 40]);
+  // While a panel is selected the direction keys belong to the panel, not to Nib.
+  expect(save?.player.position).toEqual(before);
+});

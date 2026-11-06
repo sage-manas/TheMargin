@@ -4,7 +4,9 @@ extends RefCounted
 ## story actions, reachable `next`.
 
 const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released"]
+## Object type -> word categories its label accepts.
+const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"]}
 
 
 func _pages() -> Array:
@@ -43,22 +45,40 @@ func test_ids_and_references(t) -> void:
 		var ids := {}
 		var captions := {}
 		var npcs := {}
+		var buttons := {}
+		var wired := []
 		for pd: Dictionary in d.panels:
 			t.ok(not ids.has(pd.id), "unique panel id %s" % pd.id)
 			ids[pd.id] = true
 			for c: Dictionary in pd.get("captions", []):
-				captions[c.id] = true
+				# Captions that hold words are fixed text; story actions can't rewrite them.
+				captions[c.id] = not Lettering.has_slots(c.get("text", ""))
+				for m in RegEx.create_from_string(Lettering.SLOT_RE).search_all(c.get("text", "")):
+					t.ok(m.get_string(1) == "" or WordLibrary.exists(m.get_string(1)), "caption word exists: %s" % m.get_string(1))
 			for n: Dictionary in pd.get("npcs", []):
 				npcs[n.id] = true
 			for o: Dictionary in pd.get("objects", []):
+				t.ok(OBJECTS.has(o.type), "known object type %s" % o.type)
 				if o.has("label") and o.label != "":
 					t.ok(WordLibrary.exists(o.label), "label word exists: %s" % o.label)
+					t.ok(WordLibrary.category(o.label) in OBJECTS.get(o.type, []), "%s accepts its label %s" % [o.id, o.label])
+				if o.type == "crate":
+					var inner := Rect2i(Vector2i.ONE * PageConst.BORDER, Vector2i(int(pd.rect[2]), int(pd.rect[3])) - Vector2i.ONE * PageConst.BORDER * 2)
+					t.ok(inner.encloses(Rect2i(Vector2i(int(o.at[0]), int(o.at[1])), Vector2i(Crate.SIZE))), "%s inside its panel" % o.id)
+				if o.type == "button":
+					buttons[o.id] = true
+					t.ok(float(o.get("needs", 1.0)) > 0.0, "%s needs some weight" % o.id)
+					t.ok(int(o.at[0]) >= PageConst.BORDER and int(o.at[0]) + int(PlateButton.SIZE.x) <= int(pd.rect[2]) - PageConst.BORDER, "%s inside its panel" % o.id)
+				if o.type == "door" and o.has("button"):
+					wired.append(o.button)
+		for b: String in wired:
+			t.ok(buttons.has(b), "%s: wired button exists: %s" % [d.id, b])
 		for tr: Dictionary in d.get("triggers", []):
 			t.ok(tr["on"] in EVENTS, "known event %s" % tr["on"])
 			for a: Dictionary in tr["do"]:
 				t.ok(a.action in ACTIONS, "known action %s" % a.action)
 				if a.has("caption"):
-					t.ok(captions.has(a.caption), "caption exists: %s" % a.caption)
+					t.ok(captions.get(a.caption, false), "caption exists and is rewritable: %s" % a.caption)
 				if a.has("npc"):
 					t.ok(npcs.has(a.npc), "npc exists: %s" % a.npc)
 				if a.has("panel"):

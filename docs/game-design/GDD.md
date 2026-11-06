@@ -71,6 +71,13 @@ The character slowly realises someone outside is helping. The artist slowly real
 
 Adding a word means adding a data row. Adding a category means writing one handler for each object type that accepts it.
 
+**Implemented responses (Phase 3).**
+
+- **Crates** accept `motion`, `halt` and `mass`. UP, DOWN, LEFT and RIGHT move a crate that way until something stops it. STOP holds it where it is, even in mid air. With no label a crate is as drawn: it falls. A `mass` word leaves it falling but changes its weight: as drawn it weighs 1, HEAVY 2, LIGHT 0.5. A LIGHT crate drifts down at half speed. A crate never leaves its panel and never moves into Nib. Nib can ride a crate: a rising crate stops when Nib's head meets the ceiling.
+- **Panels** obey words written in their captions ("THIS ROOM IS **HEAVY**."). HEAVY (`mass` > 1) or STOP pins a lifted panel: it lies flat, loses its track arrows and refuses to slide. LIGHT does nothing yet. Taking the word out frees the panel, which is the page 1.4 beat.
+- **Pressure plates** (buttons) sit in the floor and are pressed while the weight resting on them reaches what they need (`needs`, default 1). Nib weighs 1; a crate weighs what its label says; Nib standing on a crate adds to it. A plate's own label accepts `mass` and scales what it needs: a LIGHT plate needs half, a HEAVY plate double. A door wired to a plate stands open while the plate is held, unless the door's own label says otherwise (the label always wins).
+- Proposed plate puzzle uses (R7 needs ≥ 3; (1) and (2) are built in sandbox `sb_weight`): (1) a plate needing 2 under a plain crate, solved by putting HEAVY on the crate *or* by standing on the crate; (2) a LIGHT crate that is too light for a plain plate, solved by taking LIGHT off it *or* writing LIGHT on the plate; (3) a stiff HEAVY plate that only a HEAVY crate with Nib on top can press, where the only HEAVY in reach first has to be taken off a panel caption, which frees that panel (page 1.4 combined with weight).
+
 **Later (Ch 3):** putting words into NPC dialogue changes what the NPC does ("YOU MAY NOT PASS" becomes "YOU MAY ___ PASS"). Words stuck on panels (UP makes a panel rise). Sentences as switches. Lettered sound effects as physical events: a "CRASH" placed on a wall breaks it.
 
 ### 4.3 Eraser and restoration (Chapter 4)

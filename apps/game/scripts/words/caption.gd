@@ -3,6 +3,10 @@ extends Node2D
 ## Narrator caption box (style "narrator") or the artist's scrawl ("artist").
 ## Captions can strike themselves out and be rewritten: the narrator noticing
 ## that the rules were broken (GDD §8).
+## A narrator caption may also hold bold words (Lettering syntax): words
+## written on a panel, which the panel obeys (GDD §4.2). Such captions are
+## fixed text; Nib reaches their words from `reach_at` (panel-local, usually
+## a spot on the floor below).
 
 const CHAR_TIME := 0.035
 
@@ -11,6 +15,9 @@ var style := "narrator"
 var text := ""
 var _visible_chars := -1   # -1 = all
 var _strike := 0.0         # 0..1 strike-through progress across the old text
+var slots: Array[WordSlot] = []
+var _lettering: Lettering
+var _time := 0.0
 
 
 func setup(def: Dictionary) -> void:
@@ -19,9 +26,37 @@ func setup(def: Dictionary) -> void:
 	text = def.get("text", "")
 	var at: Array = def["at"]
 	position = Vector2(at[0], at[1])
+	if style == "narrator" and Lettering.has_slots(text):
+		_lettering = Lettering.new()
+		var r: Array = def.get("reach_at", [at[0] + 16, at[1] + 16])
+		_lettering.parse(text, caption_id, self, self, Vector2(26, 40))
+		for s in _lettering.slots:
+			s.anchor_offset = Vector2(r[0], r[1]) - position
+		slots = _lettering.slots
+
+
+func on_slot_changed(_slot: WordSlot) -> void:
+	queue_redraw()
+
+
+func refresh(_animate := false) -> void:
+	queue_redraw()
+
+
+func slot_prompt_position(slot: WordSlot) -> Vector2:
+	return global_position + _lettering.slot_top(slot)
+
+
+func _process(delta: float) -> void:
+	if _lettering:
+		_time += delta
+		queue_redraw()
 
 
 func set_text_instant(t: String) -> void:
+	if _lettering:
+		push_warning("Caption %s holds words and cannot be rewritten" % caption_id)
+		return
 	text = t
 	_visible_chars = -1
 	_strike = 0.0
@@ -30,6 +65,9 @@ func set_text_instant(t: String) -> void:
 
 ## Strikes out the current text, then letters the new text in.
 func rewrite(new_text: String) -> void:
+	if _lettering:
+		push_warning("Caption %s holds words and cannot be rewritten" % caption_id)
+		return
 	var tween := create_tween()
 	tween.tween_method(_set_strike, 0.0, 1.0, 0.5)
 	Audio.play("scratch")
@@ -46,6 +84,9 @@ func _set_strike(v: float) -> void:
 
 ## Letters text in one character at a time.
 func write(new_text: String) -> void:
+	if _lettering:
+		push_warning("Caption %s holds words and cannot be rewritten" % caption_id)
+		return
 	text = new_text
 	_visible_chars = 0
 	var total := text.length()
@@ -67,6 +108,11 @@ func _shown_text() -> String:
 
 func _draw() -> void:
 	if text == "":
+		return
+	if _lettering:
+		var box := Vector2(_lettering.width() + 8, _lettering.lines.size() * PixelFont.LINE_HEIGHT + 4)
+		Ink.box(self, Rect2(Vector2.ZERO, box), Palette.CAPTION)
+		_lettering.draw(self, Vector2(4, 3), 0.0 if Settings.reduced_motion else roundf(sin(_time * 4.0) * 0.6))
 		return
 	var scale := 2 if style == "artist" else 1
 	var lines := PixelFont.split_lines(text)

@@ -15,6 +15,10 @@ const JUMP_CUT := 0.45
 const MAX_FALL := 330.0
 const COYOTE := 0.1
 const BUFFER := 0.12
+## Nib's own collision layer. Nib collides with the world (layer 1), but
+## world bodies that move themselves (crates) don't collide with Nib and
+## resolve Nib explicitly instead.
+const LAYER := 2
 
 var page: ComicPage
 var facing := 1
@@ -38,6 +42,8 @@ var _time := 0.0
 
 
 func _ready() -> void:
+	collision_layer = LAYER
+	collision_mask = 1
 	var cs := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
 	shape.size = SIZE

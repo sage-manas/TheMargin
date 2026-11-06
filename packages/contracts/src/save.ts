@@ -14,6 +14,9 @@ const pagePoint = z.tuple([z.number().int().min(0).max(640), z.number().int().mi
 export const PageStateSchema = z.object({
   panels: z.record(z.string(), pagePoint).default({}),
   slots: z.record(z.string(), wordId.nullable()).default({}),
+  // Resting positions of self-moving objects (crates), panel-local. Optional
+  // and defaulted, so version-1 saves written before crates still parse.
+  objects: z.record(z.string(), pagePoint).default({}),
   fired: z.array(z.string()).default([]),
 });
 

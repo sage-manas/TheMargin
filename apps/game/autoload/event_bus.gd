@@ -11,6 +11,8 @@ signal link_broken(a: String, b: String)
 signal word_taken(slot_id: String, word: String)
 signal word_placed(slot_id: String, word: String)
 signal door_opened(object_id: String)
+signal button_pressed(object_id: String)
+signal button_released(object_id: String)
 signal achievement_unlocked(code: String)
 ## Something worth persisting changed; GameState coalesces these into one save.
 signal state_dirty

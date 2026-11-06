@@ -20,6 +20,8 @@ var props: Array = []
 var notes: Array = []
 ## Currently linked border gaps, from PanelLinks.gaps_for.
 var gaps: Array = []
+## Slots in this panel's captions: words written on the panel itself.
+var caption_slots: Array[WordSlot] = []
 var hovered := false
 var selected := false
 var dragging := false
@@ -88,6 +90,20 @@ func setup(def: Dictionary) -> void:
 
 func is_lifted() -> bool:
 	return not track.is_empty()
+
+
+## A lifted panel obeys the words written on it (GDD §4.2): a heavy one
+## (`mass` > 1) or a halted one lies flat on the page and won't slide.
+func is_pinned() -> bool:
+	for s in caption_slots:
+		var def := WordLibrary.get_def(s.word)
+		match def.get("category"):
+			"halt":
+				return true
+			"mass":
+				if float(def.get("mass", 1.0)) > 1.0:
+					return true
+	return false
 
 
 func rect() -> Rect2i:
@@ -171,7 +187,9 @@ func _rebuild_border() -> void:
 
 func _draw_shadow(ci: CanvasItem) -> void:
 	var lift := 3.0
-	if not Settings.reduced_motion:
+	if is_pinned():
+		lift = 1.0
+	elif not Settings.reduced_motion:
 		lift += 2.0 if dragging else roundf(sin(_time * 2.2))
 	ci.draw_rect(Rect2(Vector2(lift, lift + 1), Vector2(size)), Palette.SHADOW)
 
@@ -226,7 +244,7 @@ func _draw_ink(ci: CanvasItem) -> void:
 			for seg: Array in PanelLinks.subtract_intervals(op[0], op[1], gs):
 				var from := Vector2(seg[0], spec[1]) if spec[0] == 0 else Vector2(spec[1], seg[0])
 				Ink.dashed(ci, from, seg[1] - seg[0], spec[0], b, color, 3, 3)
-	if is_lifted() and (hovered or selected) and not dragging:
+	if is_lifted() and (hovered or selected) and not dragging and not is_pinned():
 		_draw_track_arrows(ci)
 
 

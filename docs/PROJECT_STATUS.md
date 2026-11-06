@@ -49,7 +49,8 @@ _Last updated: 2026-11-05: Phase 3 pressure plates and crate weight._
 5. Captions that hold words can't be rewritten by story actions (validated by `test_pages`).
 6. The sandbox page can only be opened from the command line or editor, not from the web build.
 7. The 38 MB `index.wasm` is the stock engine template (≈9 MB with Brotli). A custom slim template is a Phase 8 optimisation.
-8. Firefox e2e has not been re-run since the Phase 3 changes. It runs on the next CI push.
+8. Firefox e2e has not been re-run since the Phase 3 changes; it runs on the Phase 3 PR. CI was last green on PR #1 (Godot tests, web export, contracts, Chromium + Firefox on Linux). Headless Firefox on the GPU-less runner has no WebGL2, so CI runs Firefox headed under `xvfb-run` (`E2E_HEADED=1`).
+9. The workflow's actions (`checkout`, `setup-node`, `pnpm/action-setup`, `upload/download-artifact`, all v4) still target the deprecated Node 20 runtime; bumping them is a small follow-up.
 
 ## Architectural decisions
 

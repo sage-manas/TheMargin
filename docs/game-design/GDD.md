@@ -93,6 +93,7 @@ Adding a word means adding a data row. Adding a category means writing one handl
 - Ink is collected as **drops** from leaking inkwells and spilled pens, and carried in Nib's hat. (Nib *is* a pen nib; Chapter 1 foreshadows this.)
 - **Rule:** ink can only *trace existing pencil sketches*. Nib can't draw freehand. Tracing a sketched bridge makes it real; tracing a sketched character wakes them. Drawing stays expressive but bounded, and every level remains fully authorable.
 - Each sketch has a fixed ink cost, shown as dots on the sketch, so resource puzzles are readable.
+- *Implemented (Phase 3 sandbox `sb_ink`):* §4.3 makes pencil solid while §4.4 says tracing a sketched bridge "makes it real". Both hold because there are two kinds of pencil: ordinary pencil (solid, erasable) and **faint** layout pencil (drawn but not solid). Ink makes either solid and permanent, so the eraser can't touch it. Nib's hat holds a page-set number of drops (`ink_holds`); a drop or inkwell that won't fit stays where it is and says HAT FULL. Ink pips sit above the crumb pips over Nib's head.
 
 ### 4.5 The artist (Chapter 6, seeded from Chapter 1)
 
@@ -209,6 +210,7 @@ A single large panel on an otherwise blank page. Nib lands, and a caption writes
 | Hop | W, Space or ↑ |
 | Interact (take, place or swap a word) | E |
 | Erase pencil / draw it back with crumbs (once the eraser is found) | X |
+| Trace pencil in ink (once Nib has collected ink) | C |
 | Move a panel | Drag a lifted panel with the mouse |
 | Panel mode (keyboard alternative) | Q selects the next lifted panel; arrows/WASD slide it; Q or Esc exits |
 | Reset page | R |

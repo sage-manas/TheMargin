@@ -1,0 +1,48 @@
+{
+  "id": "sb_ink",
+  "chapter": "sandbox",
+  "next": "",
+  "spawn": [40, 168],
+  "ink_holds": 2,
+  "hint": "SANDBOX   C TRACES PENCIL IN INK   THE DOTS ARE ITS COST   NIB'S HAT HOLDS TWO",
+  "panels": [
+    {
+      "id": "i1",
+      "rect": [16, 16, 296, 168],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 128, "to": 152 }],
+      "solids": [[0, 152, 296, 16], [176, 92, 16, 60]],
+      "sketches": [
+        { "id": "f1", "rect": [112, 132, 40, 4], "faint": true, "ink": 1 },
+        { "id": "f2", "rect": [156, 112, 20, 4], "faint": true, "ink": 1 }
+      ],
+      "captions": [{ "id": "cap_i1", "at": [6, 6], "text": "PENCIL IS|ONLY A PLAN." }],
+      "objects": [
+        { "type": "ink", "id": "drop", "at": [48, 152] },
+        { "type": "ink", "id": "well", "at": [80, 152], "drops": 2 }
+      ]
+    },
+    {
+      "id": "i2",
+      "rect": [328, 16, 296, 168],
+      "bg": "room_blue",
+      "openings": [{ "side": "left", "from": 128, "to": 152 }],
+      "solids": [[0, 152, 296, 16], [224, 88, 72, 64]],
+      "sketches": [
+        { "id": "f3", "rect": [136, 132, 40, 4], "faint": true, "ink": 1 },
+        { "id": "p1", "rect": [184, 112, 32, 4] }
+      ],
+      "captions": [{ "id": "cap_i2", "at": [6, 6], "text": "INK IS|FOREVER." }],
+      "objects": [{ "type": "door", "id": "door", "at": [256, 56], "open": true }]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "first_ink",
+      "on": "sketch_inked",
+      "once": true,
+      "persist": false,
+      "do": [{ "action": "rewrite_caption", "caption": "cap_i1", "text": "UNTIL SOMEONE|INKS IT." }]
+    }
+  ]
+}

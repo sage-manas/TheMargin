@@ -70,9 +70,20 @@ test("pencil sketches are optional booleans; the eraser is an ability", () => {
   assert.deepEqual(parseSave(old).pages.ch01_p01.sketches, {});
   const erased = base();
   erased.progress.abilities = ["eraser"];
-  erased.pages = { ch01_p01: { panels: {}, slots: {}, objects: {}, sketches: { wall: false, step1: true }, fired: [] } };
+  erased.pages = { ch01_p01: { panels: {}, slots: {}, objects: {}, sketches: { wall: false, step1: true }, collected: [], fired: [] } };
   const parsed = parseSave(erased);
   assert.deepEqual(parsed.pages.ch01_p01.sketches, { wall: false, step1: true });
   assert.deepEqual(parsed.progress.abilities, ["eraser"]);
   assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { sketches: { wall: "erased" } } } }));
+});
+
+test("inked sketches and collected ink are optional", () => {
+  const old = base();
+  old.pages = { ch01_p01: { panels: {}, slots: {}, sketches: { wall: false }, fired: [] } as never };
+  assert.deepEqual(parseSave(old).pages.ch01_p01.collected, []);
+  const inked = base();
+  inked.progress.abilities = ["ink"];
+  inked.pages = { ch01_p01: { panels: {}, slots: {}, objects: {}, sketches: { f1: "inked", f2: true }, collected: ["drop"], fired: [] } };
+  assert.deepEqual(parseSave(inked).pages.ch01_p01.sketches, { f1: "inked", f2: true });
+  assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { sketches: { f1: "painted" } } } }));
 });

@@ -5,9 +5,9 @@ extends RefCounted
 ## within what the eraser can hold.
 
 const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
 ## Object type -> word categories its label accepts.
-const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": []}
+const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": []}
 
 
 func _pages() -> Array:
@@ -50,6 +50,7 @@ func test_ids_and_references(t) -> void:
 		var wired := []
 		var sketch_ids := {}
 		var holds := int(d.get("eraser_holds", PlayerEraser.HOLDS))
+		var hat := int(d.get("ink_holds", PlayerInk.HOLDS))
 		for pd: Dictionary in d.panels:
 			t.ok(not ids.has(pd.id), "unique panel id %s" % pd.id)
 			ids[pd.id] = true
@@ -61,6 +62,9 @@ func test_ids_and_references(t) -> void:
 				t.ok(inner.encloses(r) and r.size.x > 0 and r.size.y > 0, "%s inside its panel" % sk.id)
 				# A sketch that costs more than the eraser holds could never be drawn back.
 				t.ok(int(sk.get("crumbs", 1)) >= 1 and int(sk.get("crumbs", 1)) <= holds, "%s: 1..%d crumbs" % [sk.id, holds])
+				# Likewise ink: a cost the hat can't hold could never be traced.
+				t.ok(int(sk.get("ink", 0)) >= 0 and int(sk.get("ink", 0)) <= hat, "%s: 0..%d ink" % [sk.id, hat])
+				t.ok(not (sk.get("faint", false) and int(sk.get("ink", 0)) == 0), "%s: a faint sketch must be traceable" % sk.id)
 			for c: Dictionary in pd.get("captions", []):
 				# Captions that hold words are fixed text; story actions can't rewrite them.
 				captions[c.id] = not Lettering.has_slots(c.get("text", ""))
@@ -79,6 +83,8 @@ func test_ids_and_references(t) -> void:
 					buttons[o.id] = true
 					t.ok(float(o.get("needs", 1.0)) > 0.0, "%s needs some weight" % o.id)
 					t.ok(int(o.at[0]) >= PageConst.BORDER and int(o.at[0]) + int(PlateButton.SIZE.x) <= int(pd.rect[2]) - PageConst.BORDER, "%s inside its panel" % o.id)
+				if o.type == "ink":
+					t.ok(int(o.get("drops", 1)) >= 1 and int(o.get("drops", 1)) <= hat, "%s: 1..%d drops" % [o.id, hat])
 				if o.type == "door" and o.has("button"):
 					wired.append(o.button)
 		for b: String in wired:

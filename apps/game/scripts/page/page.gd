@@ -24,10 +24,18 @@ var sketches: Dictionary = {}
 var abilities: Array = []
 ## Crumbs the eraser can hold on this page (`eraser_holds`).
 var eraser_holds := PlayerEraser.HOLDS
+## Drops of ink Nib's hat holds on this page (`ink_holds`).
+var ink_holds := PlayerInk.HOLDS
+var ink_drops: Dictionary = {}
+## Ids of ink pickups already collected, and the drops each held.
+var collected: Dictionary = {}
 var links: Array = []
 var player: Player
 var interaction: PlayerInteraction
 var eraser: PlayerEraser
+var ink_tool: PlayerInk
+## Nib's sketch tools, bottom prompt first.
+var tools: Array[SketchTool] = []
 var drag: PanelDrag
 var story: StoryRunner
 var spawn := Vector2.ZERO
@@ -52,6 +60,9 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	page_id = def["id"]
 	abilities = found.duplicate()
 	eraser_holds = int(def.get("eraser_holds", PlayerEraser.HOLDS))
+	ink_holds = int(def.get("ink_holds", PlayerInk.HOLDS))
+	for id: Variant in state.get("collected", []):
+		collected[str(id)] = 0
 	var bg := ColorRect.new()
 	bg.size = Vector2(PageConst.PAGE_SIZE)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -84,8 +95,12 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	interaction.setup(self, player, carried if carried is String and WordLibrary.exists(carried) else "")
 	add_child(interaction)
 	eraser = PlayerEraser.new()
-	eraser.setup(self, player)
-	add_child(eraser)
+	eraser.setup(self, player, 0)
+	ink_tool = PlayerInk.new()
+	ink_tool.setup(self, player, 1)
+	tools = [eraser, ink_tool]
+	for t in tools:
+		add_child(t)
 	drag = PanelDrag.new()
 	drag.page = self
 	add_child(drag)
@@ -154,6 +169,16 @@ func _build_panel(pd: Dictionary) -> void:
 					e.setup(o)
 					e.page = self
 					p.content.add_child(e)
+			"ink":
+				var drop := InkDrop.new()
+				drop.setup(o)
+				if collected.has(drop.drop_id):
+					collected[drop.drop_id] = drop.drops
+					drop.free()
+					continue
+				drop.page = self
+				p.content.add_child(drop)
+				ink_drops[drop.drop_id] = drop
 			_:
 				push_warning("Unknown object type: %s" % o["type"])
 
@@ -177,6 +202,10 @@ func _register_slot(s: WordSlot, p: ComicPanel) -> void:
 
 
 func _apply_state(state: Dictionary) -> void:
+	# Saved pickups this page doesn't have hold no ink.
+	for id: String in collected.keys():
+		if collected[id] == 0:
+			collected.erase(id)
 	var saved_panels: Dictionary = state.get("panels", {})
 	for id: String in saved_panels:
 		var p: ComicPanel = panels.get(id)
@@ -209,14 +238,18 @@ func _apply_state(state: Dictionary) -> void:
 	var saved_sketches: Dictionary = state.get("sketches", {})
 	for id: String in saved_sketches:
 		var sk: Sketch = sketches.get(id)
-		if sk and saved_sketches[id] is bool:
-			sk.set_drawn(saved_sketches[id])
-	# Crumbs are derived, so a save can't hold more than the eraser does or
-	# owe crumbs it never had. If one does, the sketches start over.
+		if sk:
+			sk.apply_state(saved_sketches[id])
+	# Crumbs and ink are derived, so a save can't hold more than the eraser or
+	# the hat does, or owe what it never had. If one does, the sketches start
+	# over (collected ink stays collected).
 	var crumbs_now := crumbs()
-	if crumbs_now < 0 or crumbs_now > eraser_holds:
+	var ink_now := ink()
+	if crumbs_now < 0 or crumbs_now > eraser_holds or ink_now < 0 or ink_now > ink_holds:
 		for sk: Sketch in sketches.values():
-			sk.set_drawn(sk.initially_drawn)
+			sk.reset()
+		if ink() > ink_holds:
+			collected.clear()
 
 
 func _restore_position(pos: Variant) -> Vector2:
@@ -337,6 +370,38 @@ func crumbs() -> int:
 	return total
 
 
+# --- ink -------------------------------------------------------------------
+
+func has_ink() -> bool:
+	return abilities.has("ink")
+
+
+## Collects a pickup if the hat has room for all of it. The first ink Nib
+## collects is the ability to trace.
+func collect_ink(drop: InkDrop) -> bool:
+	if collected.has(drop.drop_id) or ink() + drop.drops > ink_holds:
+		return false
+	collected[drop.drop_id] = drop.drops
+	ink_drops.erase(drop.drop_id)
+	if not has_ink():
+		abilities.append("ink")
+	Audio.play("drip")
+	EventBus.ink_collected.emit(drop.drop_id)
+	EventBus.state_dirty.emit()
+	return true
+
+
+## Ink in the hat: drops collected on this page less what tracing has spent
+## (GDD §4.4). Derived, so it is never saved.
+func ink() -> int:
+	var total := 0
+	for n: int in collected.values():
+		total += n
+	for sk: Sketch in sketches.values():
+		total -= sk.ink_spent()
+	return total
+
+
 ## Drawing a sketch back over Nib or a crate would trap them inside it.
 func sketch_blocked(sk: Sketch) -> bool:
 	var r := sk.rect().grow(-0.01)
@@ -368,7 +433,7 @@ func _physics_process(_delta: float) -> void:
 
 ## The page's save state (SAVE_SCHEMA §2, pages.<id>).
 func capture_state() -> Dictionary:
-	var st := {"panels": {}, "slots": {}, "objects": {}, "sketches": {}, "fired": story.persisted_fired()}
+	var st := {"panels": {}, "slots": {}, "objects": {}, "sketches": {}, "collected": collected.keys(), "fired": story.persisted_fired()}
 	for p in panel_list:
 		if p.is_lifted():
 			st["panels"][p.panel_id] = [int(p.position.x), int(p.position.y)]
@@ -379,7 +444,7 @@ func capture_state() -> Dictionary:
 		var c: Crate = crates[id]
 		st["objects"][id] = [int(c.position.x), int(c.position.y)]
 	for id: String in sketches:
-		st["sketches"][id] = sketches[id].drawn
+		st["sketches"][id] = sketches[id].state()
 	return st
 
 

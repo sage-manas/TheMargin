@@ -16,6 +16,8 @@ signal button_released(object_id: String)
 signal eraser_found
 signal sketch_erased(sketch_id: String)
 signal sketch_restored(sketch_id: String)
+signal ink_collected(object_id: String)
+signal sketch_inked(sketch_id: String)
 signal achievement_unlocked(code: String)
 ## Something worth persisting changed; GameState coalesces these into one save.
 signal state_dirty

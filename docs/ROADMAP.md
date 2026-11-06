@@ -51,7 +51,7 @@
 
 ### Next (Phase 3)
 21. Word categories `motion`, `halt`, `mass` ✅ (crates; HEAVY/STOP on a panel's caption pins it; sandbox `sb_mechanics`). Panel resize and swap tracks: not started (Chapter 2 mechanic, so it follows Chapter 1 per R7).
-22. Crates reacting to `motion`/`halt` ✅. Pressure plates and crate `mass` ✅ (wired doors, plate labels; sandbox `sb_weight`). Moving platforms: not started.
+22. Crates reacting to `motion`/`halt` ✅. Pressure plates and crate `mass` ✅ (wired doors, plate labels; sandbox `sb_weight`). Moving platforms ✅ (planks on rails that shuttle as drawn and obey `motion`/`halt`, carry Nib and crates; sandbox `sb_platforms`).
 23. Eraser prototype on a sandbox page (pencil layer, crumbs) ✅ (`sketches` in panel data, the eraser as a found ability, derived crumbs with a capacity; sandbox `sb_eraser`).
 24. Ink trace prototype ✅ (traceable and `faint` sketches, ink drops and inkwells, the hat's capacity, derived ink; both tools share `SketchTool`; sandbox `sb_ink`).
 25. Music system with per-chapter loops and ducking ✅ (scores as data in `data/music.json`, synthesised incrementally; chapter 1 "Margins"; ducks while the artist letters or shakes; MUSIC volume in settings; sandbox `sb_music`).

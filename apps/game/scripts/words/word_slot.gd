@@ -10,6 +10,9 @@ var word := ""
 var loose := true
 ## Accepted word categories; empty means anything (sentence gaps).
 var accepts: Array = []
+## Optional per-word check on top of `accepts`, for holders that take only
+## some words of a category (a platform takes only motion along its rail).
+var filter := Callable()
 var holder: Object
 ## Where the character must stand to reach this slot.
 var anchor_node: Node2D
@@ -41,7 +44,9 @@ func prompt_position() -> Vector2:
 
 
 func accepts_word(w: String) -> bool:
-	return accepts.is_empty() or WordLibrary.category(w) in accepts
+	if not (accepts.is_empty() or WordLibrary.category(w) in accepts):
+		return false
+	return not filter.is_valid() or filter.call(w)
 
 
 func take() -> String:

@@ -1,0 +1,48 @@
+{
+  "id": "sb_platforms",
+  "chapter": "sandbox",
+  "next": "",
+  "spawn": [48, 184],
+  "hint": "SANDBOX   PLANKS RIDE THEIR RAILS   A LABEL SENDS ONE TO THE END",
+  "panels": [
+    {
+      "id": "m1",
+      "rect": [16, 16, 208, 200],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 32, "to": 56 }],
+      "solids": [[0, 168, 208, 32], [124, 56, 84, 16]],
+      "captions": [{ "id": "cap_m1", "at": [6, 6], "text": "THE PLANK KNEW|ITS LINE." }],
+      "objects": [{ "type": "platform", "id": "lift1", "at": [88, 150], "rail": { "axis": "y", "min": 56, "max": 150 } }]
+    },
+    {
+      "id": "m2",
+      "rect": [232, 16, 392, 104],
+      "bg": "room_blue",
+      "openings": [
+        { "side": "left", "from": 32, "to": 56 },
+        { "side": "bottom", "from": 312, "to": 336 }
+      ],
+      "solids": [[0, 56, 96, 48], [96, 80, 200, 24], [296, 56, 16, 48], [336, 56, 56, 48]],
+      "captions": [{ "id": "cap_m2", "at": [120, 6], "text": "THE FERRY WAITED." }],
+      "objects": [{ "type": "platform", "id": "ferry", "at": [96, 56], "rail": { "axis": "x", "min": 96, "max": 264 }, "label": "STOP" }]
+    },
+    {
+      "id": "m3",
+      "rect": [232, 128, 392, 216],
+      "bg": "room_warm",
+      "openings": [{ "side": "top", "from": 312, "to": 336 }],
+      "solids": [[0, 184, 392, 32], [0, 88, 112, 96]],
+      "captions": [
+        { "id": "cap_up", "at": [6, 6], "text": "GOING *UP*?", "reach_at": [184, 184] },
+        { "id": "cap_left", "at": [6, 22], "text": "KEEP *LEFT*.", "reach_at": [256, 184] }
+      ],
+      "objects": [
+        { "type": "platform", "id": "lift3", "at": [116, 166], "rail": { "axis": "y", "min": 88, "max": 166 }, "label": "DOWN" },
+        { "type": "crate", "id": "box", "at": [124, 142] },
+        { "type": "button", "id": "plate", "at": [2, 88] },
+        { "type": "door", "id": "door", "at": [360, 152], "button": "plate" }
+      ]
+    }
+  ],
+  "triggers": []
+}

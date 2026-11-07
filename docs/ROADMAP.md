@@ -9,8 +9,8 @@
 | 2 Prototype | Browser-playable pages 1.1–1.2 | A first-time player solves 1.1 in the **browser export** without help; save/refresh restores state; all automated tests green (automated ✅, human playtest pending) |
 | 3 Mechanic framework (done for Chapter 1; resize/swap deferred to Chapter 2) | Panels (resize/swap), words (all categories), eraser, ink, triggers, music | Each system has unit tests plus one sandbox page |
 | **4 Chapter 1** (content complete; playtest pending) | Pages 1.1–1.8, audio, polish | Playtest: ≥ 70 % unaided completion, median 20–35 min |
-| **5 Web platform** (started: landing, launcher, chapters, settings done; auth UI next) | Landing, launcher, auth UI, chapters, settings | The game launches reliably from `/play` in 3 browsers; Lighthouse ≥ 90 performance and accessibility on the landing page |
-| **6 Backend** (started: the API is done; the site's sync client is next) | Auth, saves, progression, achievements, settings | API integration tests green; offline→online sync and conflict tests green |
+| **5 Web platform** (automated bar met: landing, launcher, auth UI, chapters, settings) | Landing, launcher, auth UI, chapters, settings | The game launches reliably from `/play` in 3 browsers; Lighthouse ≥ 90 performance and accessibility on the landing page |
+| **6 Backend** (automated bar met: API integration, offline→online sync and conflict tests) | Auth, saves, progression, achievements, settings | API integration tests green; offline→online sync and conflict tests green |
 | 7 Expansion | Chapters 2+, art and audio pass | Per-chapter playtest bars |
 | 8 Production | Perf, security, monitoring, deploy automation | Release checklist complete in staging |
 | 9 Release | Production deploy | The deployed game works end to end (E2E suite against production) |
@@ -58,7 +58,7 @@
 
 ### Later
 26. Pages 1.3–1.8 and the chapter finale ✅. 1.3–1.5 (`ch01_p03`–`ch01_p05`; 1.2 now turns to 1.3) and 1.6–1.8 (`ch01_p06`–`ch01_p08`: fallen bubbles, `erase_panel`, `panel_entered`; the end card follows 1.8), each with a real-physics solution test. Finishing the chapter records `completedChapters` and sends `CHAPTER_COMPLETED`; the browser e2e plays the finale from a seeded save. Next: the Chapter 1 playtest (Phase 4 exit bar).
-27. Next.js app: landing, `/play` launcher with the bridge adapter ✅ (`apps/web`, ADR-0010; plus chapters and settings pages, shared settings via `SETTINGS_UPDATED`, `build.json`, a Lighthouse gate in CI). Next: the auth UI against the API contract.
-28. NestJS app: auth, saves, progression, achievements, settings; Prisma schema and migrations ✅ (`apps/api`, ADR-0011; 28 integration tests on a real Postgres in CI). Next: the site's sync client and auth UI, with the offline→online and conflict tests.
-29. E2E: register → play → save → second session restores from cloud.
+27. Next.js app: landing, `/play` launcher with the bridge adapter ✅ (`apps/web`, ADR-0010; plus chapters and settings pages, shared settings via `SETTINGS_UPDATED`, `build.json`, a Lighthouse gate in CI). The auth UI (`/account`, header) ✅.
+28. NestJS app: auth, saves, progression, achievements, settings; Prisma schema and migrations ✅ (`apps/api`, ADR-0011; 28 integration tests on a real Postgres in CI).
+29. E2E: register → play → save → second session restores from cloud ✅ (`specs/cloud.spec.ts`, plus offline→online and conflict; the sync client is `apps/web/src/sync/`).
 30. Infrastructure: S3/CloudFront build upload, staging environment, monitoring.

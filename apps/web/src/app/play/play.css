@@ -42,7 +42,17 @@ body:has(.launcher) {
 }
 .launcher-tools {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+.launcher-cloud {
+  font: 600 0.75rem var(--lettering);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 8px;
+}
+.launcher-cloud a {
+  color: var(--caption);
 }
 .launcher-tools button {
   font: 600 0.8rem var(--lettering);

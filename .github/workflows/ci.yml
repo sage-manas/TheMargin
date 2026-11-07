@@ -80,6 +80,17 @@ jobs:
   browser:
     needs: game
     runs-on: ubuntu-latest
+    # For the API that Playwright starts (specs/cloud.spec.ts).
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: margin
+          POSTGRES_PASSWORD: margin
+          POSTGRES_DB: margin_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -94,10 +105,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @the-margin/e2e exec playwright install --with-deps chromium firefox
       # Firefox runs headed inside a virtual display; see playwright.config.ts.
-      # Playwright also builds and starts the site (apps/web) for web.spec.ts.
+      # Playwright also builds and starts the site (apps/web) and the API
+      # (migrated and seeded) for web.spec.ts and cloud.spec.ts.
       - run: xvfb-run -a pnpm e2e
         env:
           E2E_HEADED: "1"
+          E2E_DATABASE_URL: postgresql://margin:margin@localhost:5432/margin_e2e
       # Phase 5 exit bar: Lighthouse >= 90 for performance and accessibility
       # on the landing page, against the production build the e2e just made.
       - name: Lighthouse (landing page)

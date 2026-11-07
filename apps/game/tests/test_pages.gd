@@ -2,12 +2,13 @@ extends RefCounted
 ## Every page in data/pages must be well formed: geometry on the grid,
 ## panels inside the page and a gutter apart, unique ids, known props and
 ## story actions, reachable `next`, pencil sketches inside their panels and
-## within what the eraser can hold.
+## within what the eraser can hold, platforms on rails that stay inside
+## their panels.
 
-const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card"]
+const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page"]
 const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
 ## Object type -> word categories its label accepts.
-const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": []}
+const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"]}
 
 
 func _pages() -> Array:
@@ -79,6 +80,19 @@ func test_ids_and_references(t) -> void:
 					t.ok(WordLibrary.category(o.label) in OBJECTS.get(o.type, []), "%s accepts its label %s" % [o.id, o.label])
 				if o.type == "crate":
 					t.ok(inner.encloses(Rect2i(Vector2i(int(o.at[0]), int(o.at[1])), Vector2i(Crate.SIZE))), "%s inside its panel" % o.id)
+				if o.type == "platform":
+					var rail: Dictionary = o.get("rail", {})
+					var axis := 0 if rail.get("axis") == "x" else 1
+					t.ok(rail.get("axis") in ["x", "y"] and int(rail.get("min", 0)) < int(rail.get("max", 0)), "%s: rail runs along x or y" % o.id)
+					t.ok(int(o.at[axis]) >= int(rail.get("min", 0)) and int(o.at[axis]) <= int(rail.get("max", 0)), "%s starts on its rail" % o.id)
+					var size := Vector2i(int(o.get("w", 32)), Platform.HEIGHT)
+					var lo := Vector2i(int(o.at[0]), int(o.at[1]))
+					var hi := lo
+					lo[axis] = int(rail.get("min", 0))
+					hi[axis] = int(rail.get("max", 0))
+					t.ok(inner.encloses(Rect2i(lo, size)) and inner.encloses(Rect2i(hi, size)), "%s: whole rail inside its panel" % o.id)
+					if o.has("label") and WordLibrary.category(o.label) == "motion":
+						t.ok(Platform.heading_for(o.label, axis) != 0, "%s: label %s runs along its rail" % [o.id, o.label])
 				if o.type == "button":
 					buttons[o.id] = true
 					t.ok(float(o.get("needs", 1.0)) > 0.0, "%s needs some weight" % o.id)

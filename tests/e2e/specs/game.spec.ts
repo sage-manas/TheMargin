@@ -151,12 +151,13 @@ test("page 1 can be solved with keyboard and mouse", async ({ page }, info) => {
   await page.waitForTimeout(1200);
   await page.screenshot({ path: info.outputPath("page2-arrival.png") });
 
-  // The ending writes itself; then the end card.
-  await page.waitForTimeout(9000);
-  await page.screenshot({ path: info.outputPath("ending.png") });
+  // The artist writes on page 2, then turns the page to page 3 themselves.
+  await waitFor(page, (m) => m.type === "PAGE_COMPLETED" && m.payload.pageId === "ch01_p02", 15_000);
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: info.outputPath("page3-arrival.png") });
   const save = await lastSave(page);
-  expect(save?.progress.completedPages).toContain("ch01_p01");
-  expect(save?.progress.page).toBe("ch01_p02");
+  expect(save?.progress.completedPages).toEqual(expect.arrayContaining(["ch01_p01", "ch01_p02"]));
+  expect(save?.progress.page).toBe("ch01_p03");
   const codes = (await messages(page)).flatMap((m) => (m.type === "ACHIEVEMENT_UNLOCKED" ? [m.payload.code] : []));
   expect(codes).toEqual(expect.arrayContaining(["FIRST_SLIDE", "FIRST_WORD"]));
 });

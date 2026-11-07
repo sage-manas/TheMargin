@@ -18,6 +18,7 @@ var captions: Dictionary = {}
 var npcs: Dictionary = {}
 var doors: Array[Door] = []
 var crates: Dictionary = {}
+var platforms: Dictionary = {}
 var buttons: Dictionary = {}
 var sketches: Dictionary = {}
 ## Abilities Nib has found so far (`progress.abilities`), e.g. "eraser".
@@ -156,6 +157,14 @@ func _build_panel(pd: Dictionary) -> void:
 				p.content.add_child(c)
 				crates[c.crate_id] = c
 				_register_slot(c.slot, p)
+			"platform":
+				var pl := Platform.new()
+				pl.setup(o)
+				pl.page = self
+				pl.panel = p
+				p.content.add_child(pl)
+				platforms[pl.platform_id] = pl
+				_register_slot(pl.slot, p)
 			"button":
 				var b := PlateButton.new()
 				b.setup(o)
@@ -222,14 +231,17 @@ func _apply_state(state: Dictionary) -> void:
 			continue
 		if w == null:
 			s.word = ""
-		elif w is String and WordLibrary.exists(w):
+		elif w is String and WordLibrary.exists(w) and s.accepts_word(w):
 			s.word = w
 			s.loose = true
 		s.holder.refresh(false)
 	var saved_objects: Dictionary = state.get("objects", {})
 	for id: String in saved_objects:
-		var c: Crate = crates.get(id)
 		var pos: Variant = saved_objects[id]
+		var pl: Platform = platforms.get(id)
+		if pl and pos is Array and pos.size() == 2 and pl.on_rail(Vector2i(int(pos[0]), int(pos[1]))):
+			pl.position = Vector2(int(pos[0]), int(pos[1]))
+		var c: Crate = crates.get(id)
 		if c and pos is Array and pos.size() == 2:
 			var at := Vector2(int(pos[0]), int(pos[1]))
 			var inner := Rect2(Vector2.ONE * PageConst.BORDER, Vector2(c.panel.size) - Vector2.ONE * PageConst.BORDER * 2)
@@ -402,13 +414,17 @@ func ink() -> int:
 	return total
 
 
-## Drawing a sketch back over Nib or a crate would trap them inside it.
+## Drawing a sketch back over Nib, a crate or a platform would trap them
+## inside it.
 func sketch_blocked(sk: Sketch) -> bool:
 	var r := sk.rect().grow(-0.01)
 	if player and r.intersects(player.collision_rect()):
 		return true
 	for c: Crate in crates.values():
 		if r.intersects(c.rect()):
+			return true
+	for pl: Platform in platforms.values():
+		if r.intersects(pl.rect()):
 			return true
 	return false
 
@@ -424,11 +440,19 @@ func _physics_process(_delta: float) -> void:
 		player.velocity = Vector2.ZERO
 	for d in doors:
 		if d.exit and d.is_open and d.doorway_rect().has_point(player.global_position + Vector2(0, -4)):
-			_exited = true
-			player.input_locked = true
-			player.velocity = Vector2.ZERO
-			exit_requested.emit()
+			turn()
 			return
+
+
+## Leaves the page for `next`, once: through an exit door, or when the story
+## turns the page itself (`turn_page`).
+func turn() -> void:
+	if _exited:
+		return
+	_exited = true
+	player.input_locked = true
+	player.velocity = Vector2.ZERO
+	exit_requested.emit()
 
 
 ## The page's save state (SAVE_SCHEMA §2, pages.<id>).
@@ -443,6 +467,9 @@ func capture_state() -> Dictionary:
 	for id: String in crates:
 		var c: Crate = crates[id]
 		st["objects"][id] = [int(c.position.x), int(c.position.y)]
+	for id: String in platforms:
+		var pl: Platform = platforms[id]
+		st["objects"][id] = [int(pl.position.x), int(pl.position.y)]
 	for id: String in sketches:
 		st["sketches"][id] = sketches[id].state()
 	return st

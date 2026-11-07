@@ -16,6 +16,9 @@ const SIZE := Vector2(24, 24)
 const SPEED := 48.0
 const FALL_SPEED := 150.0
 const PROBE_MARGIN := 0.05
+## Where Nib's feet can be to reach the label, from the crate's top.
+const REACH_ABOVE := -2.0
+const REACH_BELOW := SIZE.y + 20.0
 
 var crate_id := ""
 var slot: WordSlot
@@ -36,9 +39,11 @@ func setup(def: Dictionary) -> void:
 	cs.shape = rect
 	cs.position = SIZE / 2.0
 	add_child(cs)
-	slot = WordSlot.make("%s:label" % crate_id, def.get("label", ""), def.get("loose", true), ["motion", "halt", "mass"], self, self, Vector2(SIZE.x / 2.0, SIZE.y))
-	# Reachable from beside the crate or from standing on it.
-	slot.reach = Vector2(22, 20)
+	slot = WordSlot.make("%s:label" % crate_id, def.get("label", ""), def.get("loose", true), ["motion", "halt", "mass"], self, self, Vector2(SIZE.x / 2.0, (REACH_ABOVE + REACH_BELOW) / 2.0))
+	# Reachable from standing on the crate, from beside it, or from below a
+	# crate a little off the floor (riding a plank): Nib's feet anywhere from
+	# REACH_ABOVE over its top down to REACH_BELOW under it.
+	slot.reach = Vector2(22, (REACH_BELOW - REACH_ABOVE) / 2.0)
 
 
 ## Which way a label sends a crate, one pixel per step. Data only: the word's
@@ -113,9 +118,19 @@ func _physics_process(delta: float) -> void:
 
 
 ## Moves one pixel along `dir` if nothing is in the way. Returns false when
-## blocked: by panel geometry, other crates, the panel's own border, Nib
-## (when not riding), or, for a rider, whatever is above Nib's head.
+## blocked (see can_step).
 func step(dir: Vector2i) -> bool:
+	if not can_step(dir):
+		return false
+	shift(Vector2(dir))
+	return true
+
+
+## Whether a one-pixel move along `dir` is clear: of panel geometry, other
+## crates, the panel's own border, Nib (when not riding), or, for a rider,
+## whatever is above Nib's head. `nib_shift` is where Nib will be moved to
+## alongside the crate (a platform carrying both).
+func can_step(dir: Vector2i, nib_shift := Vector2.ZERO) -> bool:
 	var motion := Vector2(dir)
 	# Probe slightly short of a full pixel so the default safe margin doesn't
 	# stop the crate one pixel before a surface it should touch.
@@ -126,18 +141,25 @@ func step(dir: Vector2i) -> bool:
 	if not inner.encloses(Rect2(position + motion, SIZE)):
 		return false
 	var player := page.player
-	var rider := player != null and carries(player)
-	if rider:
-		if dir.y <= 0 and player.test_move(player.global_transform, probe, null, PROBE_MARGIN):
+	if player != null and carries(player):
+		var margin := Player.HEADROOM if dir.y < 0 else PROBE_MARGIN
+		if dir.y <= 0 and player.test_move(player.global_transform, probe, null, margin):
 			return false
 	elif player != null:
 		var body := player.collision_rect().grow(-0.01)
-		if Rect2(global_position + motion, SIZE).intersects(body) and not rect().intersects(body):
+		var moved := Rect2(global_position + motion, SIZE)
+		if moved.intersects(Rect2(body.position + nib_shift, body.size)) and not rect().intersects(body):
 			return false
+	return true
+
+
+## Moves the crate, and Nib if Nib rides it, without checking.
+func shift(motion: Vector2) -> void:
+	var player := page.player
+	var rider := player != null and carries(player)
 	position += motion
 	if rider:
 		player.position += motion
-	return true
 
 
 ## Nib is standing on top of this crate.

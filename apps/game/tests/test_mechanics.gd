@@ -77,8 +77,33 @@ func test_crate_carries_nib(t) -> void:
 	t.ok(c.carries(nib), "still on top")
 	# The crate stops when Nib's head meets the ceiling, not when the crate does.
 	var head := nib.collision_rect().position.y - c.panel.global_position.y
-	t.ok(absf(head - PageConst.BORDER) <= 1.0, "Nib's head stopped at the ceiling (%s)" % head)
+	t.ok(head - PageConst.BORDER >= Player.HEADROOM - 0.1 and head - PageConst.BORDER <= Player.HEADROOM + 1.0, "Nib's head stopped just under the ceiling (%s)" % head)
 	t.ok(c.position.y > Player.SIZE.y, "crate stopped below Nib")
+	# Touching the ceiling would wedge Nib; with headroom Nib walks off.
+	var x := nib.position.x
+	Input.action_press("move_left")
+	await t.frames(20)
+	Input.action_release("move_left")
+	t.ok(nib.position.x < x - 8.0, "Nib can walk off the risen crate (%s → %s)" % [x, nib.position.x])
+	await _free(t, page)
+
+
+func test_crate_label_in_reach_from_on_top(t) -> void:
+	var page: ComicPage = await _build(t)
+	var c: Crate = page.crates["c1"]
+	var nib := page.player
+	nib.position = c.global_position + Vector2(30, 24)
+	await t.frames(10)
+	page.interaction.carrying = "UP"
+	await t.frames(2)
+	t.eq(page.interaction.target, c.slot, "label in reach from beside the crate")
+	nib.position = c.global_position + Vector2(8, 0)
+	await t.frames(10)
+	t.ok(c.carries(nib), "Nib stands on the crate")
+	t.eq(page.interaction.target, c.slot, "and from on top of it")
+	page.interaction.perform()
+	await _settle(t, c)
+	t.ok(c.carries(nib) and c.position.y < 100.0, "Nib labelled the crate UP from on top and rode it")
 	await _free(t, page)
 
 

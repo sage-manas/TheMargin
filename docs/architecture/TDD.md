@@ -140,7 +140,7 @@ A page is a JSON document that `page.gd` builds into nodes at runtime (ADR-0003)
 
 ### 3.6 Interaction
 
-`player_interaction.gd` keeps a list of `WordSlot`s registered with the current page. Each frame it picks the best candidate in reach (same panel, within an x/y radius of the slot's interaction anchor; for bubbles, the anchor is the speaker), then resolves the verb from the hand/slot state:
+`player_interaction.gd` keeps a list of `WordSlot`s registered with the current page. Each frame it picks the best candidate in reach (same panel, within an x/y radius of the slot's interaction anchor; for bubbles, the anchor is the speaker; a fallen bubble with no speaker is solid and is read standing on it, so its anchor is the top of the bubble above each word), then resolves the verb from the hand/slot state:
 
 | Hand | Slot | Verb |
 |---|---|---|
@@ -153,7 +153,11 @@ The player controller never knows what a door or a bubble is. The eraser (X) and
 
 ### 3.7 Story triggers
 
-Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `turn_page` (leave for `next`, as an exit door does), `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `panel_entered` (Nib is now wholly inside a panel, having last been inside another), `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `turn_page` (leave for `next`, as an exit door does), `erase_panel`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+
+**`erase_panel {panel, respawn}`** is the artist rubbing a whole panel out (page 1.8). It first waits until Nib is wholly inside another panel, so nobody is erased with the room. Then the panel stops being a room at once: its border and solids lose their collision layer, it reports no openings (so its links close), it no longer encloses anything, and `_panel_fits` ignores it, so a lifted panel may slide into the space it leaves. Nib is nudged clear of the border that just closed (being wholly inside a panel still overlaps its border collision by up to 6 px). The drawing is then rubbed away in 16 px rows, back and forth, holding the music duck, and only a smudge, crumbs and a ghost border are left. `respawn` moves the page spawn out of the room. Page validation requires the erased panel to be fixed and to hold nothing the page needs (objects, NPCs, bubbles, sketches, caption words). A panel can also start `erased` in data, as a smudge where an earlier page had a room.
+
+**Restore order.** A page restores lasting erasures (and their respawn) before anything else, then lifted-panel positions, then Nib. Saved panel positions are checked against each other only after all of them are applied, because one panel may rest where another started (page 1.7's R rests over V's start). If any clash, all of them start over.
 
 ### 3.7a Music
 

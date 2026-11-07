@@ -1,0 +1,82 @@
+{
+  "id": "ch01_p08",
+  "chapter": "ch01",
+  "number": 8,
+  "next": "",
+  "spawn": [76, 144],
+  "panels": [
+    {
+      "id": "p1",
+      "rect": [16, 16, 192, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "props": [
+        { "type": "bed", "at": [14, 112] },
+        { "type": "frame", "at": [74, 64] },
+        { "type": "window", "at": [130, 44] }
+      ],
+      "captions": [{ "id": "cap1", "at": [6, 6], "text": "ONCE, THERE WAS|A LITTLE ROOM." }]
+    },
+    {
+      "id": "p2",
+      "rect": [216, 16, 192, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "props": [
+        { "type": "lamp", "at": [30, 96] },
+        { "type": "table", "at": [96, 112] },
+        { "type": "rug", "at": [70, 126] }
+      ],
+      "captions": [
+        { "id": "cap2", "at": [6, 6], "text": "AND THAT WAS|ALL THERE WAS." },
+        { "id": "artist8", "at": [84, 40], "text": "", "style": "artist" }
+      ]
+    },
+    {
+      "id": "p3",
+      "rect": [416, 16, 208, 120],
+      "erased": true
+    },
+    {
+      "id": "l",
+      "rect": [16, 200, 192, 144],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 200 },
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "props": [{ "type": "window", "at": [110, 44] }],
+      "captions": [{ "id": "cap_l", "at": [6, 6], "text": "THERE WAS ROOM|AFTER ALL." }]
+    },
+    {
+      "id": "e",
+      "rect": [216, 200, 192, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "props": [{ "type": "plant", "at": [24, 112] }],
+      "captions": [{ "id": "cap_e", "at": [6, 6], "text": "AND SO THE STORY|WENT ON." }],
+      "objects": [{ "type": "door", "id": "door8", "at": [150, 96], "label": "OPEN", "loose": false, "exit": true }]
+    },
+    {
+      "id": "p5",
+      "rect": [416, 200, 208, 144],
+      "erased": true
+    }
+  ],
+  "triggers": [
+    {
+      "id": "from_the_top",
+      "on": "panel_entered",
+      "when": { "panel": "p2" },
+      "do": [
+        { "action": "erase_panel", "panel": "p1", "respawn": [296, 144] },
+        { "action": "wait", "sec": 0.4 },
+        { "action": "write_caption", "caption": "artist8", "text": "FROM THE|TOP." },
+        { "action": "wait", "sec": 0.8 },
+        { "action": "rewrite_caption", "caption": "cap2", "text": "AND THEN,|THERE WASN'T." }
+      ]
+    }
+  ]
+}

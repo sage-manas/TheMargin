@@ -1,19 +1,19 @@
 # Project Status
 
-_Last updated: 2026-11-07: Phase 4 pages 1.3–1.5._
+_Last updated: 2026-11-07: Phase 4 pages 1.6–1.8 (Chapter 1 content complete)._
 
 ## Current phase
 
-**Phase 2 is done except for the human playtest. Phase 3 is done for Chapter 1's needs, and Phase 4 (Chapter 1) has started: pages 1.3–1.5 are built.** The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates, moving platforms, the eraser, ink and music. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser and ink are Chapter 4 and 5 mechanics, built now as sandboxes so the framework's data model covers them.
+**Phase 2 is done except for the human playtest. Phase 3 is done for Chapter 1's needs, and Phase 4 (Chapter 1) is content-complete: all eight pages are built and the end card follows the finale.** Phase 4 isn't done until its playtest bar is met (≥ 70 % unaided completion, median 20–35 min). The Phase 2 prototype passes every automated test and has been browser-tested in Chromium, Firefox and WebKit. It has **not** been play-tested by people and is **not** deployed. The roadmap gates Phase 3 on that playtest (Risks R1, R2). The Phase 3 work so far covers word categories, crates, pressure plates, moving platforms, the eraser, ink and music. Chapter 1 pages 1.4 and 1.5 need the first three whatever the playtest finds, so that work is low-regret; the eraser and ink are Chapter 4 and 5 mechanics, built now as sandboxes so the framework's data model covers them.
 
-| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, platforms, eraser, ink, music | Phase 4: pages 1.3–1.5 |
-|---|---|---|---|
-| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_platforms`, `sb_eraser`, `sb_ink`, `sb_music`) | ✅ (`ch01_p03`–`ch01_p05`, reached from page 1.2) |
-| Automated tests (Godot headless) | ✅ | ✅ 42 tests | ✅ 7 tests, including each page solved through real physics (75 total) |
-| Browser-tested, Chromium + Firefox (Windows, 2026-11-02) | ✅ 6/6 | Not yet (sandbox pages aren't reachable from the title) | Firefox: on the PR's CI |
-| Browser-tested, Chromium + WebKit (macOS, 2026-11-07) | ✅ 8/8 | n/a | Arrival on 1.3 only (the e2e solves page 1 and lets page 2 turn itself) |
-| Human playtest | ❌ Required (Risk R1, R2) | ❌ | ❌ |
-| Production-deployed | ❌ (Phase 8–9) | ❌ | ❌ |
+| Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, platforms, eraser, ink, music | Phase 4: pages 1.3–1.5 | Phase 4: pages 1.6–1.8 |
+|---|---|---|---|---|
+| Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_platforms`, `sb_eraser`, `sb_ink`, `sb_music`) | ✅ (`ch01_p03`–`ch01_p05`, reached from page 1.2) | ✅ (`ch01_p06`–`ch01_p08`; the end card follows 1.8) |
+| Automated tests (Godot headless) | ✅ | ✅ 42 tests | ✅ 7 tests, including each page solved through real physics (75 total) | ✅ 8 tests, including each page solved through real physics (83 total) |
+| Browser-tested, Chromium + Firefox (Windows, 2026-11-02) | ✅ 6/6 | Not yet (sandbox pages aren't reachable from the title) | Firefox: on CI (PR #7 green) | Firefox: on the PR's CI |
+| Browser-tested, Chromium + WebKit (macOS, 2026-11-07) | ✅ 8/8 | n/a | Arrival on 1.3 only (the e2e solves page 1 and lets page 2 turn itself) | Not reached by the e2e (headless real-physics solutions only) |
+| Human playtest | ❌ Required (Risk R1, R2) | ❌ | ❌ | ❌ |
+| Production-deployed | ❌ (Phase 8–9) | ❌ | ❌ | ❌ |
 
 ## Completed milestones
 
@@ -70,19 +70,28 @@ _Last updated: 2026-11-07: Phase 4 pages 1.3–1.5._
   - **Fixed: a crate or platform lifting Nib to a ceiling wedged them.** It stopped with Nib's head touching, overlapping ceiling and carrier by a hair, and Nib could no longer walk. Carriers now leave `Player.HEADROOM` (1 px), and the sandbox test now walks off the risen crate.
   - 7 headless tests in `test_chapter1.gd` (each page solved through real walking and hopping, plus checks that 1.3's order matters, 1.4's box can't be pressed without HEAVY, and 1.5's ledge can't be reached without UP); page validation covers the new pages; the capture tool renders them.
 
+- **Phase 4 (2026-11-07): Chapter 1 pages 1.6–1.8 (GDD §6), completing the chapter.** Page 1.5 now turns to 1.6, and the end card after 1.8 reads END OF CHAPTER 1.
+  - **1.6 "The Empty Room":** the neighbour's room, empty. Their bubble lies on the floor as a solid thing; Nib climbs onto it to reach a ledge and takes OPEN from it for the door.
+  - **1.7 "The Long Way":** carry OPEN through three lifted panels. R is pinned by STOP, so Nib lends OPEN to its caption to free it, and V has to be slid out from under R's shaft to become the bridge.
+  - **1.8 "From the Top":** the artist rubs out the little room from 1.1 as soon as Nib is next door, and the space it leaves is what lets L rise and carry Nib to the exit.
+  - **Fallen bubbles** (`bubbles` in panel data): a speech bubble with no speaker, solid and fixed at the widest its words can make it, with its words reached from on top.
+  - **`erase_panel {panel, respawn}`** story action and **`panel_entered`** event. An erased panel has no collision, no links and takes up no space; the action waits for Nib to be wholly in another panel, nudges Nib clear of the closed border, and ducks the music while the eraser rubs the panel out row by row. Panels can also start `erased` in data.
+  - **Fixed: saved panel positions were checked one at a time,** so a panel saved where another one *started* (1.7's R over V, 1.8's L in the erased room) was refused on reload and Nib was sent back to the spawn. Lasting erasures and their respawn now apply first, then all saved positions together; if any clash, all start over.
+  - 8 headless tests: the chapter runs 1.1→1.8; each new page solved with real walking and hopping; 1.6's ledge needs the bubble and its word is only reachable from on top; 1.7 and 1.8 restore their saved positions; the erasure waits for Nib and is re-applied instantly on load. Page validation covers fallen bubbles, erased panels and erase targets (fixed, holding nothing the page needs, with a respawn in a room that stays). The capture tool renders the new pages and the erasure mid-rub.
+
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.5, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 75 passed |
+| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 83 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge) | `pnpm --filter @the-margin/contracts test` | 8 passed |
-| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (2026-11-07 with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (2026-11-07 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
 1. The `localStorage` mirror is unavailable when a browser blocks site storage (some private modes). The game still plays, with the old IndexedDB-only behaviour.
 2. Placeholder-grade art and synthesised audio. Only Chapter 1 has music; the title screen plays only room tone. The music isn't cached between sessions, so it is rebuilt on every boot (caching the rendered loop in `user://` is a possible optimisation).
-3. Only Chapter 1 pages 1–5 are in the story; the end card follows page 5 and says the chapter continues.
+3. Only Chapter 1 is in the story; the end card follows page 1.8. The browser e2e reaches page 1.3 only; pages 1.3–1.8 are covered by headless real-physics solutions.
 4. A crate can't carry another crate (a rising crate stops under one), so stacked crates don't add weight to a plate. LIGHT has no effect on panels yet. Plates have no puzzle on a story page yet.
 5. Captions that hold words can't be rewritten by story actions (validated by `test_pages`).
 6. The sandbox page can only be opened from the command line or editor, not from the web build.
@@ -92,6 +101,8 @@ _Last updated: 2026-11-07: Phase 4 pages 1.3–1.5._
 10. The eraser targets only whole sketches (no partial rubbing), and sketches are axis-aligned rects. Erasing a crate's support while Nib stands underneath leaves the crate hovering above Nib until Nib steps away (crates never crush Nib). The "underdrawing revealed by erasing" (GDD §4.3) isn't built yet.
 11. **Only the first bold word in a narrator caption can be reached.** Every word in a caption shares the caption's `reach_at` point, and the nearest-slot pick keeps the first on a tie, so in `sb_mechanics` ("CRATES GO *UP*. UNTIL THEY *STOP*.") STOP can never be targeted. Story pages so far have one word per caption; `sb_platforms` uses two captions. A fix needs a design call (per-word reach points, or cycling targets).
 12. Page 1.5 has one recovery that needs a page reset: UP placed on the crate from beside it (not on top) sends it up empty, out of reach. Watch for it in the playtest; a softer recovery would need a design change.
+13. Page 1.7's "lend a word" step relies on players reading SWAP OPEN as an offer rather than a loss. Watch whether players stall in R with OPEN in hand. A narrator nudge on the first swap is a cheap fix if they do.
+14. The 1.8 erasure takes about 2 s and doesn't lock Nib; walking back into the sealed border during it is harmless. An erased panel can't be restored (no story action undoes it).
 
 ## Architectural decisions
 
@@ -99,8 +110,8 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 
 ## Next recommended tasks
 
-1. **Playtest pages 1.1–1.5 with 3–5 people** who haven't seen them (`pnpm game:export && pnpm game:serve`). Measure the time to the first slide, whether players discover bold words unaided, and whether 1.4's "the word that freed the room is the key" lands. This still gates the rest of Chapter 1 (R1, R2).
-2. Merge this branch (it also carries the platforms work that missed `main`) once CI, including Firefox, is green.
-3. Pages 1.6–1.8 (GDD §6). 1.6 needs a speech bubble that lies on the floor and 1.8 needs an artist action that erases a whole panel; both are new story/object work. 1.7 (carry a word through three rearranged panels) can be built from data.
+1. **Playtest the whole of Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). This is now the Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also measure the time to the first slide, whether players discover bold words unaided, whether 1.4's "the word that freed the room is the key" lands, whether 1.7's lend-a-word step is found (known issue 13), and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
+2. Merge this branch once CI, including Firefox, is green.
+3. Extend the browser e2e beyond page 1.3, at least as far as a saved-state jump to 1.8 to check the erasure and the end card in a real browser.
 4. Decide how multi-word captions are reached (known issue 11) before a page needs one.
-5. Listen to "Margins" in a browser and tune by ear (levels, duck depth).
+5. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.

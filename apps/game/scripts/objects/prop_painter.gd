@@ -64,5 +64,13 @@ static func paint(ci: CanvasItem, prop: Dictionary) -> void:
 		"ghost_nib":
 			var tex: Texture2D = Sprites.frames("nib_idle")[0]
 			ci.draw_texture_rect(tex, Rect2(o, tex.get_size() * 2), false, Color(Palette.PENCIL, 0.45))
+		"ghost_neighbor":
+			# The neighbour as the artist first sketched them; `crossed` when cut.
+			var tex: Texture2D = Sprites.frames("neighbor")[0]
+			var sz := tex.get_size() * 2
+			ci.draw_texture_rect(tex, Rect2(o, sz), false, Color(Palette.PENCIL, 0.45))
+			if prop.get("crossed", false):
+				Ink.line(ci, Vector2i(o) + Vector2i(-4, -2), Vector2i(o + sz) + Vector2i(4, 2), Palette.PENCIL)
+				Ink.line(ci, Vector2i(o) + Vector2i(int(sz.x) + 4, -2), Vector2i(o) + Vector2i(-4, int(sz.y) + 2), Palette.PENCIL)
 		_:
 			push_warning("Unknown prop type: %s" % prop["type"])

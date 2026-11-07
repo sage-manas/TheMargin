@@ -39,8 +39,8 @@ func _ready() -> void:
 	ui.add_child(pause_menu)
 	pause_menu.chosen.connect(_on_pause_choice)
 	end_card = Overlay.new()
-	end_card.title = "TO BE CONTINUED"
-	end_card.subtitle = "CHAPTER 1 CONTINUES IN THE NEXT BUILD.|THANK YOU FOR PLAYING THE MARGIN."
+	end_card.title = "END OF CHAPTER 1"
+	end_card.subtitle = "CHAPTER 2 IS STILL BEING DRAWN.|THANK YOU FOR PLAYING THE MARGIN."
 	end_card.dim = 0.2
 	ui.add_child(end_card)
 	end_card.chosen.connect(_on_end_choice)

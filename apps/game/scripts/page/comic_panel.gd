@@ -5,8 +5,17 @@ extends Node2D
 ##   BorderBody / SolidBody (physics, never shaken)
 ##   Shadow (lifted panels only, below every panel)
 ##   Visual → Background, Ground+props, Content (objects), Ink (border)
+## An erased panel (rubbed out by the artist, GDD §6 page 1.8) is no longer
+## a room: no collision, no links, and it no longer takes up space on the
+## page. Only a smudge and crumbs are left.
+
+signal erase_finished
 
 const HALFTONE := preload("res://shaders/halftone.gdshader")
+## The artist's eraser rubs a panel out in rows, back and forth.
+const ERASE_ROW := 16
+const ERASE_ROW_SEC := 0.2
+const ERASER_SIZE := Vector2(28, 14)
 
 var panel_id := ""
 var size := Vector2i.ZERO
@@ -25,6 +34,7 @@ var caption_slots: Array[WordSlot] = []
 var hovered := false
 var selected := false
 var dragging := false
+var erased := false
 
 var visual: Node2D
 var content: Node2D
@@ -33,6 +43,11 @@ var _ink: DrawLayer
 var _shadow: DrawLayer
 var _shake_t := 0.0
 var _time := 0.0
+var _solid_body: StaticBody2D
+var _smudge: DrawLayer
+## Rubbing progress, 0..1 across every row; -1 when not rubbing.
+var _erase_p := -1.0
+var _ducking := false
 
 
 func setup(def: Dictionary) -> void:
@@ -56,11 +71,11 @@ func setup(def: Dictionary) -> void:
 	_border_body = StaticBody2D.new()
 	_border_body.name = "BorderBody"
 	add_child(_border_body)
-	var solid_body := StaticBody2D.new()
-	solid_body.name = "SolidBody"
+	_solid_body = StaticBody2D.new()
+	_solid_body.name = "SolidBody"
 	for s in solids:
-		_add_box(solid_body, Rect2(s))
-	add_child(solid_body)
+		_add_box(_solid_body, Rect2(s))
+	add_child(_solid_body)
 
 	visual = Node2D.new()
 	visual.name = "Visual"
@@ -86,10 +101,12 @@ func setup(def: Dictionary) -> void:
 	_ink = DrawLayer.make(_draw_ink)
 	visual.add_child(_ink)
 	_rebuild_border()
+	if def.get("erased", false):
+		erase(false)
 
 
 func is_lifted() -> bool:
-	return not track.is_empty()
+	return not track.is_empty() and not erased
 
 
 ## A lifted panel obeys the words written on it (GDD §4.2): a heavy one
@@ -112,11 +129,67 @@ func rect() -> Rect2i:
 
 ## Input for PanelLinks. Pencil sketches are never inked, so they never link.
 func info() -> Dictionary:
-	return {"id": panel_id, "rect": rect(), "openings": [] if pencil else openings}
+	return {"id": panel_id, "rect": rect(), "openings": [] if pencil or erased else openings}
 
 
 func encloses(r: Rect2) -> bool:
-	return Rect2(rect()).encloses(r)
+	return not erased and Rect2(rect()).encloses(r)
+
+
+## Rubs the panel out. It stops being a room at once (collision off, no
+## links); with `animate` the drawing is rubbed away row by row and
+## `erase_finished` fires when the last row is done.
+func erase(animate := true) -> void:
+	if erased:
+		return
+	erased = true
+	_border_body.collision_layer = 0
+	_solid_body.collision_layer = 0
+	if _shadow:
+		_shadow.visible = false
+	_smudge = DrawLayer.make(_draw_smudge)
+	add_child(_smudge)
+	if not animate:
+		visual.visible = false
+		return
+	_set_ducking(true)
+	_erase_p = 0.0
+	var rows := _erase_rows()
+	for i in rows:
+		Audio.play("rub", 0.1)
+		var tween := create_tween()
+		tween.tween_method(_set_erase_p, float(i) / rows, float(i + 1) / rows, ERASE_ROW_SEC)
+		await tween.finished
+	_erase_p = -1.0
+	visual.visible = false
+	_smudge.queue_redraw()
+	_set_ducking(false)
+	erase_finished.emit()
+
+
+func _erase_rows() -> int:
+	return ceili(float(size.y) / ERASE_ROW)
+
+
+func _set_erase_p(v: float) -> void:
+	_erase_p = v
+	_smudge.queue_redraw()
+
+
+## The artist rubbing a panel out is the artist intervening: the music ducks
+## until the last row is done (GDD §10). Let go if freed mid-rub (a reset).
+func _set_ducking(on: bool) -> void:
+	if on == _ducking:
+		return
+	_ducking = on
+	if on:
+		Audio.duck_hold()
+	else:
+		Audio.duck_release()
+
+
+func _exit_tree() -> void:
+	_set_ducking(false)
 
 
 func set_gaps(new_gaps: Array) -> void:
@@ -184,6 +257,45 @@ func _rebuild_border() -> void:
 
 
 # --- drawing ---------------------------------------------------------------
+
+## What rubbing leaves: grey smears, crumbs along the bottom and a ghost of
+## the border. While rubbing, the rows already done are covered with page
+## paper and the eraser sits at the end of the current stroke.
+func _draw_smudge(ci: CanvasItem) -> void:
+	var rows := _erase_rows()
+	var done := rows if _erase_p < 0.0 else int(_erase_p * rows)
+	if _erase_p >= 0.0:
+		ci.draw_rect(Rect2(0, 0, size.x, mini(done * ERASE_ROW, size.y)), Palette.PAGE)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(panel_id)
+	for i in done:
+		for k in 2:
+			var w := rng.randf_range(0.3, 0.7) * size.x
+			var x := rng.randf_range(0.0, size.x - w)
+			ci.draw_rect(Rect2(x, i * ERASE_ROW + rng.randi_range(3, ERASE_ROW - 4), w, 1), Color(Palette.PENCIL, 0.25))
+	if done == rows:
+		for i in int(size.x / 6.0):
+			var c := Vector2(rng.randf_range(2.0, size.x - 4.0), size.y - rng.randf_range(1.0, 10.0))
+			ci.draw_rect(Rect2(c.round(), Vector2(2, 1) if i % 3 else Vector2(1, 1)), Color(Palette.ERASER, 0.8))
+		Ink.dashed(ci, Vector2(0, 0), size.x, 0, 1, Color(Palette.PENCIL, 0.3), 2, 6)
+		Ink.dashed(ci, Vector2(0, size.y - 1), size.x, 0, 1, Color(Palette.PENCIL, 0.3), 2, 6)
+		Ink.dashed(ci, Vector2(0, 0), size.y, 1, 1, Color(Palette.PENCIL, 0.3), 2, 6)
+		Ink.dashed(ci, Vector2(size.x - 1, 0), size.y, 1, 1, Color(Palette.PENCIL, 0.3), 2, 6)
+	if _erase_p < 0.0 or done >= rows:
+		return
+	# The current stroke, covered up to the eraser, boustrophedon.
+	var f := _erase_p * rows - done
+	var x := f * size.x if done % 2 == 0 else (1.0 - f) * size.x
+	var y := done * ERASE_ROW
+	var h := mini(ERASE_ROW, size.y - y)
+	if done % 2 == 0:
+		ci.draw_rect(Rect2(0, y, x, h), Palette.PAGE)
+	else:
+		ci.draw_rect(Rect2(x, y, size.x - x, h), Palette.PAGE)
+	var e := Rect2(Vector2(x - ERASER_SIZE.x / 2.0, y + h / 2.0 - ERASER_SIZE.y / 2.0).round(), ERASER_SIZE)
+	Ink.box(ci, e, Palette.ERASER)
+	Ink.box(ci, Rect2(e.position + Vector2(10, 0), Vector2(12, ERASER_SIZE.y)), Palette.WHITE)
+
 
 func _draw_shadow(ci: CanvasItem) -> void:
 	var lift := 3.0

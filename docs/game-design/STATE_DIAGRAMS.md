@@ -46,6 +46,8 @@ stateDiagram-v2
   Dragging --> Resting: release (snapped)
   Hovered --> Refused: press while character is in a gutter
   Refused --> Resting: shake done
+  Resting --> Erased: artist's erase_panel (waits until Nib is in another panel)
+  Erased --> [*]: no collision, no links, takes up no space
 ```
 
 ## Word slot

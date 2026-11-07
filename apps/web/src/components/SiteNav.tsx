@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AccountLink } from "./AccountLink";
 
 // /play is a plain link: the engine needs a fresh document every time it starts.
 export function SiteNav() {
@@ -15,6 +16,7 @@ export function SiteNav() {
       <Link href="/settings" aria-current={current("/settings")}>
         Settings
       </Link>
+      <AccountLink current={path === "/account"} />
     </nav>
   );
 }

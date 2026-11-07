@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 8060;
 const WEB_PORT = 3000;
+const API_PORT = 4000;
+// The API needs Postgres; E2E_CLOUD=0 runs without it (cloud.spec.ts skips).
+const cloud = process.env.E2E_CLOUD !== "0";
 
 export default defineConfig({
   testDir: "./specs",
@@ -27,6 +30,29 @@ export default defineConfig({
       reuseExistingServer: true,
       timeout: 240_000,
     },
+    // The API behind the site's /v1 proxy (specs/cloud.spec.ts), on its own
+    // database, migrated and seeded first.
+    ...(cloud
+      ? [
+          {
+            command:
+              "pnpm --filter @the-margin/api build && pnpm --filter @the-margin/api migrate:deploy && pnpm --filter @the-margin/api seed && pnpm --filter @the-margin/api start",
+            port: API_PORT,
+            reuseExistingServer: true,
+            timeout: 240_000,
+            env: {
+              ...(process.env as Record<string, string>),
+              DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://margin:margin@localhost:5432/margin_e2e",
+              PORT: String(API_PORT),
+              WEB_ORIGINS: `http://localhost:${WEB_PORT}`,
+              COOKIE_SECURE: "false",
+              // Every test signs up from the same IP.
+              RATE_LIMIT_REGISTER: "1000",
+              RATE_LIMIT_LOGIN: "1000",
+            },
+          },
+        ]
+      : []),
   ],
   projects: [
     // WebGL in headless Chromium needs a software GL backend on CI machines.

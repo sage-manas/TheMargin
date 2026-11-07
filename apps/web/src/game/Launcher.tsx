@@ -7,6 +7,7 @@ import { BuildManifestSchema, type GameToWeb } from "@the-margin/contracts";
 import { installBridge, type GameBridge, type HostBridge } from "./bridge.ts";
 import { readSettings, writeSettings } from "@/lib/settings.ts";
 import { browserStorage } from "@/lib/storage.ts";
+import { connectCloud, type CloudStatus } from "@/sync/cloud.ts";
 
 type GodotEngine = {
   init(basePath: string): Promise<void>;
@@ -27,6 +28,16 @@ type Phase =
 
 const BUILD_URL = process.env.NEXT_PUBLIC_GAME_BUILD_URL ?? "/game";
 
+const CLOUD_LABEL: Record<CloudStatus, string> = {
+  connecting: "",
+  local: "",
+  syncing: "Saving online…",
+  synced: "Saved online",
+  offline: "Offline: saved here, will sync",
+  "signed-out": "Signed out: saved here only",
+  error: "Online save failed",
+};
+
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
@@ -46,6 +57,7 @@ export function Launcher() {
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
+  const [cloud, setCloud] = useState<CloudStatus>("connecting");
 
   // The canvas is sized in device pixels to fill the stage; Godot (resize
   // policy 0) follows whatever size the canvas has.
@@ -84,7 +96,10 @@ export function Launcher() {
 
     const b = installBridge(win, (raw, err) => console.warn("Ignored a game message that breaks the contract", raw, err));
     bridge.current = b;
+    let ready: () => void = () => {};
+    const gameReady = new Promise<void>((r) => (ready = r));
     b.subscribe((msg: GameToWeb) => {
+      if (msg.type === "GAME_READY") ready();
       if (msg.type === "GAME_READY") setPhase({ name: "ready" });
       if (msg.type === "SETTINGS_UPDATED") writeSettings(browserStorage(), msg.payload.settings);
       // Lets other parts of the site (and tests) follow the game.
@@ -96,6 +111,8 @@ export function Launcher() {
       const { version: _version, ...patch } = settings;
       b.send({ v: 1, type: "SET_SETTINGS", payload: { settings: patch } });
     }
+    // The account's cloud save, achievements and settings, when signed in.
+    connectCloud(b, gameReady, setCloud);
     // Ask the browser not to evict saves under storage pressure (Risk R5).
     navigator.storage?.persist?.().catch(() => {});
 
@@ -161,6 +178,9 @@ export function Launcher() {
           <span aria-hidden="true">←</span> The Margin
         </a>
         <div className="launcher-tools">
+          <span className="launcher-cloud" role="status" data-cloud={cloud}>
+            {cloud === "local" ? <a href="/account">Sign in to save online</a> : CLOUD_LABEL[cloud]}
+          </span>
           <button type="button" onClick={toggleMute} aria-pressed={muted}>
             {muted ? "Unmute" : "Mute"}
           </button>

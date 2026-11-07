@@ -1,0 +1,142 @@
+// docs/architecture/DATABASE.md. Tables are snake_case; every user-owned row
+// cascades on account deletion. The citext extension and the save size CHECK
+// live in the migration SQL (Prisma doesn't model them).
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String              @id @default(uuid()) @db.Uuid
+  email           String              @unique @db.Citext
+  passwordHash    String              @map("password_hash")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  profile         PlayerProfile?
+  sessions        Session[]
+  saves           GameSave[]
+  chapterProgress ChapterProgress[]
+  achievements    PlayerAchievement[]
+  settings        PlayerSettings?
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash Bytes    @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  userAgent String?  @map("user_agent")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model PlayerProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @map("user_id") @db.Uuid
+  displayName String   @map("display_name")
+  avatar      String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("player_profiles")
+}
+
+model GameSave {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  /// "main", or "backup-<ts>" for conflict losers (the last 5 are kept).
+  slot            String
+  saveVersion     Int       @map("save_version")
+  /// Counts accepted cloud writes to this slot; not the save's own revision.
+  revision        Int
+  payload         Json
+  clientUpdatedAt DateTime? @map("client_updated_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slot])
+  @@map("game_saves")
+}
+
+model Chapter {
+  id       String            @id
+  ordinal  Int               @unique
+  title    String
+  released Boolean           @default(false)
+  progress ChapterProgress[]
+
+  @@map("chapters")
+}
+
+enum ChapterStatus {
+  locked
+  available
+  in_progress
+  completed
+
+  @@map("chapter_status")
+}
+
+model ChapterProgress {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  chapterId   String        @map("chapter_id")
+  status      ChapterStatus
+  completedAt DateTime?     @map("completed_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter     Chapter       @relation(fields: [chapterId], references: [id])
+
+  @@unique([userId, chapterId])
+  @@map("chapter_progress")
+}
+
+model Achievement {
+  id          String              @id @default(uuid()) @db.Uuid
+  code        String              @unique
+  title       String
+  description String
+  metadata    Json                @default("{}")
+  players     PlayerAchievement[]
+
+  @@map("achievements")
+}
+
+model PlayerAchievement {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  achievementId String      @map("achievement_id") @db.Uuid
+  unlockedAt    DateTime    @default(now()) @map("unlocked_at") @db.Timestamptz(3)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("player_achievements")
+}
+
+model PlayerSettings {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  settingsVersion Int      @map("settings_version")
+  payload         Json
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("player_settings")
+}

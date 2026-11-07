@@ -4,7 +4,7 @@
   "description": "THE MARGIN \u2014 Escape the drawing.",
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": ">=22.6"
+    "node": "^22.12 || >=24"
   },
   "scripts": {
     "typecheck": "pnpm -r typecheck",
@@ -16,6 +16,9 @@
     "web:dev": "pnpm --filter @the-margin/web dev",
     "web:build": "pnpm --filter @the-margin/web build",
     "web:start": "pnpm --filter @the-margin/web start",
-    "web:lighthouse": "node infrastructure/scripts/lighthouse.mjs"
+    "web:lighthouse": "node infrastructure/scripts/lighthouse.mjs",
+    "api:dev": "pnpm --filter @the-margin/api build && pnpm --filter @the-margin/api start",
+    "api:test": "pnpm --filter @the-margin/api test",
+    "db:up": "docker compose -f infrastructure/docker/compose.yml up -d"
   }
 }

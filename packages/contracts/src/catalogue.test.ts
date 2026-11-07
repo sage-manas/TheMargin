@@ -49,3 +49,26 @@ test("the local save key matches the game's localStorage mirror", () => {
   const gd = readFileSync(join(import.meta.dirname, "../../../apps/game/autoload/save_manager.gd"), "utf8");
   assert.equal(/const WEB_KEY := "([^"]+)"/.exec(gd)?.[1], LOCAL_SAVE_KEY);
 });
+
+test("every achievement the game unlocks is defined", async () => {
+  const { ACHIEVEMENTS } = await import("./achievements.ts");
+  const root = join(import.meta.dirname, "../../../apps/game");
+  const codes = new Set<string>();
+  const walk = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (/\.(json|gd)$/.test(e.name)) for (const m of readFileSync(p, "utf8").matchAll(/"code": *"([A-Z0-9_]+)"/g)) codes.add(m[1]);
+    }
+  };
+  for (const d of ["data", "scripts", "autoload"]) walk(join(root, d));
+  assert.ok(codes.size >= 3);
+  for (const c of codes) assert.ok(ACHIEVEMENTS.some((a) => a.code === c), c);
+});
+
+test("api: requests normalise and validate", async () => {
+  const { RegisterRequestSchema, ErrorEnvelopeSchema } = await import("./api.ts");
+  assert.equal(RegisterRequestSchema.parse({ email: " Nib@Example.COM ", password: "0123456789", displayName: "Nib" }).email, "nib@example.com");
+  assert.ok(!RegisterRequestSchema.safeParse({ email: "x", password: "short", displayName: "" }).success);
+  assert.ok(ErrorEnvelopeSchema.safeParse({ error: { code: "SAVE_CONFLICT", message: "m" } }).success);
+});

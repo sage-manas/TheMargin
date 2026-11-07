@@ -9,18 +9,20 @@ A browser-playable 2D puzzle-adventure. You play a tiny ink character who discov
 ```text
 apps/game/          Godot 4.7 project (GDScript). The game.
 apps/web/           Next.js site: landing, the /play launcher, chapters, settings
+apps/api/           NestJS + Prisma API: auth, cloud saves, progression, achievements, settings
 packages/contracts/ Zod schemas: bridge messages, save envelope (source of truth)
 tests/e2e/          Playwright tests against the real web export
 infrastructure/     Godot wrapper (test/export), static server for the export
 docs/               Product, game design, architecture, ADRs, status
 ```
 
-`apps/api` (NestJS) arrives in Phase 6. See [ADR-0008](docs/architecture/decisions/README.md).
+See [ADR-0008](docs/architecture/decisions/README.md) for why the game came first.
 
 ## Requirements
 
 - **Godot 4.7.2-stable** with Web export templates. The version is pinned in `.godot-version`. Set `GODOT` to the binary, or place it in `.tools/godot/` (Windows console exe or macOS `Godot.app`).
-- Node ≥ 22.6 and pnpm 9.
+- Node ^22.12 or ≥ 24 (`.nvmrc`; Prisma 7 needs it) and pnpm 9.
+- PostgreSQL for the API: `pnpm db:up` starts one in Docker (`infrastructure/docker/compose.yml`), or use any Postgres 14+.
 
 ## Common tasks
 
@@ -33,7 +35,11 @@ pnpm test             # contract tests
 pnpm e2e              # Playwright: the game export, and the site launching it
 pnpm web:dev          # http://localhost:3000 — the site (run game:serve too for /play)
 pnpm web:lighthouse   # Lighthouse gate on a running site build (web:build && web:start)
+pnpm api:test         # API integration tests (TEST_DATABASE_URL: a database it may wipe)
+pnpm api:dev          # http://localhost:4000/v1 (DATABASE_URL; migrate and seed first)
 ```
+
+API setup: copy the variables from `apps/api/.env.example` into your environment, then run `pnpm --filter @the-margin/api migrate:deploy` and `pnpm --filter @the-margin/api build && pnpm --filter @the-margin/api seed`.
 
 The site loads the game from `NEXT_PUBLIC_GAME_BUILD_URL` (a folder holding a web export and its `build.json`). Locally it defaults to `/game`, which Next.js proxies to `pnpm game:serve`. See `apps/web/.env.example`.
 

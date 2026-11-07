@@ -1,14 +1,17 @@
+import { existsSync } from "node:fs";
 import type { NextConfig } from "next";
 
-// Where the game build lives (TDD §2): a CDN folder in production, so a
-// rollback is an env change. Locally it defaults to /game, proxied to the
-// static export server (`pnpm game:serve`).
+// Where the game build lives (TDD §2, ADR-0012). Deploys copy the export into
+// public/game, so it is served by the site itself, same-origin. Without one,
+// /game is proxied to the static export server (`pnpm game:serve`). A CDN
+// folder can be named with NEXT_PUBLIC_GAME_BUILD_URL instead.
 const gameBuildUrl = (process.env.NEXT_PUBLIC_GAME_BUILD_URL ?? "/game").replace(/\/$/, "");
+const gameBundled = existsSync(new URL("./public/game/build.json", import.meta.url));
 const gameDevOrigin = process.env.GAME_DEV_ORIGIN ?? "http://localhost:8060";
-// The API (apps/api). Same-origin /v1 by default, proxied to API_DEV_ORIGIN,
-// so its cookies belong to the site and need no CORS.
+// The API (apps/api) at same-origin /v1, proxied to API_ORIGIN, so its
+// cookies belong to the site (vercel.app and fly.dev are different sites).
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "/v1").replace(/\/$/, "");
-const apiDevOrigin = process.env.API_DEV_ORIGIN ?? "http://localhost:4000";
+const apiOrigin = (process.env.API_ORIGIN ?? process.env.API_DEV_ORIGIN ?? "http://localhost:4000").replace(/\/$/, "");
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -17,8 +20,8 @@ const config: NextConfig = {
   env: { NEXT_PUBLIC_GAME_BUILD_URL: gameBuildUrl, NEXT_PUBLIC_API_URL: apiUrl },
   async rewrites() {
     return [
-      ...(gameBuildUrl === "/game" ? [{ source: "/game/:path*", destination: `${gameDevOrigin}/:path*` }] : []),
-      ...(apiUrl === "/v1" ? [{ source: "/v1/:path*", destination: `${apiDevOrigin}/v1/:path*` }] : []),
+      ...(gameBuildUrl === "/game" && !gameBundled ? [{ source: "/game/:path*", destination: `${gameDevOrigin}/:path*` }] : []),
+      ...(apiUrl === "/v1" ? [{ source: "/v1/:path*", destination: `${apiOrigin}/v1/:path*` }] : []),
     ];
   },
   async headers() {

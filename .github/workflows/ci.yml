@@ -50,6 +50,34 @@ jobs:
         env:
           TEST_DATABASE_URL: postgresql://margin:margin@localhost:5432/margin_test
 
+  # The image staging deploys (apps/api/Dockerfile): build it, run its release
+  # step against a real Postgres, boot it and check it answers.
+  api-image:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: margin
+          POSTGRES_PASSWORD: margin
+          POSTGRES_DB: margin
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/api/Dockerfile -t the-margin-api .
+      - name: Release step, boot and health check
+        run: |
+          DB=postgresql://margin:margin@localhost:5432/margin
+          docker run --rm --network host -e DATABASE_URL=$DB the-margin-api ./release.sh
+          docker run -d --name api --network host -e DATABASE_URL=$DB -e COOKIE_SECURE=false the-margin-api
+          for i in $(seq 30); do curl -sf http://localhost:4000/v1/health && break; sleep 1; done
+          curl -sf http://localhost:4000/v1/health | grep -q '"db":"ok"'
+          curl -sf http://localhost:4000/v1/achievements | grep -q CH01_COMPLETE
+          docker logs api
+          docker rm -f api
+
   game:
     runs-on: ubuntu-latest
     steps:

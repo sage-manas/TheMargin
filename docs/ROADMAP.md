@@ -12,7 +12,7 @@
 | **5 Web platform** (automated bar met: landing, launcher, auth UI, chapters, settings) | Landing, launcher, auth UI, chapters, settings | The game launches reliably from `/play` in 3 browsers; Lighthouse ≥ 90 performance and accessibility on the landing page |
 | **6 Backend** (automated bar met: API integration, offline→online sync and conflict tests) | Auth, saves, progression, achievements, settings | API integration tests green; offline→online sync and conflict tests green |
 | 7 Expansion | Chapters 2+, art and audio pass | Per-chapter playtest bars |
-| 8 Production | Perf, security, monitoring, deploy automation | Release checklist complete in staging |
+| **8 Production** (started: staging pipeline) | Perf, security, monitoring, deploy automation | Release checklist complete in staging |
 | 9 Release | Production deploy | The deployed game works end to end (E2E suite against production) |
 
 **Ordering note (ADR-0008):** the brief lists Phase 1 before Phase 2, but its first assignment says the first implementation milestone is a browser-playable slice, not a scaffolded website. Phase 1 therefore covers only what the prototype needs: the monorepo root, the Godot project, `packages/contracts`, export scripts and CI. The Next.js and NestJS scaffolds move to the start of Phases 5 and 6, where they get built for real instead of sitting idle as empty shells.
@@ -61,4 +61,4 @@
 27. Next.js app: landing, `/play` launcher with the bridge adapter ✅ (`apps/web`, ADR-0010; plus chapters and settings pages, shared settings via `SETTINGS_UPDATED`, `build.json`, a Lighthouse gate in CI). The auth UI (`/account`, header) ✅.
 28. NestJS app: auth, saves, progression, achievements, settings; Prisma schema and migrations ✅ (`apps/api`, ADR-0011; 28 integration tests on a real Postgres in CI).
 29. E2E: register → play → save → second session restores from cloud ✅ (`specs/cloud.spec.ts`, plus offline→online and conflict; the sync client is `apps/web/src/sync/`).
-30. Infrastructure: S3/CloudFront build upload, staging environment, monitoring.
+30. Infrastructure: staging environment ✅ pipeline (Vercel + Fly.io + Neon, game bundled into the site; ADR-0012, DEPLOY.md), live once accounts are set up. Next: monitoring, production environment.

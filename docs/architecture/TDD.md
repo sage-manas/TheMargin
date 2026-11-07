@@ -239,10 +239,12 @@ After that, every `SAVE_UPDATED` is pushed on the revision it was based on. A re
 
 | Piece | Host | Notes |
 |---|---|---|
-| Game builds | S3 bucket `the-margin-builds/<env>/<buildId>/` behind CloudFront | Immutable build folders, `Cache-Control: max-age=31536000, immutable`. Brotli/gzip at the edge. `.wasm` served as `application/wasm`. |
-| Web | Vercel (recommended) or AWS Amplify | `NEXT_PUBLIC_GAME_BUILD_URL` selects the build, so rollback is an env change |
-| API | AWS App Runner or Fly.io (decided in Phase 8) | One container, health check at `/v1/health` |
-| DB | Managed Postgres (RDS or Neon) | Daily snapshots + PITR |
+| Game builds | Bundled into the site's Vercel deployment at `/game` (ADR-0012) | Same origin, deployed and rolled back with the site, compressed at Vercel's edge. A CDN folder (S3 + CloudFront with immutable caching) remains possible through `NEXT_PUBLIC_GAME_BUILD_URL`. |
+| Web | Vercel | Proxies `/v1/*` to the API, so cookies are first-party |
+| API | Fly.io (`apps/api/Dockerfile`, `fly.toml`) | One container in Singapore; migrations and seed run as the release command; health check at `/v1/health` |
+| DB | Neon Postgres (same region) | Direct connection (the pooler rejects the UTC startup option); daily snapshots + PITR per Neon's plan |
+
+Staging setup, deploys and rollback are in [DEPLOY.md](../DEPLOY.md).
 
 ### 5.3 Embedding
 

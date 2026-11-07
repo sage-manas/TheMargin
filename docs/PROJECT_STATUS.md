@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-07: Phases 5 and 6 meet their automated bars: accounts, cloud saves and sync in the site._
+_Last updated: 2026-11-08: Phase 8 started: staging deploy pipeline (Vercel + Fly.io + Neon)._
 
 ## Current phase
 
@@ -8,7 +8,9 @@ _Last updated: 2026-11-07: Phases 5 and 6 meet their automated bars: accounts, c
 
 **Phase 5 (web platform) has started alongside the playtest**, since it doesn't depend on Chapter 2. The site has its landing page, `/play` launcher, chapters and settings pages; the auth UI is next. Of the exit bar, Lighthouse is met (landing page: performance 98–100, accessibility 100) and `/play` launches in Chromium, Firefox (CI) and WebKit.
 
-**Phase 6 (backend) meets its bar:** the API's integration tests pass against a real Postgres, and the offline→online sync and conflict tests pass, both as unit tests on the sync logic and end to end in Chromium and WebKit (Firefox on CI). The auth UI completes Phase 5 too. Neither phase is deployed (Phases 8–9), and the Chapter 1 playtest is still the open Phase 4 item.
+**Phase 6 (backend) meets its bar:** the API's integration tests pass against a real Postgres, and the offline→online sync and conflict tests pass, both as unit tests on the sync logic and end to end in Chromium and WebKit (Firefox on CI). The auth UI completes Phase 5 too. The Chapter 1 playtest is still the open Phase 4 item.
+
+**Phase 8 (production readiness) has started with staging**, so the playtest can run from a URL with accounts on. The pipeline and runbook are in the repo (DEPLOY.md, ADR-0012). It hasn't deployed yet: it needs the one-time account setup (Neon, Fly.io, Vercel and GitHub secrets).
 
 | Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, platforms, eraser, ink, music | Phase 4: pages 1.3–1.5 | Phase 4: pages 1.6–1.8 |
 |---|---|---|---|---|
@@ -113,6 +115,14 @@ _Last updated: 2026-11-07: Phases 5 and 6 meet their automated bars: accounts, c
   - API rate limits can now be set from the environment (`RATE_LIMIT_*`), for test setups that share one IP.
   - Tests: 11 sync unit tests against an in-memory cloud with the API's compare-and-swap rules (first upload, new device, offline backoff and one push on reconnect, offline across a reload, both conflict directions, stale device, identical saves in another key order, account switch, 401/5xx/422). 3 e2e tests against the real site, API and game: a second browser continues from the account's save; offline play syncs once back online; a conflict with more progress elsewhere loads the cloud save into the running game. CI's browser job now has a Postgres service.
 
+- **Housekeeping (2026-11-08):** PR #12 had been merged into its stacked base (`phase6/api`) after #11 was merged, so it never reached `main`. PR #13 carried it over unchanged, with green CI.
+- **Phase 8 (2026-11-08): staging pipeline (backlog 30; ADR-0012, DEPLOY.md).**
+  - **Shape:** the site on Vercel serves the game export bundled at `/game` and proxies `/v1` to the API on Fly.io, which uses Neon Postgres in Singapore. Everything is one origin for the browser: no CORS, first-party cookies. `next.config.ts` serves a bundled build when `public/game/build.json` exists (otherwise it proxies to the local export server). `API_ORIGIN` names the API in every environment (`API_DEV_ORIGIN` still works).
+  - **API image** (`apps/api/Dockerfile`): Node 22 with OpenSSL for Prisma's migrations. It keeps the workspace layout (ADR-0011), runs as a non-root user, and has `release.sh` (migrate, then seed) as Fly's release command. `fly.toml`: one 512 MB shared machine that stops when idle, health check `/v1/health`, Secure cookies, two trusted proxy hops, `WEB_ORIGINS` set to the staging site.
+  - **Workflow** `deploy-staging.yml`: after CI passes on `main` (or by hand), deploy the API, export the game into the site and deploy it to Vercel prebuilt, then smoke-test (`infrastructure/scripts/smoke.mjs`).
+  - **CI job `api-image`** builds the image on every PR, runs its release step against Postgres 17, boots it and checks health and seeded data.
+  - Checked locally: a production site build with the game bundled and no game server, with the API behind `/v1`, passed all 6 smoke checks and the site and cloud browser tests (Chromium 7/7).
+
 ## Test status
 
 | Suite | Command | Result |
@@ -149,6 +159,8 @@ _Last updated: 2026-11-07: Phases 5 and 6 meet their automated bars: accounts, c
 21. On a shared browser, signing in to a second account can upload the first account's local save to it when the second account has no cloud save (the local save isn't tagged with an owner). Signing out doesn't clear the local save.
 22. In WebKit at ×1 page scale, a Playwright drag lands one 8 px grid step short (fine at ×2, which the e2e uses). Check whether real Safari at ×1 does the same.
 23. Settings conflicts are last-writer-wins, and cloud settings are pulled only into a browser with no settings of its own.
+24. Staging isn't live until the one-time setup in DEPLOY.md is done. The API image has only been built on CI (Docker wasn't running on the development machine).
+25. The API trusts two proxy hops for client IPs, so a direct caller of the Fly hostname can forge `X-Forwarded-For` and dodge rate limits (DEPLOY.md, known gaps). For the Phase 8 security review.
 
 ## Architectural decisions
 
@@ -158,7 +170,7 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 
 1. **Playtest the whole of Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). This is now the Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also measure the time to the first slide, whether players discover bold words unaided, whether 1.4's "the word that freed the room is the key" lands, whether 1.7's lend-a-word step is found (known issue 13), and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
 2. Merge the Phase 5 branch once CI, including Firefox and the Lighthouse gate, is green. That covers the third browser for the Phase 5 bar.
-3. Merge PRs #11 (API) and #12 (sync) once CI is green.
-4. **Phase 8 groundwork can start** (Phase 7 is content, gated on the playtest): a staging deploy (site on Vercel, API container, managed Postgres, game builds on S3 + CloudFront with CORS), so the playtest can run from a URL with accounts on. Then the security review (R10), monitoring, and a password reset once there's an email provider.
+3. **Do the one-time staging setup** (DEPLOY.md: Neon, Fly.io, Vercel, GitHub secrets), merge the staging branch, and run the deploy. Then **run the Chapter 1 playtest from the staging URL**.
+4. Phase 8 continues: the security review (R10, including restricting the API to the site's proxy), monitoring and error reporting, a production environment, and a password reset once there's an email provider.
 5. Decide how multi-word captions are reached (known issue 11) before a page needs one.
 6. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.

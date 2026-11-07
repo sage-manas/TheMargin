@@ -219,6 +219,14 @@ sequenceDiagram
 
 Local save is always written first. Cloud is an asynchronous mirror and a failure there never blocks play. Pending syncs retry with exponential backoff (2 s doubling to 5 min) and on `online` / `visibilitychange`.
 
+Implementation (`apps/web/src/sync/`): `SaveSync` keeps `{userId, cloudRevision, pending}` in `localStorage` (`the-margin.sync`). On `/play` it first reconciles the browser's save (the game's `localStorage` mirror) with `GET /saves/main`:
+- With no cloud save, it uploads the local one.
+- With no local save, it loads the cloud save into the game.
+- If the cloud is still at `cloudRevision`, it pushes only if something is pending.
+- Otherwise it resolves the two saves (SAVE_SCHEMA §5).
+
+After that, every `SAVE_UPDATED` is pushed on the revision it was based on. A retry that is waiting carries the newest save, so offline play costs one push when the connection returns. Saves are compared key-order-insensitively, because Postgres JSONB reorders keys. `LOAD_CLOUD_SAVE` is sent only after `GAME_READY`: the game drains queued messages in its bridge autoload, before its main scene listens for cloud saves. Chapter completions and achievement unlocks go through an outbox (`the-margin.outbox`) that survives reloads; their endpoints are idempotent. `SETTINGS_UPDATED` is pushed after a 1 s debounce, and cloud settings fill a browser that has none. A 401 stops syncing; play carries on locally.
+
 ## 5. Browser deployment strategy
 
 ### 5.1 Build

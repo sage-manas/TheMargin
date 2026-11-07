@@ -353,6 +353,51 @@ kbd {
   accent-color: var(--red-text);
   margin-top: 2px;
 }
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border-bottom: var(--border);
+}
+.tabs button {
+  font: 700 0.9rem var(--lettering);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  border-bottom: 4px solid transparent;
+  padding: 10px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] {
+  border-bottom-color: var(--red-text);
+}
+.text-field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.text-field label {
+  font-weight: 600;
+}
+.text-field input {
+  font: inherit;
+  padding: 10px 12px;
+  min-height: 44px;
+  border: var(--border);
+  background: var(--bubble);
+  color: var(--ink);
+}
+.text-field small {
+  color: var(--pencil);
+}
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 .status-line {
   min-height: 1.6em;
   color: var(--pencil);

@@ -32,7 +32,9 @@ pnpm game:test        # Godot headless test suite (unit + real-physics playthrou
 pnpm game:export      # Web export to apps/game/build/web + artifact checks
 pnpm game:serve       # http://localhost:8060 — play the export in a browser
 pnpm test             # contract tests
-pnpm e2e              # Playwright: the game export, and the site launching it
+pnpm e2e              # Playwright: the game export, the site, and accounts with cloud saves
+                      # (needs Postgres: E2E_DATABASE_URL, default margin_e2e on localhost;
+                      #  E2E_CLOUD=0 skips the account tests)
 pnpm web:dev          # http://localhost:3000 — the site (run game:serve too for /play)
 pnpm web:lighthouse   # Lighthouse gate on a running site build (web:build && web:start)
 pnpm api:test         # API integration tests (TEST_DATABASE_URL: a database it may wipe)

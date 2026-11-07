@@ -22,7 +22,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     webOrigins: (env.WEB_ORIGINS ?? "http://localhost:3000").split(",").map((s) => s.trim()).filter(Boolean),
     cookieSecure: env.COOKIE_SECURE !== "false",
     trustProxy: Number(env.TRUST_PROXY ?? 0),
-    rateLimits: { default: 120, register: 5, login: 10, windowMs: 60_000 },
+    // Per IP per minute. Overridable for test environments that share one IP.
+    rateLimits: {
+      default: Number(env.RATE_LIMIT_DEFAULT ?? 120),
+      register: Number(env.RATE_LIMIT_REGISTER ?? 5),
+      login: Number(env.RATE_LIMIT_LOGIN ?? 10),
+      windowMs: 60_000,
+    },
     argon2: { memoryCost: 19_456, timeCost: 2 },
   };
 }

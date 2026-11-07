@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-07: Phase 6 started: the API (`apps/api`) with auth, cloud saves, progression, achievements and settings._
+_Last updated: 2026-11-07: Phases 5 and 6 meet their automated bars: accounts, cloud saves and sync in the site._
 
 ## Current phase
 
@@ -8,7 +8,7 @@ _Last updated: 2026-11-07: Phase 6 started: the API (`apps/api`) with auth, clou
 
 **Phase 5 (web platform) has started alongside the playtest**, since it doesn't depend on Chapter 2. The site has its landing page, `/play` launcher, chapters and settings pages; the auth UI is next. Of the exit bar, Lighthouse is met (landing page: performance 98–100, accessibility 100) and `/play` launches in Chromium, Firefox (CI) and WebKit.
 
-**Phase 6 (backend) has started.** The API is built and its integration tests pass against a real Postgres. The other half of the Phase 6 bar, the offline→online sync and conflict tests, belongs to the site's sync client, which is next (it also needs the auth UI from Phase 5).
+**Phase 6 (backend) meets its bar:** the API's integration tests pass against a real Postgres, and the offline→online sync and conflict tests pass, both as unit tests on the sync logic and end to end in Chromium and WebKit (Firefox on CI). The auth UI completes Phase 5 too. Neither phase is deployed (Phases 8–9), and the Chapter 1 playtest is still the open Phase 4 item.
 
 | Status level | Prototype pages 1.1–1.2 | Phase 3: crates, panel words, plates, platforms, eraser, ink, music | Phase 4: pages 1.3–1.5 | Phase 4: pages 1.6–1.8 |
 |---|---|---|---|---|
@@ -105,6 +105,14 @@ _Last updated: 2026-11-07: Phase 6 started: the API (`apps/api`) with auth, clou
   - **Contracts:** API request and response schemas (`api.ts`), the error codes, and the achievement catalogue (checked against the codes the game emits).
   - 28 integration tests (`pnpm api:test`), in a CI job with a Postgres 17 service. `pnpm db:up` starts Postgres locally. Test scripts now pass `--experimental-strip-types`, so Node 22.12–22.17 runs them too.
 
+- **Phase 6 (2026-11-07): accounts and cloud sync in the site (backlog 29; completes the Phase 5 auth UI).** Stacked on PR #11 (the API).
+  - **Auth UI:** `/account` (sign in, create account, sign out) and the signed-in name in the header. Errors are in plain words, including when the accounts server is unreachable (play still works). The site reaches the API at same-origin `/v1`, proxied to `API_DEV_ORIGIN` locally, so its cookies are the site's and need no CORS. `ApiClient` is Zod-free (every page shows the header) and refreshes a stale CSRF token once.
+  - **Save sync (`SaveSync`, TDD §4.3):** on `/play` the browser's save is reconciled with the cloud, and each local save is pushed on the cloud revision it was based on. Offline, it retries from 2 s doubling to 5 min, or immediately on `online`/`visibilitychange`, and play made offline costs one push. Conflicts are resolved with `resolveConflict`: the loser goes to a cloud backup, and if the cloud wins the game gets `LOAD_CLOUD_SAVE`. Sync state survives reloads, so a save made offline before closing the tab syncs on the next visit. A different account on the same browser starts from scratch. A 401 stops syncing; invalid saves don't retry. The launcher's toolbar says where progress is: saved online, offline (will sync), or signed out.
+  - **Found while wiring it:** `LOAD_CLOUD_SAVE` queued before the game started would have been dropped, because the bridge autoload drains its inbox before the main scene connects. The site now waits for `GAME_READY`.
+  - **Outbox:** `CHAPTER_COMPLETED` and `ACHIEVEMENT_UNLOCKED` are forwarded to the API through a persisted queue. Settings changes are pushed after a debounce; cloud settings fill a browser that has none.
+  - API rate limits can now be set from the environment (`RATE_LIMIT_*`), for test setups that share one IP.
+  - Tests: 11 sync unit tests against an in-memory cloud with the API's compare-and-swap rules (first upload, new device, offline backoff and one push on reconnect, offline across a reload, both conflict directions, stale device, identical saves in another key order, account switch, 401/5xx/422). 3 e2e tests against the real site, API and game: a second browser continues from the account's save; offline play syncs once back online; a conflict with more progress elsewhere loads the cloud save into the running game. CI's browser job now has a Postgres service.
+
 ## Test status
 
 | Suite | Command | Result |
@@ -112,9 +120,9 @@ _Last updated: 2026-11-07: Phase 6 started: the API (`apps/api`) with auth, clou
 | Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 85 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge, settings, chapter catalogue vs the game's pages, storage key vs the game, achievements vs the game, API schemas) | `pnpm --filter @the-margin/contracts test` | 15 passed |
 | API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 28 passed (local Postgres 14, IST timezone; CI Postgres 17) |
-| Site unit tests (bridge, progress, settings mirror) | `pnpm --filter @the-margin/web test` | 7 passed |
-| Lighthouse, landing page (production build) | `pnpm web:lighthouse` | Performance 98 and 100 (two runs), accessibility 100, best practices 100, SEO 100 |
-| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save; the site (landing, chapters, `/play` launch with settings, missing build) | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 9/9, WebKit 9/9 on macOS (2026-11-07 with the site specs). Earlier: Chromium 5/5, WebKit 5/5 (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Site unit tests (bridge, progress, settings mirror, save sync incl. offline and conflicts) | `pnpm --filter @the-margin/web test` | 18 passed |
+| Lighthouse, landing page (production build) | `pnpm web:lighthouse` | Performance 99, accessibility 100 with the header's session check (earlier 98 and 100). Best practices 96 when no API is running, because the failed session request is logged |
+| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save; the site (landing, chapters, `/play` launch with settings, missing build); accounts and cloud saves (second browser, offline→online, conflict) | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS; needs Postgres, or `E2E_CLOUD=0`) | Chromium 12/12, WebKit 12/12 on macOS (2026-11-07 with the cloud specs). Earlier: Chromium 9/9, WebKit 9/9 with the site specs. Earlier: Chromium 5/5, WebKit 5/5 (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
@@ -136,8 +144,11 @@ _Last updated: 2026-11-07: Phase 6 started: the API (`apps/api`) with auth, clou
 16. `/play` and `/settings` ship Zod (about 60 KB) to validate bridge messages and settings; the landing and chapters pages don't.
 17. A game build on a different origin from the site (the CDN) needs CORS headers on its files. Only same-origin `/game` has been tested.
 18. `GAME_ERROR` messages are logged by the launcher but not shown to the player.
-19. The site doesn't talk to the API yet: the sync client and auth UI are next. OpenAPI docs at `/v1/docs` are deferred.
+19. OpenAPI docs at `/v1/docs` are deferred. There's no password reset or email verification yet (no email provider), and no account deletion endpoint (the database cascades are ready).
 20. The API's `dist/` needs the workspace's `packages/contracts` at runtime (ADR-0011), which shapes the Phase 8 container build. Expired sessions are swept daily by an in-process timer, so with several instances each one sweeps.
+21. On a shared browser, signing in to a second account can upload the first account's local save to it when the second account has no cloud save (the local save isn't tagged with an owner). Signing out doesn't clear the local save.
+22. In WebKit at ×1 page scale, a Playwright drag lands one 8 px grid step short (fine at ×2, which the e2e uses). Check whether real Safari at ×1 does the same.
+23. Settings conflicts are last-writer-wins, and cloud settings are pulled only into a browser with no settings of its own.
 
 ## Architectural decisions
 
@@ -147,6 +158,7 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 
 1. **Playtest the whole of Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). This is now the Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also measure the time to the first slide, whether players discover bold words unaided, whether 1.4's "the word that freed the room is the key" lands, whether 1.7's lend-a-word step is found (known issue 13), and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
 2. Merge the Phase 5 branch once CI, including Firefox and the Lighthouse gate, is green. That covers the third browser for the Phase 5 bar.
-3. **Next: the site's sync client and auth UI** (the rest of Phases 5 and 6): sign-in, register and sign-out in the header; the save mirror pushed to `PUT /saves/main` on `SAVE_UPDATED`, with retries and backoff while offline, conflicts resolved with `resolveConflict` (the loser to a backup slot, the winner sent to the game with `LOAD_CLOUD_SAVE`), chapter completion and achievements forwarded, and settings synced. Its offline→online and conflict tests complete the Phase 6 bar.
-4. Decide how multi-word captions are reached (known issue 11) before a page needs one.
-5. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.
+3. Merge PRs #11 (API) and #12 (sync) once CI is green.
+4. **Phase 8 groundwork can start** (Phase 7 is content, gated on the playtest): a staging deploy (site on Vercel, API container, managed Postgres, game builds on S3 + CloudFront with CORS), so the playtest can run from a URL with accounts on. Then the security review (R10), monitoring, and a password reset once there's an email provider.
+5. Decide how multi-word captions are reached (known issue 11) before a page needs one.
+6. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.

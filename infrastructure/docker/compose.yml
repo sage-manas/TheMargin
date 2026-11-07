@@ -1,0 +1,15 @@
+# Local Postgres for the API (`pnpm db:up`). Two databases: `margin` for
+# development and `margin_test`, which the integration tests wipe.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: margin
+      POSTGRES_PASSWORD: margin
+      POSTGRES_DB: margin
+    ports: ["5432:5432"]
+    volumes:
+      - margin-pg:/var/lib/postgresql/data
+      - ./init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+volumes:
+  margin-pg:

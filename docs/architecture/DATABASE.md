@@ -86,4 +86,7 @@ erDiagram
 - All FKs to `users` use `ON DELETE CASCADE` (account deletion = full erasure, which supports GDPR requests).
 - Seeds: chapters `ch01`–`ch07` (only `ch01` released) and the initial achievement set (`FIRST_SLIDE`, `FIRST_WORD`, `WONT_SHUT`, `CH01_COMPLETE`).
 
-Migrations are Prisma Migrate SQL files committed under `apps/api/prisma/migrations`, validated in CI against a disposable Postgres (`prisma migrate deploy` + `prisma migrate diff --exit-code`).
+- `chapter_progress.status` is a Postgres enum, `chapter_status`.
+- Connections are pinned to `TimeZone=UTC` (`apps/api/src/common/db.ts`): with a non-UTC server timezone, Prisma 7's `pg` adapter read `timestamptz` values shifted by the offset. The test database is set to `Asia/Kolkata` so this stays caught on UTC machines.
+
+Migrations are Prisma Migrate SQL files committed under `apps/api/prisma/migrations` (Prisma 7, `prisma.config.ts`). The citext extension and the payload size CHECK are hand-written into the SQL because Prisma doesn't model them. CI validates them against a disposable Postgres 17: drop the schema, `prisma migrate deploy`, then `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code`. Seeds (`pnpm --filter @the-margin/api seed`) come from `CHAPTERS` and `ACHIEVEMENTS` in `packages/contracts` and are idempotent.

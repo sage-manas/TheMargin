@@ -1,0 +1,91 @@
+{
+  "id": "ch01_p07",
+  "chapter": "ch01",
+  "number": 7,
+  "next": "ch01_p08",
+  "spawn": [88, 144],
+  "panels": [
+    {
+      "id": "s",
+      "rect": [16, 16, 112, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 112, 16]],
+      "props": [{ "type": "frame", "at": [60, 52] }],
+      "captions": [{ "id": "cap_s", "at": [6, 6], "text": "THE DOOR BEHIND|WAS LEFT OPEN." }],
+      "objects": [{ "type": "door", "id": "door_back", "at": [10, 96], "label": "OPEN", "loose": true }]
+    },
+    {
+      "id": "h",
+      "rect": [216, 16, 96, 144],
+      "bg": "room_blue",
+      "track": { "axis": "x", "min": 136, "max": 216 },
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 96, 16]],
+      "props": [{ "type": "lamp", "at": [40, 96] }]
+    },
+    {
+      "id": "r",
+      "rect": [320, 16, 104, 144],
+      "bg": "room_warm",
+      "track": { "axis": "y", "min": 16, "max": 200 },
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 104, 16]],
+      "props": [{ "type": "window", "at": [60, 50] }],
+      "captions": [{ "id": "cap_r", "at": [6, 6], "text": "IT ALL CAME|TO A *STOP*.", "reach_at": [52, 128] }]
+    },
+    {
+      "id": "q",
+      "rect": [432, 16, 192, 176],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [{ "type": "ghost_nib", "at": [120, 136] }],
+      "notes": [{ "at": [20, 20], "text": "CUT THIS|PAGE?" }]
+    },
+    {
+      "id": "b",
+      "rect": [16, 168, 296, 176],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [{ "type": "stairs_sketch", "at": [100, 156] }]
+    },
+    {
+      "id": "v",
+      "rect": [320, 200, 96, 144],
+      "bg": "room_blue",
+      "track": { "axis": "x", "min": 320, "max": 432 },
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 96, 16]],
+      "props": [{ "type": "stool", "at": [42, 118] }]
+    },
+    {
+      "id": "e",
+      "rect": [536, 200, 88, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 88, 16]],
+      "captions": [{ "id": "cap_e", "at": [6, 6], "text": "THE OTHER|SIDE." }],
+      "objects": [{ "type": "door", "id": "door7", "at": [52, 96], "label": "SHUT", "loose": true, "exit": true }]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "no_going_back",
+      "on": "word_taken",
+      "when": { "slot": "door_back:label" },
+      "do": [
+        { "action": "wait", "sec": 0.5 },
+        { "action": "rewrite_caption", "caption": "cap_s", "text": "THERE WAS NO|GOING BACK." }
+      ]
+    }
+  ]
+}

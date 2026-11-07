@@ -2,7 +2,7 @@
   "id": "ch01_p05",
   "chapter": "ch01",
   "number": 5,
-  "next": "",
+  "next": "ch01_p06",
   "spawn": [56, 328],
   "panels": [
     {

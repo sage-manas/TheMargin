@@ -6,6 +6,8 @@ signal page_entered(page_id: String)
 signal page_completed(page_id: String)
 signal panel_moved(panel_id: String, position: Vector2i)
 signal panel_released(panel_id: String)
+## Nib is now wholly inside this panel, having last been inside another.
+signal panel_entered(panel_id: String)
 signal link_formed(a: String, b: String)
 signal link_broken(a: String, b: String)
 signal word_taken(slot_id: String, word: String)

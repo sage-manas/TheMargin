@@ -43,6 +43,8 @@ var spawn := Vector2.ZERO
 
 var _bridges: DrawLayer
 var _exited := false
+## The panel Nib was last wholly inside, for `panel_entered`.
+var _last_panel := ""
 
 
 static func load_def(id: String) -> Dictionary:
@@ -85,10 +87,15 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 
 	var sp: Array = def["spawn"]
 	spawn = Vector2(sp[0], sp[1])
+	for a: Dictionary in StoryRunner.lasting_erasures(def.get("triggers", []), state.get("fired", [])):
+		if a.get("respawn") is Array:
+			spawn = Vector2(a["respawn"][0], a["respawn"][1])
 	player = Player.new()
 	player.page = self
 	player.position = _restore_position(player_state.get("position"))
 	add_child(player)
+	var here := player_panel()
+	_last_panel = here.panel_id if here else ""
 	_wire_buttons()
 
 	var carried: Variant = player_state.get("carrying")
@@ -141,6 +148,13 @@ func _build_panel(pd: Dictionary) -> void:
 			p.content.add_child(bubble)
 			for s in bubble.slots:
 				_register_slot(s, p)
+	# Bubbles nobody is saying any more, lying where they fell (page 1.6).
+	for bd: Dictionary in pd.get("bubbles", []):
+		var fallen := SpeechBubble.new()
+		fallen.setup(bd, null)
+		p.content.add_child(fallen)
+		for s in fallen.slots:
+			_register_slot(s, p)
 	for o: Dictionary in pd.get("objects", []):
 		match o["type"]:
 			"door":
@@ -215,14 +229,27 @@ func _apply_state(state: Dictionary) -> void:
 	for id: String in collected.keys():
 		if collected[id] == 0:
 			collected.erase(id)
+	# Panels the story has already rubbed out free their space first.
+	for a: Dictionary in StoryRunner.lasting_erasures(def.get("triggers", []), state.get("fired", [])):
+		if panels.has(a["panel"]):
+			panels[a["panel"]].erase(false)
+	# Positions were saved together, so they are checked together: a panel
+	# may rest where another one started. If any clash, all start over.
 	var saved_panels: Dictionary = state.get("panels", {})
+	var starts := {}
 	for id: String in saved_panels:
 		var p: ComicPanel = panels.get(id)
 		var pos: Variant = saved_panels[id]
 		if p and p.is_lifted() and pos is Array and pos.size() == 2:
 			var target := Vector2i(int(pos[0]), int(pos[1]))
-			if _on_track(p, target) and _panel_fits(p, target):
+			if _on_track(p, target):
+				starts[p] = p.position
 				p.position = Vector2(target)
+	for p: ComicPanel in starts:
+		if not _panel_fits(p, Vector2i(p.position)):
+			for q: ComicPanel in starts:
+				q.position = starts[q]
+			break
 	var saved_slots: Dictionary = state.get("slots", {})
 	for id: String in saved_slots:
 		var s: WordSlot = slots.get(id)
@@ -311,7 +338,7 @@ func _on_track(p: ComicPanel, pos: Vector2i) -> bool:
 func _panel_fits(p: ComicPanel, pos: Vector2i) -> bool:
 	var r := Rect2i(pos, p.size).grow(PageConst.GUTTER)
 	for other in panel_list:
-		if other != p and r.intersects(other.rect()):
+		if other != p and not other.erased and r.intersects(other.rect()):
 			return false
 	return true
 
@@ -356,6 +383,48 @@ func player_panel() -> ComicPanel:
 
 func is_player_in_gutter() -> bool:
 	return player != null and player_panel() == null
+
+
+## The artist rubs a whole panel out (GDD §6, page 1.8). It stops being a
+## room at once: its links close, and it stops taking up the page, so a
+## lifted panel may slide into the space it leaves. Animated, it waits for
+## Nib to be wholly inside another panel first, so nobody is rubbed out
+## with it. `respawn` moves the page's spawn out of it.
+func erase_panel(id: String, animate := true, respawn: Variant = null) -> void:
+	var p: ComicPanel = panels.get(id)
+	if p == null:
+		return
+	if respawn is Array and respawn.size() == 2:
+		spawn = Vector2(respawn[0], respawn[1])
+	if not animate:
+		if not p.erased:
+			p.erase(false)
+			relink(true)
+		# Restoring a save: Nib can't be standing in a rubbed-out room.
+		if player and player_panel() == null:
+			player.position = spawn
+			player.velocity = Vector2.ZERO
+		return
+	if p.erased:
+		return
+	while is_inside_tree() and (player_panel() == null or player_panel() == p):
+		await get_tree().physics_frame
+	if not is_inside_tree():
+		return
+	p.erase(true)
+	relink()
+	_clear_player_of_borders()
+	await p.erase_finished
+
+
+## Keeps Nib clear of a border that has just closed beside them: being
+## wholly inside a panel still lets Nib overlap its border's collision.
+func _clear_player_of_borders() -> void:
+	var q := player_panel()
+	if q == null:
+		return
+	var b := PageConst.BORDER + Player.SIZE.x / 2.0
+	player.position.x = clampf(player.position.x, q.position.x + b, q.position.x + q.size.x - b)
 
 
 # --- eraser ----------------------------------------------------------------
@@ -438,6 +507,10 @@ func _physics_process(_delta: float) -> void:
 	if not Rect2(Vector2.ZERO, Vector2(PageConst.PAGE_SIZE)).has_point(player.position):
 		player.position = spawn
 		player.velocity = Vector2.ZERO
+	var here := player_panel()
+	if here and here.panel_id != _last_panel:
+		_last_panel = here.panel_id
+		EventBus.panel_entered.emit(here.panel_id)
 	for d in doors:
 		if d.exit and d.is_open and d.doorway_rect().has_point(player.global_position + Vector2(0, -4)):
 			turn()

@@ -2,7 +2,7 @@ extends Node
 ## Developer tool: renders pages to PNG for art review (not a test; needs a
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
-## Captures the page start state and the solved positions of pages 1 and 3–5, and
+## Captures the page start state and the solved positions of pages 1 and 3–8, and
 ## the Phase 3 sandboxes (mechanics, weight, eraser, ink, platforms).
 
 func _ready() -> void:
@@ -21,6 +21,14 @@ func _ready() -> void:
 	await _shot(out, "p04_pressed", "ch01_p04", {"panels": {"l": [200, 200]}, "slots": {"cap_l:0": null, "box4:label": "HEAVY"}}, [80, 328])
 	await _shot(out, "p05_start", "ch01_p05", {})
 	await _shot(out, "p05_risen", "ch01_p05", {"panels": {"k2": [200, 144]}, "slots": {"cap_k1:0": null, "box5:label": "UP"}, "objects": {"box5": [132, 54]}}, [345, 197])
+	await _shot(out, "p06_start", "ch01_p06", {})
+	await _shot(out, "p06_taken", "ch01_p06", {"panels": {"n": [224, 40]}, "slots": {"fallen:0": null}, "fired": ["said_nothing"]}, [530, 144], "OPEN")
+	await _shot(out, "p07_start", "ch01_p07", {})
+	await _shot(out, "p07_lent", "ch01_p07", {"panels": {"h": [216, 16], "v": [432, 200]}, "slots": {"door_back:label": null, "cap_r:0": "OPEN"}, "fired": ["no_going_back"]}, [372, 144], "STOP")
+	await _shot(out, "p07_down", "ch01_p07", {"panels": {"h": [216, 16], "r": [320, 200], "v": [432, 200]}, "slots": {"door_back:label": null, "cap_r:0": "STOP"}, "fired": ["no_going_back"]}, [372, 328], "OPEN")
+	await _shot(out, "p08_start", "ch01_p08", {})
+	await _shot(out, "p08_erased", "ch01_p08", {"fired": ["from_the_top"]}, [300, 144])
+	await _shot(out, "p08_risen", "ch01_p08", {"panels": {"l": [16, 16]}, "fired": ["from_the_top"]}, [120, 144])
 	await _shot(out, "sb_start", "sb_mechanics", {})
 	await _shot(out, "sb_risen", "sb_mechanics", {"slots": {"cap_s1:0": null, "c1:label": "UP"}, "objects": {"c1": [172, 16]}}, [200, 32])
 	await _shot(out, "sb_lowered", "sb_mechanics", {"panels": {"s2": [320, 112]}, "slots": {"cap_s1:0": null, "c1:label": "UP", "cap_s2:0": null}, "objects": {"c1": [172, 16]}}, [450, 200], "HEAVY")
@@ -37,8 +45,24 @@ func _ready() -> void:
 	await _shot(out, "sbp_start", "sb_platforms", {})
 	await _shot(out, "sbp_ferry", "sb_platforms", {"slots": {"ferry:label": null}, "objects": {"ferry": [176, 56], "lift1": [88, 56]}}, [432, 72], "STOP")
 	await _shot(out, "sbp_done", "sb_platforms", {"slots": {"ferry:label": null, "cap_up:0": "STOP", "box:label": "LEFT", "lift3:label": "UP"}, "objects": {"ferry": [264, 56], "lift3": [116, 88], "box": [2, 64]}}, [400, 312], "DOWN")
+	await _erase_shot(out)
 	await _turn_shot(out)
 	get_tree().quit()
+
+
+## Page 1.8 with the artist's eraser halfway through the little room.
+func _erase_shot(dir: String) -> void:
+	var page := ComicPage.new()
+	add_child(page)
+	page.build(ComicPage.load_def("ch01_p08"), {}, {"position": [300, 144], "carrying": ""})
+	page.erase_panel("p1")
+	for i in 3:
+		await get_tree().process_frame
+	await get_tree().create_timer(ComicPanel.ERASE_ROW_SEC * 4.5).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(dir.path_join("p08_erasing.png"))
+	page.queue_free()
+	await get_tree().process_frame
 
 
 ## The page-turn shader frozen mid-turn: page 1 curling away over page 2.

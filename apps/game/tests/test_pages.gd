@@ -3,10 +3,11 @@ extends RefCounted
 ## panels inside the page and a gutter apart, unique ids, known props and
 ## story actions, reachable `next`, pencil sketches inside their panels and
 ## within what the eraser can hold, platforms on rails that stay inside
-## their panels.
+## their panels, fallen bubbles inside their panels, and nothing left
+## stranded in a panel the artist erases.
 
-const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
+const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page", "erase_panel"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
 ## Object type -> word categories its label accepts.
 const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"]}
 
@@ -73,6 +74,17 @@ func test_ids_and_references(t) -> void:
 					t.ok(m.get_string(1) == "" or WordLibrary.exists(m.get_string(1)), "caption word exists: %s" % m.get_string(1))
 			for n: Dictionary in pd.get("npcs", []):
 				npcs[n.id] = true
+			for b: Dictionary in pd.get("bubbles", []):
+				t.ok(not npcs.has(b.id) and not captions.has(b.id), "%s: bubble id %s is its own" % [d.id, b.id])
+				for m in RegEx.create_from_string(Lettering.SLOT_RE).search_all(b.get("text", "")):
+					t.ok(m.get_string(1) == "" or WordLibrary.exists(m.get_string(1)), "bubble word exists: %s" % m.get_string(1))
+				var lt := Lettering.new()
+				lt.parse(b.text, b.id, null, null, Vector2.ZERO)
+				var bs := Vector2i(lt.max_width() + SpeechBubble.PAD.x * 2, lt.lines.size() * PixelFont.LINE_HEIGHT + SpeechBubble.PAD.y * 2 - 2)
+				t.ok(inner.encloses(Rect2i(Vector2i(int(b.at[0]), int(b.at[1]) - bs.y), bs)), "%s: fallen bubble inside its panel" % b.id)
+			if pd.get("erased", false):
+				t.ok(not pd.has("track"), "%s/%s: an erased panel lies flat" % [d.id, pd.id])
+				t.ok(_contents(pd).is_empty(), "%s/%s: an erased panel holds nothing (%s)" % [d.id, pd.id, _contents(pd)])
 			for o: Dictionary in pd.get("objects", []):
 				t.ok(OBJECTS.has(o.type), "known object type %s" % o.type)
 				if o.has("label") and o.label != "":
@@ -113,5 +125,40 @@ func test_ids_and_references(t) -> void:
 					t.ok(npcs.has(a.npc), "npc exists: %s" % a.npc)
 				if a.has("panel"):
 					t.ok(ids.has(a.panel), "panel exists: %s" % a.panel)
+				if a.action == "erase_panel":
+					_check_erasure(t, d, a)
 		if d.get("next", "") != "":
 			t.ok(not ComicPage.load_def(d.next).is_empty(), "next page exists: %s" % d.next)
+
+
+## What a panel holds that the character could need or be standing on.
+func _contents(pd: Dictionary) -> Array:
+	var out := []
+	for key: String in ["objects", "npcs", "bubbles", "sketches"]:
+		if not pd.get(key, []).is_empty():
+			out.append(key)
+	for c: Dictionary in pd.get("captions", []):
+		if Lettering.has_slots(c.get("text", "")):
+			out.append("caption words")
+	return out
+
+
+## A panel the artist rubs out must leave nothing behind that the page needs,
+## and the respawn point must be in a room that stays.
+func _check_erasure(t, d: Dictionary, a: Dictionary) -> void:
+	var target: Dictionary = {}
+	for pd: Dictionary in d.panels:
+		if pd.id == a.panel:
+			target = pd
+	t.ok(not target.has("track"), "%s: the erased panel %s is fixed" % [d.id, a.panel])
+	t.ok(_contents(target).is_empty(), "%s: nothing stranded in %s (%s)" % [d.id, a.panel, _contents(target)])
+	t.ok(a.has("respawn"), "%s: erasing %s moves the spawn" % [d.id, a.panel])
+	if not a.has("respawn"):
+		return
+	var at := Vector2(a.respawn[0], a.respawn[1])
+	var inside := false
+	for pd: Dictionary in d.panels:
+		var r := Rect2(pd.rect[0], pd.rect[1], pd.rect[2], pd.rect[3])
+		if pd.id != a.panel and not pd.get("erased", false) and not pd.has("track") and r.encloses(Rect2(at - Vector2(Player.SIZE.x / 2.0, Player.SIZE.y), Player.SIZE)):
+			inside = true
+	t.ok(inside, "%s: respawn %s is in a fixed room that stays" % [d.id, at])

@@ -53,6 +53,33 @@ func width() -> int:
 	return out
 
 
+## The widest this lettering can get, whatever word each slot holds.
+func max_width() -> int:
+	var widest := GAP_WIDTH
+	for w: String in WordLibrary.all_words():
+		widest = maxi(widest, PixelFont.measure(w, true))
+	var out := 0
+	for segs: Array in lines:
+		var lw := 0
+		for seg: Dictionary in segs:
+			lw += (PixelFont.measure(seg["text"]) if seg.has("text") else widest) + 1
+		out = maxi(out, lw)
+	return out
+
+
+## Top-centre of a slot as currently laid out, in lettering space.
+func slot_center(slot: WordSlot) -> Vector2:
+	var idx := slots.find(slot)
+	for li in lines.size():
+		var x := 0
+		for seg: Dictionary in lines[li]:
+			var w := segment_width(seg)
+			if seg.get("slot", -1) == idx:
+				return Vector2(x + w / 2.0, li * PixelFont.LINE_HEIGHT)
+			x += w
+	return Vector2.ZERO
+
+
 ## Where the interaction prompt goes for `slot`, in owner-local coordinates.
 func slot_top(slot: WordSlot) -> Vector2:
 	var r: Rect2 = _slot_rects.get(slots.find(slot), Rect2())

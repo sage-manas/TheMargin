@@ -1,0 +1,55 @@
+{
+  "id": "ch01_p06",
+  "chapter": "ch01",
+  "number": 6,
+  "next": "ch01_p07",
+  "spawn": [60, 168],
+  "panels": [
+    {
+      "id": "a",
+      "rect": [16, 40, 200, 144],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 200, 16]],
+      "props": [
+        { "type": "plant", "at": [20, 112] },
+        { "type": "lamp", "at": [150, 96] }
+      ],
+      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "NEXT DOOR, THERE|WAS A NEIGHBOUR." }]
+    },
+    {
+      "id": "n",
+      "rect": [224, 16, 400, 144],
+      "bg": "room_blue",
+      "track": { "axis": "y", "min": 16, "max": 56 },
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 400, 16], [336, 96, 64, 32]],
+      "props": [
+        { "type": "stool", "at": [120, 118] },
+        { "type": "window", "at": [150, 36] }
+      ],
+      "captions": [{ "id": "cap_n", "at": [6, 6], "text": "THEY ALWAYS SAID|THE SAME THING." }],
+      "bubbles": [{ "id": "fallen", "at": [200, 128], "text": "THIS DOOR WON'T *OPEN*.|NOT ONCE. NOT EVER." }],
+      "objects": [{ "type": "door", "id": "door6", "at": [360, 64], "label": "SHUT", "loose": true, "exit": true }]
+    },
+    {
+      "id": "b",
+      "rect": [16, 208, 608, 136],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [{ "type": "ghost_neighbor", "at": [292, 44], "crossed": true }],
+      "notes": [{ "at": [20, 20], "text": "TOO MANY|CHARACTERS." }]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "said_nothing",
+      "on": "word_taken",
+      "when": { "slot": "fallen:0" },
+      "do": [
+        { "action": "wait", "sec": 0.5 },
+        { "action": "rewrite_caption", "caption": "cap_n", "text": "NOW THEY SAID|NOTHING AT ALL." }
+      ]
+    }
+  ]
+}

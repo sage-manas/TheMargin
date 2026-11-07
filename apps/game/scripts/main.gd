@@ -152,6 +152,10 @@ func _on_page_exit() -> void:
 
 
 func _on_end_reached() -> void:
+	var chapter: String = page.def.get("chapter", "")
+	if chapter != "" and not GameState.sandbox:
+		GameState.complete_chapter(chapter)
+		WebBridge.send("CHAPTER_COMPLETED", {"chapterId": chapter})
 	GameState.commit_now()
 	Audio.play("chime")
 	page.player.input_locked = true

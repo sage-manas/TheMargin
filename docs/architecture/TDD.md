@@ -183,9 +183,11 @@ A small in-house headless runner (`godot --headless --path apps/game -s res://te
 
 Every message is `{ v: 1, type, payload }`, serialised as JSON.
 
-**Game → web:** `GAME_READY`, `GAME_STARTED`, `GAME_PAUSED`, `GAME_RESUMED`, `SAVE_UPDATED {save}`, `CHAPTER_COMPLETED {chapterId}`, `PAGE_COMPLETED {pageId}`, `ACHIEVEMENT_UNLOCKED {code}`, `GAME_EXITED`, `GAME_ERROR {message}`.
+**Game → web:** `GAME_READY`, `GAME_STARTED`, `GAME_PAUSED`, `GAME_RESUMED`, `SAVE_UPDATED {save}`, `SETTINGS_UPDATED {settings}` (once the bridge is up, then on every change), `CHAPTER_COMPLETED {chapterId}`, `PAGE_COMPLETED {pageId}`, `ACHIEVEMENT_UNLOCKED {code}`, `GAME_EXITED`, `GAME_ERROR {message}`.
 
-**Web → game:** `LOAD_CLOUD_SAVE {save}`, `SET_SETTINGS {settings}`, `PAUSE`, `RESUME`, `REQUEST_SAVE`.
+**Web → game:** `LOAD_CLOUD_SAVE {save}`, `SET_SETTINGS {settings}` (any subset of the settings, plus a transient `muted` the game never saves), `PAUSE`, `RESUME`, `REQUEST_SAVE`.
+
+Settings belong to the game (`user://settings.json`). The site keeps a mirror from `SETTINGS_UPDATED`, its settings page edits that mirror, and the launcher sends it with `SET_SETTINGS` before the engine starts, so the pause menu and the site never disagree for long.
 
 ### 4.2 Mechanism
 
@@ -236,7 +238,14 @@ Local save is always written first. Cloud is an asynchronous mirror and a failur
 
 ### 5.3 Embedding
 
-The `/play` page loads the engine script from the CDN and runs it on a `<canvas>` inside a launcher shell (loading bar from Godot's `onProgress`, error state, fullscreen button, mute, back to site). It does **not** use the exported `index.html`; it drives the `Engine` API directly. The game iframe/canvas gets focus on click; keyboard events are prevented from scrolling the page.
+The `/play` page loads the engine script from the build URL and runs it on a `<canvas>` inside a launcher shell (loading bar from Godot's `onProgress`, error and unsupported-browser states, fullscreen, mute, back to site). It does **not** use the exported `index.html`; it drives the `Engine` API directly (`apps/web/src/game/Launcher.tsx`):
+
+1. Install `window.TheMarginBridge` and queue `SET_SETTINGS` from the site's mirror.
+2. Fetch `build.json` (written by the export script: executable name, versions, file sizes for the progress bar).
+3. Load `<build>/index.js`, check `Engine.getMissingFeatures`, then `init` the engine, preload the pack to the fixed in-memory path `index.pck`, and `start` with `--main-pack index.pck`, so a build works from any URL.
+4. Resize policy 0: the launcher sizes the canvas in device pixels to fill the stage below its toolbar, and Godot integer-scales inside it. Fullscreen is requested on the stage, not by Godot.
+
+An engine can start only once per document, so every link to and from `/play` is a full page load. The canvas takes focus on start and again after toolbar clicks. The launcher also re-dispatches every game message as a `themargin:message` DOM event.
 
 ### 5.4 Browser verification
 

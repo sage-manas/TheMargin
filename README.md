@@ -8,13 +8,14 @@ A browser-playable 2D puzzle-adventure. You play a tiny ink character who discov
 
 ```text
 apps/game/          Godot 4.7 project (GDScript). The game.
+apps/web/           Next.js site: landing, the /play launcher, chapters, settings
 packages/contracts/ Zod schemas: bridge messages, save envelope (source of truth)
 tests/e2e/          Playwright tests against the real web export
 infrastructure/     Godot wrapper (test/export), static server for the export
 docs/               Product, game design, architecture, ADRs, status
 ```
 
-`apps/web` (Next.js) and `apps/api` (NestJS) arrive in Phases 5–6. See [ADR-0008](docs/architecture/decisions/README.md).
+`apps/api` (NestJS) arrives in Phase 6. See [ADR-0008](docs/architecture/decisions/README.md).
 
 ## Requirements
 
@@ -29,8 +30,12 @@ pnpm game:test        # Godot headless test suite (unit + real-physics playthrou
 pnpm game:export      # Web export to apps/game/build/web + artifact checks
 pnpm game:serve       # http://localhost:8060 — play the export in a browser
 pnpm test             # contract tests
-pnpm e2e              # Playwright: boot, full solution, reload persistence
+pnpm e2e              # Playwright: the game export, and the site launching it
+pnpm web:dev          # http://localhost:3000 — the site (run game:serve too for /play)
+pnpm web:lighthouse   # Lighthouse gate on a running site build (web:build && web:start)
 ```
+
+The site loads the game from `NEXT_PUBLIC_GAME_BUILD_URL` (a folder holding a web export and its `build.json`). Locally it defaults to `/game`, which Next.js proxies to `pnpm game:serve`. See `apps/web/.env.example`.
 
 To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5. To open a mechanic sandbox page directly (it never touches the save), run `godot --path apps/game -- --page=sb_mechanics` (crates and panel words), `--page=sb_weight` (pressure plates), `--page=sb_platforms` (moving platforms), `--page=sb_eraser`, `--page=sb_ink`, or `--page=sb_music` (chapter music and ducking).
 

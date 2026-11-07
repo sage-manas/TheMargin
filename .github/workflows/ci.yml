@@ -22,6 +22,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm --filter @the-margin/contracts test
+      - run: pnpm --filter @the-margin/web test
 
   game:
     runs-on: ubuntu-latest
@@ -67,9 +68,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @the-margin/e2e exec playwright install --with-deps chromium firefox
       # Firefox runs headed inside a virtual display; see playwright.config.ts.
+      # Playwright also builds and starts the site (apps/web) for web.spec.ts.
       - run: xvfb-run -a pnpm e2e
         env:
           E2E_HEADED: "1"
+      # Phase 5 exit bar: Lighthouse >= 90 for performance and accessibility
+      # on the landing page, against the production build the e2e just made.
+      - name: Lighthouse (landing page)
+        run: |
+          pnpm --filter @the-margin/web start > /tmp/web.log 2>&1 &
+          for i in $(seq 60); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 1; done
+          node infrastructure/scripts/lighthouse.mjs http://localhost:3000/ 90
       - uses: actions/upload-artifact@v4
         if: always()
         with:

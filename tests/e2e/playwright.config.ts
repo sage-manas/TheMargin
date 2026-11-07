@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 8060;
+const WEB_PORT = 3000;
 
 export default defineConfig({
   testDir: "./specs",
@@ -13,11 +14,20 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: `node ../../infrastructure/scripts/serve-game.mjs ../../apps/game/build/web ${PORT}`,
-    port: PORT,
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: `node ../../infrastructure/scripts/serve-game.mjs ../../apps/game/build/web ${PORT}`,
+      port: PORT,
+      reuseExistingServer: true,
+    },
+    // The site (specs/web.spec.ts). Its /game path proxies to the server above.
+    {
+      command: "pnpm --filter @the-margin/web build && pnpm --filter @the-margin/web start",
+      port: WEB_PORT,
+      reuseExistingServer: true,
+      timeout: 240_000,
+    },
+  ],
   projects: [
     // WebGL in headless Chromium needs a software GL backend on CI machines.
     { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 }, launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } } },

@@ -52,3 +52,10 @@ Each record lists its context, the decision, the alternatives considered, the re
 - **Context:** No licensed assets exist yet, and the brief forbids unlicensed fonts, SFX and art.
 - **Decision:** Sprites are authored as text grids in code, the 5×7 font is original, and SFX are synthesised at boot.
 - **Consequences:** Zero licensing risk and a tiny `.pck`. The art and audio pass in Phase 7 replaces them through the same interfaces (`Sprites`, `Audio.play(name)`).
+
+## ADR-0010: The site is lean Next.js with plain CSS, and the launcher owns the canvas
+- **Context:** Phase 5 must hit Lighthouse ≥ 90 for performance and accessibility on the landing page and launch the game reliably in three browsers. React and Next.js alone are about 520 KB of uncompressed JavaScript before any of our code.
+- **Decision:** Next.js 16 (App Router, Turbopack) with static pages and one global stylesheet using the game's palette (text colours darkened to pass WCAG AA). No CSS framework, web fonts or images: the hero illustration is inline SVG. Pages that only display progress read the save with small type guards and import `@the-margin/contracts/chapters` and `/keys`, so Zod (about 60 KB) ships only where messages and settings are validated (`/play`, `/settings`). The launcher drives Godot's `Engine` API with resize policy 0 and a fixed in-memory pack path, reading `build.json` beside the export.
+- **Alternatives:** Tailwind or a component library (more CSS and JS for a handful of pages); embedding the exported `index.html` in an iframe (simpler, but the bridge, focus, sizing and fullscreen would all cross a frame boundary, and the save's origin would be the build's, not the site's); Godot's full-window resize policy (it would cover the toolbar).
+- **Consequences:** Lighthouse measured performance 98–100 and accessibility 100 on the landing page. `/play` must always be reached by a full page load. The game's save stays on the site's origin wherever the build is hosted, so the site can read it. A CDN on another origin needs CORS on the build files (Phase 8).
+

@@ -15,6 +15,7 @@ const INCOMING := ["LOAD_CLOUD_SAVE", "SET_SETTINGS", "PAUSE", "RESUME", "REQUES
 var available := false
 var _bridge: JavaScriptObject
 var _deliver_cb: JavaScriptObject
+var _settings_queued := false
 
 
 func _ready() -> void:
@@ -27,18 +28,31 @@ func _ready() -> void:
 	_deliver_cb = JavaScriptBridge.create_callback(_on_deliver)
 	_bridge.deliver = _deliver_cb
 	available = true
+	Settings.changed.connect(_send_settings)
 	var queued: Variant = JavaScriptBridge.eval("JSON.stringify((window.TheMarginBridge._inbox || []).splice(0))", true)
 	if queued is String:
 		var list: Variant = JSON.parse_string(queued)
 		if list is Array:
 			for raw: Variant in list:
 				_handle(raw if raw is String else JSON.stringify(raw))
+	_send_settings()
 
 
 func send(type: String, payload: Dictionary = {}) -> void:
 	if not available:
 		return
 	_bridge.onGameMessage(JSON.stringify({"v": PROTOCOL, "type": type, "payload": payload}))
+
+
+## The host mirrors the settings so its settings page shows what the game has.
+## Several changes in one frame are sent once.
+func _send_settings() -> void:
+	if _settings_queued:
+		return
+	_settings_queued = true
+	await get_tree().process_frame
+	_settings_queued = false
+	send("SETTINGS_UPDATED", {"settings": Settings.to_dict()})
 
 
 func _on_deliver(args: Array) -> void:

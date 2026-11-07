@@ -6,6 +6,7 @@ import { z } from "zod";
 export const SAVE_SCHEMA_TAG = "the-margin.save";
 export const SAVE_VERSION = 1;
 export const MAX_SAVE_BYTES = 65536;
+export { LOCAL_SAVE_KEY } from "./keys.ts";
 
 const pageId = z.string().regex(/^ch\d\d_p\d\d$/);
 const wordId = z.string().regex(/^[A-Z]{1,12}$/);

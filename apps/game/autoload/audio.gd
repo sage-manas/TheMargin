@@ -79,6 +79,7 @@ func _ensure_bus(bus_name: String) -> int:
 
 
 func _apply_volumes() -> void:
+	AudioServer.set_bus_mute(0, Settings.muted)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(Settings.master_volume, 0.0001)))
 	AudioServer.set_bus_volume_db(_sfx_bus, linear_to_db(maxf(Settings.sfx_volume, 0.0001)))
 	AudioServer.set_bus_volume_db(_music_bus, linear_to_db(maxf(Settings.music_volume, 0.0001)))

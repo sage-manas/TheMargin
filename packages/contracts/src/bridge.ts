@@ -2,6 +2,7 @@
 // `{ v: 1, type, payload }`. Mirrors apps/game/autoload/web_bridge.gd.
 import { z } from "zod";
 import { SaveSchema } from "./save.ts";
+import { SettingsPatchSchema, SettingsSchema } from "./settings.ts";
 
 export const BRIDGE_PROTOCOL = 1;
 
@@ -16,6 +17,8 @@ export const GameToWebSchema = z.discriminatedUnion("type", [
   envelope("SAVE_UPDATED", z.object({ save: SaveSchema })),
   envelope("PAGE_COMPLETED", z.object({ pageId: z.string() })),
   envelope("CHAPTER_COMPLETED", z.object({ chapterId: z.string() })),
+  // Sent once the bridge is up and whenever the settings change in the game.
+  envelope("SETTINGS_UPDATED", z.object({ settings: SettingsSchema })),
   envelope("ACHIEVEMENT_UNLOCKED", z.object({ code: z.string().regex(/^[A-Z0-9_]{1,40}$/) })),
   envelope("GAME_EXITED", z.object({})),
   envelope("GAME_ERROR", z.object({ message: z.string() })),
@@ -23,7 +26,7 @@ export const GameToWebSchema = z.discriminatedUnion("type", [
 
 export const WebToGameSchema = z.discriminatedUnion("type", [
   envelope("LOAD_CLOUD_SAVE", z.object({ save: SaveSchema })),
-  envelope("SET_SETTINGS", z.object({ settings: z.record(z.string(), z.unknown()) })),
+  envelope("SET_SETTINGS", z.object({ settings: SettingsPatchSchema })),
   envelope("PAUSE", z.object({})),
   envelope("RESUME", z.object({})),
   envelope("REQUEST_SAVE", z.object({})),

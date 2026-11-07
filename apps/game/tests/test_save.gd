@@ -74,3 +74,13 @@ func test_corrupt_save_falls_back_to_backup(t) -> void:
 	for file in DirAccess.get_files_at("user://"):
 		if file.contains(".corrupt-"):
 			DirAccess.remove_absolute("user://" + file)
+
+
+func test_completed_chapter_is_recorded_once(t) -> void:
+	var before: Dictionary = GameState.save
+	GameState.new_game()
+	GameState.complete_chapter("ch01")
+	GameState.complete_chapter("ch01")
+	t.eq(GameState.save["progress"]["completedChapters"], ["ch01"], "recorded once")
+	t.eq(SaveManager.validate(GameState.save), "", "still validates")
+	GameState.use_save(before)

@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-07: Phase 4 pages 1.6–1.8 (Chapter 1 content complete)._
+_Last updated: 2026-11-07: browser e2e reaches the Chapter 1 finale; finishing the chapter is now recorded._
 
 ## Current phase
 
@@ -11,7 +11,7 @@ _Last updated: 2026-11-07: Phase 4 pages 1.6–1.8 (Chapter 1 content complete).
 | Implemented | ✅ | ✅ (sandbox pages `sb_mechanics`, `sb_weight`, `sb_platforms`, `sb_eraser`, `sb_ink`, `sb_music`) | ✅ (`ch01_p03`–`ch01_p05`, reached from page 1.2) | ✅ (`ch01_p06`–`ch01_p08`; the end card follows 1.8) |
 | Automated tests (Godot headless) | ✅ | ✅ 42 tests | ✅ 7 tests, including each page solved through real physics (75 total) | ✅ 8 tests, including each page solved through real physics (83 total) |
 | Browser-tested, Chromium + Firefox (Windows, 2026-11-02) | ✅ 6/6 | Not yet (sandbox pages aren't reachable from the title) | Firefox: on CI (PR #7 green) | Firefox: on the PR's CI |
-| Browser-tested, Chromium + WebKit (macOS, 2026-11-07) | ✅ 8/8 | n/a | Arrival on 1.3 only (the e2e solves page 1 and lets page 2 turn itself) | Not reached by the e2e (headless real-physics solutions only) |
+| Browser-tested, Chromium + WebKit (macOS, 2026-11-07) | ✅ 10/10 | n/a | Arrival on 1.3 only (the e2e solves page 1 and lets page 2 turn itself) | 1.8 only, from a seeded save: erasure, L's ride and the end card ✅ |
 | Human playtest | ❌ Required (Risk R1, R2) | ❌ | ❌ | ❌ |
 | Production-deployed | ❌ (Phase 8–9) | ❌ | ❌ | ❌ |
 
@@ -79,19 +79,24 @@ _Last updated: 2026-11-07: Phase 4 pages 1.6–1.8 (Chapter 1 content complete).
   - **Fixed: saved panel positions were checked one at a time,** so a panel saved where another one *started* (1.7's R over V, 1.8's L in the erased room) was refused on reload and Nib was sent back to the spawn. Lasting erasures and their respawn now apply first, then all saved positions together; if any clash, all start over.
   - 8 headless tests: the chapter runs 1.1→1.8; each new page solved with real walking and hopping; 1.6's ledge needs the bubble and its word is only reachable from on top; 1.7 and 1.8 restore their saved positions; the erasure waits for Nib and is re-applied instantly on load. Page validation covers fallen bubbles, erased panels and erase targets (fixed, holding nothing the page needs, with a respawn in a room that stays). The capture tool renders the new pages and the erasure mid-rub.
 
+- **Phase 4 (2026-11-07): the finale in a real browser.** PR #8 (pages 1.6–1.8) merged with green CI, including Firefox.
+  - **Fixed: finishing Chapter 1 was never recorded.** The end card showed, but `progress.completedChapters` stayed empty and `CHAPTER_COMPLETED` (in the bridge contract since Phase 1) was never sent. Cloud conflict resolution scores a finished chapter at 1000 against 10 per page (SAVE_SCHEMA §5), so this had to be in place before Phase 6. The end now records the page's chapter (`GameState.complete_chapter`, idempotent) and sends `CHAPTER_COMPLETED {chapterId}` before the save is committed. Sandbox pages (chapter `sandbox`) never do.
+  - **New e2e: "the finale erases the first room and ends the chapter".** It seeds a save at 1.8 through the `localStorage` mirror, then in the browser walks next door, waits for the erasure, drags L up into the space, walks in, rides L down and leaves through the door. It checks L's saved positions, `PAGE_COMPLETED`, `CHAPTER_COMPLETED` and `completedChapters: ["ch01"]`. The e2e's `requestSave` helper is now shared.
+  - 1 new headless test (a chapter is recorded once and the save still validates).
+
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 83 passed |
+| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 84 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge) | `pnpm --filter @the-margin/contracts test` | 8 passed |
-| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 4/4, WebKit 4/4 on macOS (2026-11-07 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS) | Chromium 5/5, WebKit 5/5 on macOS (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
 1. The `localStorage` mirror is unavailable when a browser blocks site storage (some private modes). The game still plays, with the old IndexedDB-only behaviour.
 2. Placeholder-grade art and synthesised audio. Only Chapter 1 has music; the title screen plays only room tone. The music isn't cached between sessions, so it is rebuilt on every boot (caching the rendered loop in `user://` is a possible optimisation).
-3. Only Chapter 1 is in the story; the end card follows page 1.8. The browser e2e reaches page 1.3 only; pages 1.3–1.8 are covered by headless real-physics solutions.
+3. Only Chapter 1 is in the story; the end card follows page 1.8. The browser e2e plays pages 1.1–1.2 and 1.8 (from a seeded save); 1.3–1.7 are covered by headless real-physics solutions only.
 4. A crate can't carry another crate (a rising crate stops under one), so stacked crates don't add weight to a plate. LIGHT has no effect on panels yet. Plates have no puzzle on a story page yet.
 5. Captions that hold words can't be rewritten by story actions (validated by `test_pages`).
 6. The sandbox page can only be opened from the command line or editor, not from the web build.
@@ -112,6 +117,6 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 
 1. **Playtest the whole of Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). This is now the Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also measure the time to the first slide, whether players discover bold words unaided, whether 1.4's "the word that freed the room is the key" lands, whether 1.7's lend-a-word step is found (known issue 13), and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
 2. Merge this branch once CI, including Firefox, is green.
-3. Extend the browser e2e beyond page 1.3, at least as far as a saved-state jump to 1.8 to check the erasure and the end card in a real browser.
-4. Decide how multi-word captions are reached (known issue 11) before a page needs one.
-5. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.
+3. Decide how multi-word captions are reached (known issue 11) before a page needs one.
+4. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.
+5. Phase 5 can start alongside the playtest, since it doesn't depend on Chapter 2: scaffold `apps/web` (Next.js) with the landing page and the `/play` launcher's bridge adapter (backlog 27). The chapter list can now read `completedChapters`.

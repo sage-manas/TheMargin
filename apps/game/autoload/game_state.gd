@@ -53,6 +53,14 @@ func complete_page(page_id: String) -> void:
 		done.append(page_id)
 
 
+## Records a finished chapter. Cloud conflict resolution weighs chapters
+## above pages (SAVE_SCHEMA §5), so this must land before the end card.
+func complete_chapter(chapter_id: String) -> void:
+	var done: Array = save["progress"]["completedChapters"]
+	if not done.has(chapter_id):
+		done.append(chapter_id)
+
+
 func page_state(page_id: String) -> Dictionary:
 	return save["pages"].get(page_id, {})
 

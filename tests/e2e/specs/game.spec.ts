@@ -79,10 +79,10 @@ async function walkAndInteract(page: Page, label: string, done: (s: Save) => boo
   throw new Error(`Interaction never happened: ${label}`);
 }
 
-async function drag(page: Page, from: [number, number], to: [number, number]): Promise<void> {
+async function drag(page: Page, from: [number, number], to: [number, number], steps = 12): Promise<void> {
   await page.mouse.move(from[0] * S, from[1] * S);
   await page.mouse.down();
-  await page.mouse.move(to[0] * S, to[1] * S, { steps: 12 });
+  await page.mouse.move(to[0] * S, to[1] * S, { steps });
   await page.mouse.up();
   await page.waitForTimeout(250);
 }
@@ -96,6 +96,20 @@ async function newGame(page: Page): Promise<void> {
   await page.keyboard.press("Enter");
   await waitFor(page, (m) => m.type === "GAME_STARTED");
   await page.waitForTimeout(400);
+}
+
+async function requestSave(page: Page): Promise<Save | undefined> {
+  await page.evaluate(() => {
+    const b = (window as unknown as { TheMarginBridge: { deliver: (j: string) => void } }).TheMarginBridge;
+    b.deliver(JSON.stringify({ v: 1, type: "REQUEST_SAVE", payload: {} }));
+  });
+  await page.waitForTimeout(300);
+  return lastSave(page);
+}
+
+/** Starts the browser with a save already in the localStorage mirror. */
+async function seedSave(page: Page, save: Save): Promise<void> {
+  await page.addInitScript((text) => window.localStorage.setItem("the-margin.save_main", text), JSON.stringify(save));
 }
 
 test.beforeEach(async ({ page }) => {
@@ -191,14 +205,7 @@ test("progress survives a browser reload", async ({ page }, info) => {
 test("keyboard panel mode moves a panel without moving Nib", async ({ page }) => {
   await boot(page);
   await newGame(page);
-  const requestSave = () =>
-    page.evaluate(() => {
-      const b = (window as unknown as { TheMarginBridge: { deliver: (j: string) => void } }).TheMarginBridge;
-      b.deliver(JSON.stringify({ v: 1, type: "REQUEST_SAVE", payload: {} }));
-    });
-  await requestSave();
-  await page.waitForTimeout(300);
-  const before = (await lastSave(page))?.player.position;
+  const before = (await requestSave(page))?.player.position;
 
   // Q selects P3 (the only lifted panel); S slides it one grid step at a time.
   await page.keyboard.press("q");
@@ -209,10 +216,63 @@ test("keyboard panel mode moves a panel without moving Nib", async ({ page }) =>
   await page.keyboard.press("q"); // put it down
   await waitFor(page, (m) => m.type === "ACHIEVEMENT_UNLOCKED" && m.payload.code === "FIRST_SLIDE", 8000);
 
-  await requestSave();
-  await page.waitForTimeout(300);
-  const save = await lastSave(page);
+  const save = await requestSave(page);
   expect(save?.pages.ch01_p01.panels.p3).toEqual([416, 40]);
   // While a panel is selected the direction keys belong to the panel, not to Nib.
   expect(save?.player.position).toEqual(before);
+});
+
+// Pages 1.3–1.7 are solved headlessly (test_chapter1.gd); this jumps to the
+// finale through a saved state to check the erasure and the end card in a
+// real browser.
+test("the finale erases the first room and ends the chapter", async ({ page }, info) => {
+  const pages = ["ch01_p01", "ch01_p02", "ch01_p03", "ch01_p04", "ch01_p05", "ch01_p06", "ch01_p07"];
+  await seedSave(page, {
+    schema: "the-margin.save",
+    version: 1,
+    revision: 1,
+    updatedAt: "2026-11-07T00:00:00Z",
+    playtimeSec: 0,
+    progress: { chapter: "ch01", page: "ch01_p08", completedPages: pages, completedChapters: [], abilities: [], flags: {} },
+    player: { position: null, carrying: null },
+    pages: {},
+  });
+  await boot(page);
+  const ready = (await messages(page)).find((m) => m.type === "GAME_READY");
+  expect(ready?.type === "GAME_READY" && ready.payload.hasSave).toBe(true);
+  await page.mouse.click(20, 20);
+  await page.keyboard.press("Enter"); // CONTINUE
+  const started = await waitFor(page, (m) => m.type === "GAME_STARTED");
+  expect(started.type === "GAME_STARTED" && started.payload.pageId).toBe("ch01_p08");
+  await page.waitForTimeout(400);
+
+  // Walk next door; the artist rubs out the little room behind Nib.
+  await hold(page, "d", 2600);
+  await waitFor(page, (m) => m.type === "SAVE_UPDATED" && (m.payload.save.pages.ch01_p08?.fired.includes("from_the_top") ?? false), 8000);
+  await page.waitForTimeout(3000); // the rub, then the artist's and narrator's lines
+  await page.screenshot({ path: info.outputPath("page8-erased.png") });
+
+  // L (centre 112,272) rises into the space the room left.
+  await drag(page, [112, 272], [112, 88], 40);
+  expect((await requestSave(page))?.pages.ch01_p08.panels.l).toEqual([16, 16]);
+
+  // Walk into L and ride it down to the exit row.
+  await hold(page, "a", 1800);
+  await page.waitForTimeout(300);
+  const inL = (await requestSave(page))?.player.position;
+  expect(inL?.[0]).toBeLessThan(200);
+  await drag(page, [112, 88], [112, 272], 40);
+  expect((await requestSave(page))?.pages.ch01_p08.panels.l).toEqual([16, 200]);
+  await page.screenshot({ path: info.outputPath("page8-rode-down.png") });
+
+  // Out through the door: the chapter ends.
+  await page.keyboard.down("d");
+  await waitFor(page, (m) => m.type === "PAGE_COMPLETED" && m.payload.pageId === "ch01_p08", 10_000);
+  await page.keyboard.up("d");
+  await waitFor(page, (m) => m.type === "CHAPTER_COMPLETED" && m.payload.chapterId === "ch01", 5000);
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: info.outputPath("end-card.png") });
+  const save = await lastSave(page);
+  expect(save?.progress.completedPages).toContain("ch01_p08");
+  expect(save?.progress.completedChapters).toEqual(["ch01"]);
 });

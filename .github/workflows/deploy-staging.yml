@@ -1,0 +1,82 @@
+# Staging: the API on Fly.io (migrated and seeded on release), then the site
+# on Vercel with the game export bundled at /game (ADR-0012, docs/DEPLOY.md).
+# Runs after CI passes on main, or by hand.
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  api:
+    # Off until the one-time setup is done (docs/DEPLOY.md sets STAGING_URL last).
+    if: vars.STAGING_URL != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy . --config apps/api/fly.toml --dockerfile apps/api/Dockerfile --remote-only --wait-timeout 300
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  web:
+    needs: api
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - name: Install pinned Godot + web export templates
+        run: |
+          V=$(cat .godot-version)
+          curl -sSLo godot.zip "https://github.com/godotengine/godot/releases/download/${V}/Godot_v${V}_linux.x86_64.zip"
+          unzip -q godot.zip && mv "Godot_v${V}_linux.x86_64" /usr/local/bin/godot
+          curl -sSLo templates.tpz "https://github.com/godotengine/godot/releases/download/${V}/Godot_v${V}_export_templates.tpz"
+          DEST="$HOME/.local/share/godot/export_templates/${V/-/.}"
+          mkdir -p "$DEST"
+          unzip -q -j templates.tpz 'templates/web_nothreads_*' 'templates/version.txt' -d "$DEST"
+          rm templates.tpz godot.zip
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Export the game into the site
+        run: |
+          GODOT=godot node infrastructure/scripts/godot.mjs export
+          mkdir -p apps/web/public/game
+          cp -R apps/game/build/web/. apps/web/public/game/
+          rm -f apps/web/public/game/*.import apps/web/public/game/index.html
+      - run: npm install -g vercel@65.12.1
+      - name: Build and deploy to Vercel (production of the staging project)
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          vercel build --prod --token "$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+
+  smoke:
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - run: node infrastructure/scripts/smoke.mjs "${{ vars.STAGING_URL }}"

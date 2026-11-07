@@ -59,4 +59,5 @@ A/D walk · Space hop · E take/place words · X erase · C trace in ink · drag
 - [Game design](docs/game-design/GDD.md) · [state diagrams](docs/game-design/STATE_DIAGRAMS.md)
 - [Technical design](docs/architecture/TDD.md) · [database](docs/architecture/DATABASE.md) · [save schema](docs/architecture/SAVE_SCHEMA.md) · [API contract](docs/api/API_CONTRACT.md)
 - [Roadmap and backlog](docs/ROADMAP.md) · [risks](docs/RISKS.md) · [decisions](docs/architecture/decisions/README.md)
+- [Deploying staging](docs/DEPLOY.md)
 - [Project status](docs/PROJECT_STATUS.md) · [asset licences](docs/ASSETS.md)

@@ -1,0 +1,16 @@
+# Only the API is built into an image; keep its context small.
+.git
+**/node_modules
+**/dist
+**/.next
+apps/game
+apps/web/src
+apps/web/public
+apps/api/src/generated
+tests/e2e/specs
+tests/e2e/test-results
+docs
+infrastructure
+.tools
+**/.env
+**/.env.*

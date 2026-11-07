@@ -27,6 +27,8 @@ var master_volume := 0.8
 var sfx_volume := 1.0
 var music_volume := 0.6
 var reduced_motion := false
+## Set by the web launcher's mute button. Never saved, so a reload unmutes.
+var muted := false
 
 
 func _ready() -> void:
@@ -62,6 +64,8 @@ func apply_dict(d: Dictionary) -> void:
 	music_volume = _vol(d.get("musicVolume"), music_volume)
 	if d.get("reducedMotion") is bool:
 		reduced_motion = d["reducedMotion"]
+	if d.get("muted") is bool:
+		muted = d["muted"]
 	changed.emit()
 
 

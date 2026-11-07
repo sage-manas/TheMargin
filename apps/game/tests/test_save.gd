@@ -84,3 +84,11 @@ func test_completed_chapter_is_recorded_once(t) -> void:
 	t.eq(GameState.save["progress"]["completedChapters"], ["ch01"], "recorded once")
 	t.eq(SaveManager.validate(GameState.save), "", "still validates")
 	GameState.use_save(before)
+
+
+## The launcher's mute is transient: it applies but is never written out.
+func test_mute_is_never_saved(t) -> void:
+	Settings.apply_dict({"muted": true})
+	t.ok(Settings.muted, "muted")
+	t.ok(not Settings.to_dict().has("muted"), "not in the saved settings")
+	Settings.apply_dict({"muted": false})

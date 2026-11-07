@@ -1,7 +1,7 @@
 {
   "name": "the-margin",
   "private": true,
-  "description": "THE MARGIN — Escape the drawing.",
+  "description": "THE MARGIN \u2014 Escape the drawing.",
   "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=22.6"
@@ -12,6 +12,10 @@
     "game:test": "node infrastructure/scripts/godot.mjs test",
     "game:export": "node infrastructure/scripts/godot.mjs export",
     "game:serve": "node infrastructure/scripts/serve-game.mjs",
-    "e2e": "pnpm --filter @the-margin/e2e test"
+    "e2e": "pnpm --filter @the-margin/e2e test",
+    "web:dev": "pnpm --filter @the-margin/web dev",
+    "web:build": "pnpm --filter @the-margin/web build",
+    "web:start": "pnpm --filter @the-margin/web start",
+    "web:lighthouse": "node infrastructure/scripts/lighthouse.mjs"
   }
 }

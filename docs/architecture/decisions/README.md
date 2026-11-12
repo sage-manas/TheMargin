@@ -9,11 +9,12 @@ Each record lists its context, the decision, the alternatives considered, the re
 - **Reasoning:** A 2D puzzle game has no CPU-bound workload that needs threads.
 - **Consequences:** Audio goes through the AudioWorklet fallback, which is fine for SFX. Hosting stays simple. Revisit only if profiling shows main-thread audio stalls.
 
-## ADR-0002: 640×360 base resolution, viewport stretch, integer scaling
+## ADR-0002: 640×360 base resolution, viewport stretch, integer scaling (rendering superseded by ADR-0013)
 - **Context:** The pixel art must stay crisp, and one comic page must fit on one screen with legible 5×7 lettering.
 - **Decision:** Render at 640×360, `stretch_mode=viewport`, `scale_mode=integer`, nearest filtering, pixel snapping, letterboxed on paper colour.
 - **Alternatives:** 480×270 (too cramped for lettering); 320×180 (pages become unreadable); `canvas_items` stretch (allows sub-pixel and mixed pixel sizes).
 - **Consequences:** At window sizes between integer multiples there is a border. That's acceptable and on-theme (it's the page margin).
+- **Superseded (2026-11-12):** the 640×360 page grid stays, as page units for layout and physics, but rendering moved to full resolution with vector ink. See ADR-0013.
 
 ## ADR-0003: Pages are JSON data built at runtime
 - **Context:** Puzzles must be configurable, testable and extensible, not ad-hoc scripts.
@@ -52,6 +53,7 @@ Each record lists its context, the decision, the alternatives considered, the re
 - **Context:** No licensed assets exist yet, and the brief forbids unlicensed fonts, SFX and art.
 - **Decision:** Sprites are authored as text grids in code, the 5×7 font is original, and SFX are synthesised at boot.
 - **Consequences:** Zero licensing risk and a tiny `.pck`. The art and audio pass in Phase 7 replaces them through the same interfaces (`Sprites`, `Audio.play(name)`).
+- **Update (ADR-0013):** the text-grid sprites and the 5×7 bitmap font were replaced by vector figures (`Figures`) and an original stroke lettering font (`ComicFont`), still authored in code, so the licensing position is unchanged.
 
 ## ADR-0010: The site is lean Next.js with plain CSS, and the launcher owns the canvas
 - **Context:** Phase 5 must hit Lighthouse ≥ 90 for performance and accessibility on the landing page and launch the game reliably in three browsers. React and Next.js alone are about 520 KB of uncompressed JavaScript before any of our code.
@@ -70,4 +72,10 @@ Each record lists its context, the decision, the alternatives considered, the re
 - **Decision:** The site runs on Vercel and proxies `/v1/*` to the API on Fly.io (one container, Singapore), which uses Neon Postgres in the same region over a direct connection. The deploy copies the game export into `apps/web/public/game`, so Vercel serves it same-origin as part of the deployment. Deploys run from GitHub Actions after CI passes on `main`: API first (migrate and seed in Fly's release command), then the site, then a smoke test.
 - **Alternatives:** S3 + CloudFront for builds (immutable caching and independent rollbacks, but an AWS account, IAM, CORS for every file and a second deploy step); a separate Fly app serving builds (cross-origin again); App Runner + RDS (more setup and cost for a staging environment); calling the API directly with `SameSite=None` cookies (third-party cookies, which Safari blocks).
 - **Consequences:** One origin, so no CORS, first-party cookies, and the save stays on the site's origin. Site and game deploy and roll back together, so `NEXT_PUBLIC_GAME_BUILD_URL` is kept for a CDN later. Vercel Hobby's 100 MB file limit fits the 38 MB engine, but Hobby is non-commercial. Game files revalidate rather than cache immutably. The API trusts two proxy hops for client IPs, which a direct caller can spoof until the API is reachable only through the site (DEPLOY.md).
+
+## ADR-0013: Hand-inked vector art at full resolution
+- **Context:** Playtesting feedback: in the pixel art, props and scenes were often not understandable. Nib was an 8×13-pixel sprite in rooms of roughly 190×130, decoration had the same weight as the things the player could use, and movable panels were marked only by a thin shadow. The game is about comics, which are ink line art, not pixels.
+- **Decision:** Keep the 640×360 page as the coordinate system ("page units") for layout, physics and save data, so every puzzle and test stays valid. Render with `stretch_mode=canvas_items`, `aspect=keep` and `scale_mode=fractional`, with linear filtering and no pixel snapping, so everything is drawn at the window's resolution (one unit is two pixels at 720p and three at 1080p). All art is antialiased vector drawing through one kit (`Ink`), characters are `Figures`, and lettering is `ComicFont`, an original single-stroke font with the old metrics. Shaders (paper, halftone, page turn) work in continuous page units, edged per screen pixel. Line weight carries meaning: heavy ink for what can be used or moves, thin grey for scenery (GDD §9).
+- **Alternatives:** cleaner, bigger pixel art (cheaper, but the grid still limits detail and lettering); raising the base resolution (every page's data, physics constants and tests would change); imported bitmap art (licensing ledger, and a much larger download).
+- **Consequences:** Crisp, readable art at any window size with no change to page data or the save format. More draw calls per page (strokes rather than a few textures), still within the < 150 budget's spirit for Chapter 1 pages but to be profiled in Phase 8. 2D MSAA isn't available in the Compatibility renderer, so edges rely on antialiased strokes. Browser tests that map page units to screen pixels use the fitted, possibly fractional, scale.
 

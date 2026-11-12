@@ -8,7 +8,7 @@ extends Node2D
 ## its bottom-left corner, and its size is fixed at the widest its words can
 ## make it, so swapping a word never moves the ground under Nib.
 
-const PAD := Vector2i(4, 4)
+const PAD := Vector2(4, 4)
 ## Nib, plus the carried word floating over their head.
 const PROMPT_ABOVE_NIB := 30.0
 
@@ -45,7 +45,7 @@ func setup(def: Dictionary, speaker_node: Node2D) -> void:
 
 
 func _text_height() -> float:
-	return _text.lines.size() * PixelFont.LINE_HEIGHT + PAD.y * 2 - 2
+	return _text.lines.size() * ComicFont.LINE_HEIGHT + PAD.y * 2 - 2
 
 
 ## The fallen bubble's footprint, in page coordinates.
@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var bob := 0.0 if Settings.reduced_motion else roundf(sin(_time * 4.0) * 0.6)
+	var bob := 0.0 if Settings.reduced_motion else sin(_time * 4.0) * 0.6
 	if fallen:
 		_draw_fallen(bob)
 		return
@@ -86,20 +86,22 @@ func _draw() -> void:
 	var target := speaker.position + Vector2(0, -24) - position
 	var tx := clampf(target.x, 6.0, size.x - 6.0)
 	var base_y := size.y - 1
-	var head := (Vector2(tx, base_y) + (target - Vector2(tx, base_y)).limit_length(12.0)).round()
-	draw_colored_polygon(PackedVector2Array([Vector2(tx - 3, base_y), Vector2(tx + 3, base_y), head]), Palette.BUBBLE)
-	Ink.line(self, Vector2i(int(tx - 3), int(base_y)), Vector2i(head), Palette.INK)
-	Ink.line(self, Vector2i(int(tx + 3), int(base_y)), Vector2i(head), Palette.INK)
-	Ink.rounded_box(self, rect, Palette.BUBBLE)
-	draw_rect(Rect2(tx - 2, base_y, 5, 1), Palette.BUBBLE)
+	var head := Vector2(tx, base_y) + (target - Vector2(tx, base_y)).limit_length(12.0)
+	# A curved tail, the way a letterer pulls it from the balloon.
+	var mid := Vector2(tx, base_y).lerp(head, 0.5) + Vector2(1.5, 0)
+	var tail := PackedVector2Array([Vector2(tx - 3.5, base_y), mid + Vector2(-1, 0), head, mid + Vector2(1.5, -1), Vector2(tx + 3.5, base_y)])
+	draw_colored_polygon(tail, Palette.BUBBLE)
+	Ink.stroke(self, tail, Palette.INK, 1.0)
+	Ink.rounded_box(self, rect, Palette.BUBBLE, Palette.INK, 5.0, 1.0)
+	draw_rect(Rect2(tx - 2.6, base_y - 1.2, 5.2, 2.0), Palette.BUBBLE)
 	_text.draw(self, Vector2(PAD), bob)
 
 
 ## Lying on its side: the tail, pointing at nobody, flat on the floor.
 func _draw_fallen(bob: float) -> void:
-	var y := _size.y - 1
-	draw_colored_polygon(PackedVector2Array([Vector2(8, y - 4), Vector2(8, y), Vector2(-10, y)]), Palette.BUBBLE)
-	Ink.line(self, Vector2i(8, int(y) - 4), Vector2i(-10, int(y)), Palette.INK)
-	draw_rect(Rect2(-10, y, 18, 1), Palette.INK)
-	Ink.rounded_box(self, Rect2(Vector2.ZERO, _size), Palette.BUBBLE)
+	var y := _size.y - 0.5
+	var tail := PackedVector2Array([Vector2(8, y - 4), Vector2(-10, y), Vector2(8, y)])
+	draw_colored_polygon(tail, Palette.BUBBLE)
+	Ink.stroke(self, tail, Palette.INK, 1.0)
+	Ink.rounded_box(self, Rect2(Vector2.ZERO, _size), Palette.BUBBLE, Palette.INK, 5.0, Ink.W_THING)
 	_text.draw(self, Vector2(PAD), bob)

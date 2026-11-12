@@ -205,11 +205,18 @@ Page 1.2 no longer ends the build: after the artist writes WHO MOVED MY PANELS? 
 
 ## 9. Visual direction (summary; technical rules are in the TDD)
 
-- **Base resolution 640×360**, integer-scaled. One page fills one screen, and the camera never scrolls within a page.
-- **Ink:** near-black blue `#1d1b26`. Borders are 2 px; loose segments are 4 px on, 3 px off.
+- **Hand-inked, not pixel art (ADR-0013).** A page is 640×360 units drawn at full screen resolution with antialiased ink strokes, like a printed comic. One page fills one screen, and the camera never scrolls within a page.
+- **Read the puzzle first.** Line weight says what matters:
+  - *Heavy ink* (1.5–2 units, full colour) for everything Nib can use or that moves: Nib, crates, doors, plates, planks, panel borders, ground.
+  - *Thin grey lines and muted colour* for scenery: furniture, windows, frames, plants. Scenery never looks usable.
+  - *Red* means "the reader can act here": loose words, an empty word tag (red dashed outline), the panel or tag in reach.
+- **Movable panels say so.** A lifted panel casts a shadow and carries chevrons on its edges pointing the way it slides (red under the hand). Its whole lane, everywhere it can go, is dashed faintly on the page. A pinned panel lies flat with no chevrons.
+- **Every label is the same tag.** A paper tag with the word in bold, hung on the thing it labels. An empty tag shows a red dashed outline and a blank line: a word goes here.
+- **Ink:** near-black blue `#1d1b26`. Borders are 2 units; loose (unlinked) openings are dashed. A linked opening becomes a short inked corridor across the gutter.
 - **Paper:** warm cream with fibre noise. Panel interiors use Ben-Day halftone dots for shading.
-- **Pencil:** graphite grey, 1 px.
-- **Lettering:** an original 5×7 uppercase pixel font (comics are lettered in capitals). Bold = emphasis = loose.
+- **Pencil:** graphite grey, thin. The artist's sketches and notes.
+- **Lettering:** `ComicFont`, an original single-stroke hand-lettering font in capitals (comics are lettered in capitals). Bold = emphasis = loose. Key prompts show a keycap and the verb.
+- **Characters:** Nib is a round white figure with a pen-nib cap, a face that looks where Nib is going, a red scarf that streams behind, and legs that stride. The neighbour wears a hat and a long blue coat.
 - **Palettes:** Ch 1 warm cream with a red accent; Ch 2 newsprint and cyan; Ch 3 pulp yellow; Ch 4 graphite greys; Ch 5 ink blues; Ch 6 red-pencil corrections; Ch 7 near-white.
 
 ## 10. Audio direction (summary)

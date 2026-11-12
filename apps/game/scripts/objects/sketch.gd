@@ -136,43 +136,43 @@ func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
 	var line := Palette.RED if is_highlighted() else Palette.PENCIL
 	if inked:
-		# Ink: drawn like the page's own ground, a 2 px line over hatching.
+		# Ink: drawn like the page's own ground, a heavy line over hatching.
 		draw_rect(r, Palette.PAPER_DARK)
 		Ink.hatch(self, r, Palette.SHADOW)
-		Ink.rect_outline(self, r, Palette.INK, 2 if size.x > 4 and size.y > 4 else 1)
-		draw_rect(Rect2(0, 0, size.x, minf(2, size.y)), Palette.INK)
+		Ink.rect_outline(self, r, Palette.INK, Ink.W_THING if size.x > 4 and size.y > 4 else 1.0)
+		Ink.line(self, Vector2(0, 0.75), Vector2(size.x, 0.75), Palette.INK, minf(1.5, size.y))
 		return
 	if drawn:
 		if faint:
 			# Layout pencil: a dashed outline round a pale tint, nothing in it
 			# to stand on.
-			draw_rect(r, Color(line, 0.18))
-			Ink.dashed(self, Vector2(0, 0), size.x, 0, 1, line, 2, 2)
-			Ink.dashed(self, Vector2(0, size.y - 1), size.x, 0, 1, line, 2, 2)
-			Ink.dashed(self, Vector2(0, 0), size.y, 1, 1, line, 2, 2)
-			Ink.dashed(self, Vector2(size.x - 1, 0), size.y, 1, 1, line, 2, 2)
+			draw_rect(r, Color(line, 0.15))
+			_dashed_outline(line, 0.8, 2.0, 2.0)
 		else:
-			# Graphite: a light hatch inside a 1 px outline whose top stroke
+			# Graphite: a light hatch inside a thin outline whose top stroke
 			# overshoots the corners, the way a quick sketch does.
-			Ink.hatch(self, r, Palette.SHADOW, 3)
-			Ink.rect_outline(self, r, line)
-			draw_rect(Rect2(-2, 0, size.x + 4, 1), line)
+			Ink.hatch(self, r, Palette.SHADOW, 3.0)
+			Ink.rect_outline(self, r, line, 0.8)
+			Ink.line(self, Vector2(-2.5, 0.4), Vector2(size.x + 2.5, 0.2), line, 0.8)
 		_draw_dots(ink_cost, Palette.INK, -3)
 		return
 	# A smudge: rubbed-out graphite, the ghost of its outline, and one dot
 	# per crumb it takes to draw back.
 	draw_rect(r, Color(Palette.PAGE_FIBER, 0.7))
-	var ghost := Color(line, 0.6)
-	Ink.dashed(self, Vector2(0, 0), size.x, 0, 1, ghost, 2, 3)
-	Ink.dashed(self, Vector2(0, size.y - 1), size.x, 0, 1, ghost, 2, 3)
-	Ink.dashed(self, Vector2(0, 0), size.y, 1, 1, ghost, 2, 3)
-	Ink.dashed(self, Vector2(size.x - 1, 0), size.y, 1, 1, ghost, 2, 3)
+	_dashed_outline(Color(line, 0.6), 0.7, 2.0, 3.0)
 	_draw_dots(crumbs, line, size.y / 2.0 - 1)
 
 
-## A row of `n` 2 px dots centred on the sketch, its top at `y`: crumbs on
-## a smudge, or the ink cost just above a traceable sketch (GDD §4.4).
+func _dashed_outline(color: Color, t: float, on: float, off: float) -> void:
+	Ink.dashed(self, Vector2(0, 0), size.x, 0, t, color, on, off)
+	Ink.dashed(self, Vector2(0, size.y - t), size.x, 0, t, color, on, off)
+	Ink.dashed(self, Vector2(0, 0), size.y, 1, t, color, on, off)
+	Ink.dashed(self, Vector2(size.x - t, 0), size.y, 1, t, color, on, off)
+
+
+## A row of `n` dots centred on the sketch, its top at `y`: crumbs on a
+## smudge, or the ink cost just above a traceable sketch (GDD §4.4).
 func _draw_dots(n: int, color: Color, y: float) -> void:
 	var x := size.x / 2.0 - (n * 3 - 1) / 2.0
 	for i in n:
-		draw_rect(Rect2(roundf(x) + i * 3, roundf(y), 2, 2), color)
+		Ink.dot(self, Vector2(x + i * 3 + 1, y + 1), 1.0, color)

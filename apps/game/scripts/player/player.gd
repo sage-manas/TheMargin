@@ -29,12 +29,10 @@ var facing := 1
 var carrying := ""
 var input_locked := false
 
-var _sprite: Sprite2D
+var _figure: DrawLayer
 var _tag: DrawLayer
-var _anims := {}
-var _anim := "nib_idle"
-var _frame := 0
-var _anim_t := 0.0
+var _pose := "idle"
+var _phase := 0.0
 var _blink_t := 2.5
 var _coyote := 0.0
 var _buffer := 0.0
@@ -56,13 +54,8 @@ func _ready() -> void:
 	cs.shape = shape
 	cs.position = Vector2(0, -SIZE.y / 2.0)
 	add_child(cs)
-	_sprite = Sprite2D.new()
-	_sprite.centered = false
-	_sprite.offset = Vector2(-5, -14)
-	add_child(_sprite)
-	for n: String in ["nib_idle", "nib_walk", "nib_air"]:
-		_anims[n] = Sprites.frames(n)
-	_sprite.texture = _anims["nib_idle"][0]
+	_figure = DrawLayer.make(_draw_figure)
+	add_child(_figure)
 	_tag = DrawLayer.make(_draw_tag, 5)
 	add_child(_tag)
 	floor_snap_length = 3.0
@@ -126,39 +119,30 @@ func _physics_process(delta: float) -> void:
 
 
 func _animate(delta: float) -> void:
-	var want := "nib_idle"
+	_pose = "idle"
 	if not is_on_floor():
-		want = "nib_air"
+		_pose = "air"
 	elif absf(velocity.x) > 10.0:
-		want = "nib_walk"
-	if want != _anim:
-		_anim = want
-		_frame = 0
-		_anim_t = 0.0
-	_anim_t += delta
-	var frames: Array = _anims[_anim]
-	if _anim == "nib_walk":
-		if _anim_t > 0.1:
-			_anim_t = 0.0
-			_frame = (_frame + 1) % frames.size()
-	elif _anim == "nib_idle":
-		_blink_t -= delta
-		_frame = 1 if _blink_t < 0.0 else 0
-		if _blink_t < -0.15:
-			_blink_t = randf_range(2.0, 4.0)
-	else:
-		_frame = 0
-	_sprite.texture = frames[_frame]
-	_sprite.flip_h = facing < 0
+		_pose = "walk"
+	# One stride cycle per 0.4 s at full speed; the scarf keeps moving at rest.
+	_phase += delta * (absf(velocity.x) / WALK_SPEED * 2.5 if _pose == "walk" else 0.6)
+	_blink_t -= delta
+	if _blink_t < -0.15:
+		_blink_t = randf_range(2.0, 4.0)
+	_figure.queue_redraw()
 	_tag.queue_redraw()
+
+
+func _draw_figure(ci: CanvasItem) -> void:
+	Figures.nib(ci, Vector2.ZERO, facing, _pose, _phase, _pose == "idle" and _blink_t < 0.0)
 
 
 func _draw_tag(ci: CanvasItem) -> void:
 	if carrying == "":
 		return
 	var bob := 0.0 if Settings.reduced_motion else roundf(sin(_time * 3.0))
-	var w := PixelFont.measure(carrying, true) + 6
-	var r := Rect2(-roundf(w / 2.0), -31 + bob, w, 11)
-	ci.draw_rect(Rect2(0, r.end.y, 1, -17 - r.end.y + 1), Palette.PENCIL)
+	var w := ComicFont.measure(carrying, true) + 6
+	var r := Rect2(-roundf(w / 2.0), -32 + bob, w, 11)
+	Ink.line(ci, Vector2(0, r.end.y), Vector2(0, -Figures.NIB_HEIGHT - 1), Palette.PENCIL, 0.75)
 	Ink.rounded_box(ci, r, Palette.BUBBLE)
-	PixelFont.draw(ci, r.position + Vector2(3, 2), carrying, Palette.RED, true)
+	ComicFont.draw(ci, r.position + Vector2(3, 2), carrying, Palette.RED, true)

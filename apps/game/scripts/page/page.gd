@@ -42,6 +42,7 @@ var story: StoryRunner
 var spawn := Vector2.ZERO
 
 var _bridges: DrawLayer
+var _lanes: DrawLayer
 var _exited := false
 ## The panel Nib was last wholly inside, for `panel_entered`.
 var _last_panel := ""
@@ -77,6 +78,8 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	bg.material = mat
 	add_child(bg)
 	add_child(DrawLayer.make(_draw_margin, -9))
+	_lanes = DrawLayer.make(_draw_lanes, -8)
+	add_child(_lanes)
 
 	for pd: Dictionary in def["panels"]:
 		_build_panel(pd)
@@ -308,6 +311,8 @@ func relink(silent := false) -> void:
 	for p in panel_list:
 		infos.append(p.info())
 	var new_links := PanelLinks.compute(infos)
+	if _lanes:
+		_lanes.queue_redraw()
 	for p in panel_list:
 		p.set_gaps(PanelLinks.gaps_for(p.panel_id, p.rect(), new_links))
 	if not silent:
@@ -564,27 +569,49 @@ func snapshot() -> Dictionary:
 # --- drawing ---------------------------------------------------------------
 
 func _draw_bridges(ci: CanvasItem) -> void:
+	# A linked opening: the gutter between the two borders is filled with
+	# paper and inked top and bottom (or either side), a short corridor.
 	var g := PageConst.GUTTER
+	var w := Ink.W_BORDER
 	for l: Dictionary in links:
 		var a: ComicPanel = panels[l.a]
 		if l.axis == "h":
 			var x := float(a.rect().end.x)
 			ci.draw_rect(Rect2(x - 2, l.from, g + 4, l.to - l.from), Palette.PAPER)
-			ci.draw_rect(Rect2(x - 2, l.from - 2, g + 4, 2), Palette.INK)
-			ci.draw_rect(Rect2(x - 2, l.to, g + 4, 2), Palette.INK)
+			Ink.line(ci, Vector2(x - 2, l.from - w / 2.0), Vector2(x + g + 2, l.from - w / 2.0), Palette.INK, w)
+			Ink.line(ci, Vector2(x - 2, l.to + w / 2.0), Vector2(x + g + 2, l.to + w / 2.0), Palette.INK, w)
 		else:
 			var y := float(a.rect().end.y)
 			ci.draw_rect(Rect2(l.from, y - 2, l.to - l.from, g + 4), Palette.PAPER)
-			ci.draw_rect(Rect2(l.from - 2, y - 2, 2, g + 4), Palette.INK)
-			ci.draw_rect(Rect2(l.to, y - 2, 2, g + 4), Palette.INK)
+			Ink.line(ci, Vector2(l.from - w / 2.0, y - 2), Vector2(l.from - w / 2.0, y + g + 2), Palette.INK, w)
+			Ink.line(ci, Vector2(l.to + w / 2.0, y - 2), Vector2(l.to + w / 2.0, y + g + 2), Palette.INK, w)
+
+
+## Each lifted panel's lane: the whole stretch of page it can slide over,
+## dashed in pencil, so a player sees where a room can go before touching
+## it (GDD §9). The panel covers its own part of the lane.
+func _draw_lanes(ci: CanvasItem) -> void:
+	for p in panel_list:
+		if not p.is_lifted():
+			continue
+		var r := Rect2(p.rect())
+		var lo := float(p.track["min"])
+		var hi := float(p.track["max"])
+		var lane := Rect2(Vector2(r.position.x, lo), Vector2(r.size.x, hi - lo + r.size.y)) if p.track["axis"] == "y" \
+			else Rect2(Vector2(lo, r.position.y), Vector2(hi - lo + r.size.x, r.size.y))
+		var col := Color(Palette.PENCIL, 0.55)
+		Ink.dashed(ci, lane.position, lane.size.x, 0, 0.75, col, 5.0, 4.0)
+		Ink.dashed(ci, Vector2(lane.position.x, lane.end.y - 0.75), lane.size.x, 0, 0.75, col, 5.0, 4.0)
+		Ink.dashed(ci, lane.position, lane.size.y, 1, 0.75, col, 5.0, 4.0)
+		Ink.dashed(ci, Vector2(lane.end.x - 0.75, lane.position.y), lane.size.y, 1, 0.75, col, 5.0, 4.0)
 
 
 func _draw_margin(ci: CanvasItem) -> void:
 	if def.has("hint"):
-		PixelFont.draw_centered(ci, PageConst.PAGE_SIZE.x / 2.0, PageConst.PAGE_SIZE.y - 12, def["hint"], Palette.PENCIL)
+		ComicFont.draw_centered(ci, PageConst.PAGE_SIZE.x / 2.0, PageConst.PAGE_SIZE.y - 12, def["hint"], Palette.PENCIL)
 	if def.has("number"):
 		var number := str(int(def["number"]))
-		PixelFont.draw(ci, Vector2(PageConst.PAGE_SIZE.x - 10 - PixelFont.measure(number), PageConst.PAGE_SIZE.y - 12), number, Palette.PENCIL)
+		ComicFont.draw(ci, Vector2(PageConst.PAGE_SIZE.x - 10 - ComicFont.measure(number), PageConst.PAGE_SIZE.y - 12), number, Palette.PENCIL)
 	for n: Dictionary in def.get("notes", []):
 		var at: Array = n["at"]
-		PixelFont.draw_lines(ci, Vector2(at[0], at[1]), n["text"], Palette.PENCIL)
+		ComicFont.draw_lines(ci, Vector2(at[0], at[1]), n["text"], Palette.PENCIL)

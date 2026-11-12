@@ -15,7 +15,7 @@ void fragment() {
 	if (fade_only) {
 		COLOR = vec4(old.rgb, 1.0 - progress);
 	} else {
-		vec2 px = floor(UV * vec2(640.0, 360.0));
+		vec2 px = UV * vec2(640.0, 360.0);
 		float c0 = 640.0 + 360.0 * TILT;
 		float c = mix(c0, -24.0, progress);
 		float d = c - (px.x + (360.0 - px.y) * TILT);

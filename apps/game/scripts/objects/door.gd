@@ -93,33 +93,32 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, SIZE)
-	# Frame and the doorway behind the leaf: dark, with the curled corner of
-	# the next page glowing inside.
-	Ink.box(self, r.grow(1), Palette.NIGHT, Palette.INK, 2)
+	# The doorway behind the leaf: dark, with the curled corner of the next
+	# page glowing inside once it opens.
+	Ink.box(self, r.grow(1.5), Palette.NIGHT, Palette.INK, Ink.W_THING + 0.5)
 	if _swing > 0.0:
 		var corner := PackedVector2Array([Vector2(SIZE.x - 3, SIZE.y - 13), Vector2(SIZE.x - 3, SIZE.y - 1), Vector2(SIZE.x - 15, SIZE.y - 1)])
 		draw_colored_polygon(corner, Color(Palette.PAGE, _swing))
+		Ink.stroke(self, corner, Color(Palette.INK, _swing * 0.6), 0.6, true)
 	# The leaf swings toward the viewer: it narrows as it opens.
-	var leaf_w := roundf(SIZE.x * (1.0 - _swing))
+	var leaf_w := SIZE.x * (1.0 - _swing)
 	if leaf_w >= 1.0:
-		var leaf := Rect2(1, 1, leaf_w - 1, SIZE.y - 2)
-		Ink.box(self, leaf, Palette.OCHRE)
-		if leaf_w > 8:
-			draw_rect(Rect2(leaf.position.x + 4, 6, 1, SIZE.y - 10), Palette.SHADOW)
-			draw_rect(Rect2(leaf.position.x + leaf_w - 6, 6, 1, SIZE.y - 10), Palette.SHADOW)
-			draw_rect(Rect2(leaf.end.x - 5, SIZE.y / 2.0, 2, 2), Palette.INK)
-
+		var leaf := Rect2(0.5, 0.5, leaf_w - 0.5, SIZE.y - 1.0)
+		Ink.box(self, leaf, Palette.OCHRE, Palette.INK, Ink.W_THING)
+		if leaf_w > 10:
+			# Two recessed panels and a knob.
+			var pw := leaf_w - 9.0
+			Ink.stroke(self, Ink.round_rect_points(Rect2(leaf.position.x + 4, 4, pw, 10), 1.5), Palette.WOOD_DARK, 0.8, true)
+			Ink.stroke(self, Ink.round_rect_points(Rect2(leaf.position.x + 4, 17, pw, 11), 1.5), Palette.WOOD_DARK, 0.8, true)
+			Ink.dot(self, Vector2(leaf.end.x - 3.0, SIZE.y / 2.0 + 1.0), 1.1, Palette.INK)
 	# A wired door has a lamp on its frame, lit while its button is held.
 	if button_id != "":
-		Ink.box(self, Rect2(SIZE.x + 2, 4, 4, 4), Palette.RED if powered else Palette.PENCIL)
-
-	# Label plate above the door.
-	var bold := slot.word != ""
-	var w := maxi(PixelFont.measure(slot.word, true) + 6, 28) if bold else 28
-	var plate := Rect2(roundf(SIZE.x / 2.0 - w / 2.0), -13, w, 11)
-	Ink.box(self, plate, Palette.WHITE, Palette.RED if slot.highlighted else Palette.INK)
-	if bold:
-		var bob := 0.0 if (Settings.reduced_motion or not slot.loose) else roundf(sin(Time.get_ticks_msec() / 250.0) * 0.6)
-		PixelFont.draw_centered(self, SIZE.x / 2.0, plate.position.y + 2 + bob, slot.word, Palette.RED if slot.loose else Palette.INK, true)
-	else:
-		draw_rect(Rect2(plate.position.x + 6, plate.position.y + 8, w - 12, 1), Palette.PENCIL)
+		var lamp := Vector2(SIZE.x + 5, 6)
+		if powered:
+			Ink.dot(self, lamp, 3.4, Color(Palette.RED, 0.25))
+		Ink.ellipse(self, lamp, Vector2(2.2, 2.2), Palette.RED if powered else Palette.muted(Palette.PENCIL, 0.3), Palette.INK, 0.8)
+		Ink.line(self, Vector2(SIZE.x + 1.5, 6), Vector2(SIZE.x + 2.8, 6), Palette.INK, 0.8)
+	# The label hangs from two nails above the door.
+	var tag := LabelTag.draw(self, Vector2(SIZE.x / 2.0, -14), slot, 28.0)
+	for x in [tag.position.x + 4, tag.end.x - 4]:
+		Ink.line(self, Vector2(x, tag.end.y), Vector2(x, -1.5), Palette.PENCIL, 0.6)

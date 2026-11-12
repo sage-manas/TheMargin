@@ -4,7 +4,7 @@ extends Node2D
 ## thought ("...?", "!") above its head when the story reacts to the player.
 
 var npc_id := ""
-var _frames: Array[Texture2D] = []
+var _kind := "neighbor"
 var _blink := 0.0
 var _emote := ""
 var _emote_t := 0.0
@@ -12,7 +12,7 @@ var _emote_t := 0.0
 
 func setup(def: Dictionary) -> void:
 	npc_id = def["id"]
-	_frames = Sprites.frames(def.get("sprite", "neighbor"))
+	_kind = def.get("sprite", "neighbor")
 	var at: Array = def["at"]
 	position = Vector2(at[0], at[1])
 	_blink = randf_range(1.5, 3.5)
@@ -37,14 +37,17 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var tex := _frames[1 if _blink < 0.0 and _frames.size() > 1 else 0]
-	var sz := tex.get_size()
-	draw_texture(tex, Vector2(-roundf(sz.x / 2.0), -sz.y))
+	var height := Figures.NEIGHBOR_HEIGHT
+	if _kind == "nib":
+		Figures.nib(self, Vector2.ZERO, -1, "idle", 0.0, _blink < 0.0)
+		height = Figures.NIB_HEIGHT
+	else:
+		Figures.neighbor(self, Vector2.ZERO, _blink < 0.0)
 	if _emote != "":
-		var w := PixelFont.measure(_emote) + 6
-		var r := Rect2(roundf(-w / 2.0) - 8, -sz.y - 16, w, 11)
-		Ink.rounded_box(self, r, Palette.BUBBLE)
-		# Thought-bubble dots trailing down to the head.
-		draw_rect(Rect2(r.position.x + w - 3, r.end.y + 1, 2, 2), Palette.INK)
-		draw_rect(Rect2(r.position.x + w - 1, r.end.y + 4, 1, 1), Palette.INK)
-		PixelFont.draw(self, r.position + Vector2(3, 2), _emote, Palette.INK)
+		var w := ComicFont.measure(_emote) + 8
+		var r := Rect2(roundf(-w / 2.0) - 8, -height - 17, w, 12)
+		Ink.rounded_box(self, r, Palette.BUBBLE, Palette.INK, 5.0)
+		# Thought-bubble puffs trailing down to the head.
+		Ink.ellipse(self, Vector2(r.end.x - 4, r.end.y + 2.5), Vector2(1.4, 1.2), Palette.BUBBLE, Palette.INK, 0.7)
+		Ink.ellipse(self, Vector2(r.end.x - 2, r.end.y + 5.0), Vector2(0.8, 0.7), Palette.BUBBLE, Palette.INK, 0.6)
+		ComicFont.draw(self, r.position + Vector2(4, 2.5), _emote, Palette.INK)

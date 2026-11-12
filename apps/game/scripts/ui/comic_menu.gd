@@ -1,6 +1,6 @@
-class_name PixelMenu
+class_name ComicMenu
 extends Control
-## Keyboard- and mouse-driven vertical menu lettered in the pixel font.
+## Keyboard- and mouse-driven vertical menu, hand-lettered (ComicFont).
 ## Items: [{label: String | Callable, action: String}].
 
 signal chosen(action: String)
@@ -33,7 +33,7 @@ func _label(i: int) -> String:
 func _width() -> int:
 	var w := 0
 	for i in items.size():
-		w = maxi(w, PixelFont.measure(_label(i)) + 12)
+		w = maxi(w, ComicFont.measure(_label(i)) + 12)
 	return w
 
 
@@ -84,5 +84,5 @@ func _draw() -> void:
 		var y := i * ROW + 3
 		var selected := i == index
 		if selected:
-			PixelFont.draw(self, Vector2(0, y), ">", Palette.RED)
-		PixelFont.draw(self, Vector2(10, y), _label(i), Palette.RED if selected else Palette.INK, selected)
+			ComicFont.draw(self, Vector2(0, y), ">", Palette.RED)
+		ComicFont.draw(self, Vector2(10, y), _label(i), Palette.RED if selected else Palette.INK, selected)

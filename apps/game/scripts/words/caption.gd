@@ -132,32 +132,33 @@ func _draw() -> void:
 	if text == "":
 		return
 	if _lettering:
-		var box := Vector2(_lettering.width() + 8, _lettering.lines.size() * PixelFont.LINE_HEIGHT + 4)
-		Ink.box(self, Rect2(Vector2.ZERO, box), Palette.CAPTION)
-		_lettering.draw(self, Vector2(4, 3), 0.0 if Settings.reduced_motion else roundf(sin(_time * 4.0) * 0.6))
+		var box := Vector2(_lettering.width() + 8, _lettering.lines.size() * ComicFont.LINE_HEIGHT + 4)
+		Ink.box(self, Rect2(Vector2.ZERO, box), Palette.CAPTION, Palette.INK, 1.0)
+		_lettering.draw(self, Vector2(4, 3), 0.0 if Settings.reduced_motion else sin(_time * 4.0) * 0.6)
 		return
 	var scale := 2 if style == "artist" else 1
-	var lines := PixelFont.split_lines(text)
+	var lines := ComicFont.split_lines(text)
 	var width := 0
 	for l in lines:
-		width = maxi(width, PixelFont.measure(l) * scale)
-	var size := Vector2(width + 8, lines.size() * PixelFont.LINE_HEIGHT * scale + 4)
+		width = maxi(width, ComicFont.measure(l) * scale)
+	var size := Vector2(width + 8, lines.size() * ComicFont.LINE_HEIGHT * scale + 4)
 	if style == "narrator":
-		Ink.box(self, Rect2(Vector2.ZERO, size), Palette.CAPTION)
+		Ink.box(self, Rect2(Vector2.ZERO, size), Palette.CAPTION, Palette.INK, 1.0)
 	var color := Palette.PENCIL if style == "artist" else Palette.INK
-	var shown := PixelFont.split_lines(_shown_text())
+	var shown := ComicFont.split_lines(_shown_text())
 	for i in shown.size():
-		var pos := Vector2(4, 3 + i * PixelFont.LINE_HEIGHT * scale)
+		var pos := Vector2(4, 3 + i * ComicFont.LINE_HEIGHT * scale)
 		if style == "artist":
 			# Hand-lettered: each character sits on a slightly uneven baseline.
-			var x := 0
+			var x := 0.0
 			for ci in shown[i].length():
 				var ch := shown[i][ci]
-				var jitter := 1 if (ci * 7 + i * 3) % 5 == 0 else 0
-				x += PixelFont.draw(self, pos + Vector2(x, jitter), ch, color, false, scale)
+				var jitter := 0.6 * sin(ci * 2.3 + i * 1.7)
+				x += ComicFont.draw(self, pos + Vector2(x, jitter), ch, color, false, scale)
 		else:
-			PixelFont.draw(self, pos, shown[i], color)
+			ComicFont.draw(self, pos, shown[i], color)
 	if _strike > 0.0:
 		for i in lines.size():
-			var lw := PixelFont.measure(lines[i]) * scale
-			draw_rect(Rect2(3, 6 + i * PixelFont.LINE_HEIGHT * scale, (lw + 2) * _strike, 1), Palette.RED)
+			var lw := ComicFont.measure(lines[i]) * scale
+			var y := 6.5 + i * ComicFont.LINE_HEIGHT * scale
+			Ink.line(self, Vector2(3, y + 0.4), Vector2(3 + (lw + 2) * _strike, y - 0.4), Palette.RED, 1.0)

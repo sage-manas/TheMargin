@@ -4,7 +4,7 @@ extends AnimatableBody2D
 ## until something stops it; a `halt` word holds it where it is, even in mid
 ## air; with no label it is as drawn and falls. A `mass` word leaves it as
 ## drawn (it falls) but changes what it weighs on a button; a LIGHT crate
-## drifts down slowly. It moves in whole pixels and
+## drifts down slowly. It moves in whole page units and
 ## never leaves its panel, so where it rests is a plain page fact the save
 ## can store.
 ##
@@ -46,7 +46,7 @@ func setup(def: Dictionary) -> void:
 	slot.reach = Vector2(22, (REACH_BELOW - REACH_ABOVE) / 2.0)
 
 
-## Which way a label sends a crate, one pixel per step. Data only: the word's
+## Which way a label sends a crate, one unit per step. Data only: the word's
 ## category and its `dir` parameter.
 static func heading_for(word: String) -> Vector2i:
 	if word == "":
@@ -55,7 +55,7 @@ static func heading_for(word: String) -> Vector2i:
 	match def.get("category"):
 		"motion":
 			var d: Array = def.get("dir", [0, 0])
-			return Vector2i(int(d[0]), int(d[1]))
+			return Vector2(int(d[0]), int(d[1]))
 		"mass":
 			return Vector2i.DOWN
 	return Vector2i.ZERO
@@ -117,7 +117,7 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 
 
-## Moves one pixel along `dir` if nothing is in the way. Returns false when
+## Moves one unit along `dir` if nothing is in the way. Returns false when
 ## blocked (see can_step).
 func step(dir: Vector2i) -> bool:
 	if not can_step(dir):
@@ -126,14 +126,14 @@ func step(dir: Vector2i) -> bool:
 	return true
 
 
-## Whether a one-pixel move along `dir` is clear: of panel geometry, other
+## Whether a one-unit move along `dir` is clear: of panel geometry, other
 ## crates, the panel's own border, Nib (when not riding), or, for a rider,
 ## whatever is above Nib's head. `nib_shift` is where Nib will be moved to
 ## alongside the crate (a platform carrying both).
 func can_step(dir: Vector2i, nib_shift := Vector2.ZERO) -> bool:
 	var motion := Vector2(dir)
-	# Probe slightly short of a full pixel so the default safe margin doesn't
-	# stop the crate one pixel before a surface it should touch.
+	# Probe slightly short of a full unit so the default safe margin doesn't
+	# stop the crate one unit before a surface it should touch.
 	var probe := motion * 0.9
 	if test_move(global_transform, probe, null, PROBE_MARGIN):
 		return false
@@ -170,19 +170,15 @@ func carries(player: Player) -> bool:
 
 
 func _draw() -> void:
+	# A wooden crate: heavy outline (it can be used), an inner frame, planks
+	# and a cross brace, nails at the corners.
 	var r := Rect2(Vector2.ZERO, SIZE)
-	Ink.box(self, r, Palette.OCHRE)
-	# Planks and a cross brace above the label plate.
-	draw_rect(Rect2(1, 4, SIZE.x - 2, 1), Palette.SHADOW)
-	Ink.line(self, Vector2i(2, 6), Vector2i(int(SIZE.x) - 3, 11), Palette.SHADOW)
-
-	# The label is stencilled on a plate across the lower face.
-	var bold := slot.word != ""
-	var w := PixelFont.measure(slot.word, true) + 6 if bold else 16
-	var plate := Rect2(roundf(SIZE.x / 2.0 - w / 2.0), SIZE.y - 13, w, 11)
-	Ink.box(self, plate, Palette.WHITE, Palette.RED if slot.highlighted else Palette.INK)
-	if bold:
-		var bob := 0.0 if (Settings.reduced_motion or not slot.loose) else roundf(sin(Time.get_ticks_msec() / 250.0) * 0.6)
-		PixelFont.draw_centered(self, SIZE.x / 2.0, plate.position.y + 2 + bob, slot.word, Palette.RED if slot.loose else Palette.INK, true)
-	else:
-		draw_rect(Rect2(plate.position.x + 3, plate.position.y + 8, w - 6, 1), Palette.PENCIL)
+	var inner := r.grow(-3.0)
+	Ink.box(self, r, Palette.OCHRE, Palette.INK, Ink.W_THING)
+	Ink.rect_outline(self, inner, Palette.WOOD_DARK, 0.8)
+	Ink.line(self, Vector2(inner.position.x, 7.5), Vector2(inner.end.x, 7.5), Palette.WOOD_DARK, 0.6)
+	Ink.line(self, inner.position, Vector2(inner.end.x, SIZE.y - 13), Palette.WOOD_DARK, 1.0)
+	for c in [Vector2(1.7, 1.7), Vector2(SIZE.x - 1.7, 1.7), Vector2(1.7, SIZE.y - 1.7), Vector2(SIZE.x - 1.7, SIZE.y - 1.7)]:
+		Ink.dot(self, c, 0.5, Palette.INK)
+	# The label is stencilled on a tag across the lower face.
+	LabelTag.draw(self, Vector2(SIZE.x / 2.0, SIZE.y - 13), slot, 16.0)

@@ -8,11 +8,10 @@ signal chosen(action: String)
 
 const PAPER := preload("res://shaders/paper.gdshader")
 
-var menu: PixelMenu
+var menu: ComicMenu
 var has_save := false
 var _art: Control
 var _time := 0.0
-var _nib: Array[Texture2D] = []
 
 
 func _ready() -> void:
@@ -33,10 +32,9 @@ func _ready() -> void:
 	add_child(_art)
 	_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_art.draw.connect(_paint)
-	menu = PixelMenu.new()
+	menu = ComicMenu.new()
 	add_child(menu)
 	menu.chosen.connect(_on_menu)
-	_nib = Sprites.frames("nib_idle")
 	refresh(false)
 
 
@@ -67,12 +65,13 @@ func _paint() -> void:
 	var ci := _art
 	var panel := Rect2(120, 52, 400, 140)
 	ci.draw_rect(Rect2(panel.position + Vector2(4, 5), panel.size), Palette.SHADOW)
-	Ink.box(ci, panel, Palette.PAPER, Palette.INK, 2)
-	PixelFont.draw_centered(ci, 320, 82, "THE MARGIN", Palette.INK, true, 4)
-	ci.draw_rect(Rect2(160, 118, 320, 2), Palette.INK)
-	PixelFont.draw_centered(ci, 320, 132, "ESCAPE THE DRAWING.", Palette.RED)
+	Ink.box(ci, panel, Palette.PAPER, Palette.INK, Ink.W_BORDER)
+	ComicFont.draw_centered(ci, 320, 82, "THE MARGIN", Palette.INK, true, 4)
+	Ink.line(ci, Vector2(160, 119), Vector2(480, 119), Palette.INK, Ink.W_BORDER)
+	ComicFont.draw_centered(ci, 320, 132, "ESCAPE THE DRAWING.", Palette.RED)
 	# Nib stands on the title rule, at the edge of the lettering.
-	var frame := 1 if fmod(_time, 3.4) > 3.25 else 0
-	ci.draw_texture(_nib[frame], Vector2(466, 104))
-	PixelFont.draw(ci, Vector2(128, 178), "CHAPTER 1: THE PAGE", Palette.PENCIL)
-	PixelFont.draw(ci, Vector2(16, 344), "PROTOTYPE BUILD", Palette.PENCIL)
+	ci.draw_set_transform(Vector2(474, 118), 0.0, Vector2(1.6, 1.6))
+	Figures.nib(ci, Vector2.ZERO, -1, "idle", _time * 0.6, fmod(_time, 3.4) > 3.25)
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	ComicFont.draw(ci, Vector2(128, 178), "CHAPTER 1: THE PAGE", Palette.PENCIL)
+	ComicFont.draw(ci, Vector2(16, 344), "PLAYTEST BUILD", Palette.PENCIL)

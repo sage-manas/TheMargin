@@ -8,6 +8,7 @@ var player: Player
 var carrying := ""
 var target: WordSlot
 var verb := ""
+var _showing := false
 
 
 func setup(owner_page: ComicPage, owner_player: Player, carried: String) -> void:
@@ -20,7 +21,11 @@ func setup(owner_page: ComicPage, owner_player: Player, carried: String) -> void
 
 func _process(_delta: float) -> void:
 	_refresh_target()
-	queue_redraw()
+	# Redraw only while a prompt is up (it follows Nib), and once to clear it.
+	var showing := target != null
+	if showing or _showing:
+		queue_redraw()
+	_showing = showing
 
 
 func _refresh_target() -> void:

@@ -86,17 +86,26 @@ func slot_top(slot: WordSlot) -> Vector2:
 	return Vector2(r.get_center().x, r.position.y - 2)
 
 
-func draw(ci: CanvasItem, origin: Vector2, bob: float) -> void:
+## Draws the lettering. `part` "static" draws everything except loose
+## words; "loose" draws only the loose words (owners put those on a child
+## layer that bobs by moving, so the text itself never redraws per frame);
+## "" draws all of it, loose words offset by `bob`.
+func draw(ci: CanvasItem, origin: Vector2, bob: float, part := "") -> void:
 	for li in lines.size():
 		var x := origin.x
 		var y := origin.y + li * ComicFont.LINE_HEIGHT
 		for seg: Dictionary in lines[li]:
 			var w := segment_width(seg)
 			if seg.has("text"):
-				ComicFont.draw(ci, Vector2(x, y), seg["text"], Palette.INK)
+				if part != "loose":
+					ComicFont.draw(ci, Vector2(x, y), seg["text"], Palette.INK)
 			else:
 				var slot: WordSlot = slots[seg["slot"]]
 				_slot_rects[seg["slot"]] = Rect2(x - 1, y - 1, w + 1, ComicFont.HEIGHT + 2)
+				var is_loose := slot.word != "" and slot.loose
+				if (part == "static" and is_loose) or (part == "loose" and not is_loose):
+					x += w
+					continue
 				if slot.word != "":
 					var oy := bob if slot.loose else 0.0
 					if slot.highlighted:
@@ -106,3 +115,11 @@ func draw(ci: CanvasItem, origin: Vector2, bob: float) -> void:
 					var c := Palette.RED if slot.highlighted else Palette.PENCIL
 					Ink.line(ci, Vector2(x, y + ComicFont.HEIGHT - 0.5), Vector2(x + GAP_WIDTH, y + ComicFont.HEIGHT - 0.5), c, 0.9)
 			x += w
+
+
+## A key for what the lettering looks like now: owners redraw when it changes.
+func look() -> String:
+	var k := ""
+	for s in slots:
+		k += "%s/%s/%s;" % [s.word, s.loose, s.highlighted]
+	return k

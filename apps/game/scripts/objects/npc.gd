@@ -26,6 +26,7 @@ func emote(text: String, duration := 3.0) -> void:
 
 
 func _process(delta: float) -> void:
+	var was := _blink < 0.0
 	_blink -= delta
 	if _blink < -0.14:
 		_blink = randf_range(2.0, 4.5)
@@ -33,7 +34,9 @@ func _process(delta: float) -> void:
 		_emote_t -= delta
 		if _emote_t <= 0.0:
 			_emote = ""
-	queue_redraw()
+			queue_redraw()
+	if (_blink < 0.0) != was:
+		queue_redraw()
 
 
 func _draw() -> void:

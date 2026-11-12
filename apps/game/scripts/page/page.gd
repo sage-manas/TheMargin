@@ -7,7 +7,6 @@ signal exit_requested
 signal end_reached
 
 const DATA_DIR := "res://data/pages/"
-const PAPER := preload("res://shaders/paper.gdshader")
 
 var page_id := ""
 var def: Dictionary = {}
@@ -42,7 +41,7 @@ var story: StoryRunner
 var spawn := Vector2.ZERO
 
 var _bridges: DrawLayer
-var _lanes: DrawLayer
+var _static: BakedLayer
 var _exited := false
 ## The panel Nib was last wholly inside, for `panel_entered`.
 var _last_panel := ""
@@ -69,17 +68,13 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 		collected[str(id)] = 0
 	var bg := ColorRect.new()
 	bg.size = Vector2(PageConst.PAGE_SIZE)
+	bg.color = Palette.PAGE
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.z_index = -10
-	var mat := ShaderMaterial.new()
-	mat.shader = PAPER
-	mat.set_shader_parameter("paper", Palette.PAGE)
-	mat.set_shader_parameter("fiber", Palette.PAGE_FIBER)
-	bg.material = mat
 	add_child(bg)
-	add_child(DrawLayer.make(_draw_margin, -9))
-	_lanes = DrawLayer.make(_draw_lanes, -8)
-	add_child(_lanes)
+	# Paper fibres, margin notes and panel lanes: static, so baked once.
+	_static = BakedLayer.make(_draw_static, Rect2(Vector2.ZERO, Vector2(PageConst.PAGE_SIZE)), -9)
+	add_child(_static)
 
 	for pd: Dictionary in def["panels"]:
 		_build_panel(pd)
@@ -311,8 +306,8 @@ func relink(silent := false) -> void:
 	for p in panel_list:
 		infos.append(p.info())
 	var new_links := PanelLinks.compute(infos)
-	if _lanes:
-		_lanes.queue_redraw()
+	if _static:
+		_static.refresh()
 	for p in panel_list:
 		p.set_gaps(PanelLinks.gaps_for(p.panel_id, p.rect(), new_links))
 	if not silent:
@@ -590,6 +585,12 @@ func _draw_bridges(ci: CanvasItem) -> void:
 ## Each lifted panel's lane: the whole stretch of page it can slide over,
 ## dashed in pencil, so a player sees where a room can go before touching
 ## it (GDD §9). The panel covers its own part of the lane.
+func _draw_static(ci: CanvasItem) -> void:
+	Ink.paper_fibres(ci, Rect2(Vector2.ZERO, Vector2(PageConst.PAGE_SIZE)), 7)
+	_draw_margin(ci)
+	_draw_lanes(ci)
+
+
 func _draw_lanes(ci: CanvasItem) -> void:
 	for p in panel_list:
 		if not p.is_lifted():

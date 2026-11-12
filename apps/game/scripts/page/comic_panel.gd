@@ -39,7 +39,8 @@ var erased := false
 var visual: Node2D
 var content: Node2D
 var _border_body: StaticBody2D
-var _ink: DrawLayer
+var _ink: BakedLayer
+var _ground: BakedLayer
 var _shadow: DrawLayer
 var _shake_t := 0.0
 var _time := 0.0
@@ -48,6 +49,7 @@ var _smudge: DrawLayer
 ## Rubbing progress, 0..1 across every row; -1 when not rubbing.
 var _erase_p := -1.0
 var _ducking := false
+var _look := []
 
 
 func setup(def: Dictionary) -> void:
@@ -94,11 +96,13 @@ func setup(def: Dictionary) -> void:
 	mat.set_shader_parameter("size", Vector2(size))
 	bg.material = mat
 	visual.add_child(bg)
-	visual.add_child(DrawLayer.make(_draw_ground))
+	_ground = BakedLayer.make(_draw_ground, Rect2(Vector2.ZERO, Vector2(size)))
+	visual.add_child(_ground)
 	content = Node2D.new()
 	content.name = "Content"
 	visual.add_child(content)
-	_ink = DrawLayer.make(_draw_ink)
+	# Chevrons and loose openings reach a few units outside the border.
+	_ink = BakedLayer.make(_draw_ink, Rect2(Vector2(-10, -10), Vector2(size) + Vector2(20, 20)))
 	visual.add_child(_ink)
 	_rebuild_border()
 	if def.get("erased", false):
@@ -197,7 +201,7 @@ func set_gaps(new_gaps: Array) -> void:
 		return
 	gaps = new_gaps
 	_rebuild_border()
-	_ink.queue_redraw()
+	_ink.refresh()
 
 
 func shake() -> void:
@@ -210,8 +214,13 @@ func _process(delta: float) -> void:
 		_shake_t -= delta
 		visual.position = Vector2(roundf(sin(_time * 70.0) * 2.0), 0) if _shake_t > 0.0 else Vector2.ZERO
 	if is_lifted():
+		# The shadow bobs every frame (one rect); the border only redraws
+		# when the hand's state on it changes.
 		_shadow.queue_redraw()
-		_ink.queue_redraw()
+		var look := [hovered, selected, dragging, is_pinned()]
+		if look != _look:
+			_look = look
+			_ink.refresh()
 
 
 # --- collision -------------------------------------------------------------

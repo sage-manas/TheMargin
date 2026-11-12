@@ -125,3 +125,20 @@ static func arrowhead(ci: CanvasItem, tip: Vector2, dir: Vector2, length: float,
 	var n := Vector2(-d.y, d.x)
 	var base := tip - d * length
 	ci.draw_colored_polygon(PackedVector2Array([tip, base + n * length * 0.6, base - n * length * 0.6]), color)
+
+
+## The page's paper fibres: short faint strands and specks scattered over
+## `r`, the same every time for the same `seed`. Drawn once into a static
+## layer, so the page has texture without a per-pixel shader (ADR-0013).
+static func paper_fibres(ci: CanvasItem, r: Rect2, seed: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var n := int(r.size.x * r.size.y / 900.0)
+	for i in n:
+		var p := r.position + Vector2(rng.randf() * r.size.x, rng.randf() * r.size.y)
+		if i % 3 == 0:
+			ci.draw_circle(p, rng.randf_range(0.25, 0.5), Palette.PAGE_FIBER, true, -1.0, true)
+		else:
+			var d := Vector2.from_angle(rng.randf_range(-0.35, 0.35)) * rng.randf_range(3.0, 8.0)
+			ci.draw_line(p, p + d, Color(Palette.PAGE_FIBER, 0.7), 0.4, true)
+

@@ -15,6 +15,7 @@ var target: Sketch
 var verb := ""
 ## Which of Nib's tools this is, so two prompts and pip rows stack (0 = lowest).
 var row := 0
+var _showing := false
 
 
 func setup(owner_page: ComicPage, owner_player: Player, tool_row := 0) -> void:
@@ -76,7 +77,13 @@ func pips() -> Array:
 
 func _process(_delta: float) -> void:
 	_refresh_target()
-	queue_redraw()
+	# Redraw only while pips or a prompt are up (they follow Nib), and once
+	# more to clear them.
+	var p := pips()
+	var showing: bool = target != null or int(p[0]) > 0
+	if showing or _showing:
+		queue_redraw()
+	_showing = showing
 
 
 func _refresh_target() -> void:

@@ -3,7 +3,9 @@ extends Node2D
 ## A door that obeys its label (GDD §4.2). Responds to the `state` word
 ## category; with no label it is as drawn (closed unless `open` in data).
 ## A door wired to a button (`"button": "<id>"`) stands open while that
-## button is held down, unless a label says otherwise.
+## button is held down, unless a label says otherwise. A door with
+## `"labelled": false` takes no word at all (a door worked only by a switch,
+## so no word can bypass its puzzle) and has no tag.
 ## An exit door turns the page when the character walks through it open.
 
 const SIZE := Vector2(24, 32)
@@ -16,6 +18,7 @@ var is_open := false
 var button_id := ""
 var powered := false
 var slot: WordSlot
+var labelled := true
 var _shape: CollisionShape2D
 var _swing := 0.0   # 0 closed, 1 fully open (visual only)
 
@@ -37,6 +40,9 @@ func setup(def: Dictionary) -> void:
 	add_child(body)
 	slot = WordSlot.make("%s:label" % door_id, def.get("label", ""), def.get("loose", true), ["state"], self, self, Vector2(SIZE.x / 2.0, SIZE.y))
 	slot.reach = Vector2(22, 12)
+	labelled = def.get("labelled", true)
+	if not labelled:
+		slot.filter = func(_w: String) -> bool: return false
 	refresh(false)
 
 
@@ -118,6 +124,8 @@ func _draw() -> void:
 			Ink.dot(self, lamp, 3.4, Color(Palette.RED, 0.25))
 		Ink.ellipse(self, lamp, Vector2(2.2, 2.2), Palette.RED if powered else Palette.muted(Palette.PENCIL, 0.3), Palette.INK, 0.8)
 		Ink.line(self, Vector2(SIZE.x + 1.5, 6), Vector2(SIZE.x + 2.8, 6), Palette.INK, 0.8)
+	if not labelled:
+		return
 	# The label hangs from two nails above the door.
 	var tag := LabelTag.draw(self, Vector2(SIZE.x / 2.0, -14), slot, 28.0)
 	for x in [tag.position.x + 4, tag.end.x - 4]:

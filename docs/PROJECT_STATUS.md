@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-12: Chapter 1 rework started after playtest feedback: hand-inked art (done); new mechanics and pages 1.3–1.7 next._
+_Last updated: 2026-11-12: Chapter 1 reworked after playtest feedback: hand-inked art, scene captions and close-ups, pages 1.3–1.7 rebuilt._
 
 ## Current phase
 
@@ -10,7 +10,7 @@ _Last updated: 2026-11-12: Chapter 1 rework started after playtest feedback: han
 
 **Phase 6 (backend) meets its bar:** the API's integration tests pass against a real Postgres, and the offline→online sync and conflict tests pass, both as unit tests on the sync logic and end to end in Chromium and WebKit (Firefox on CI). The auth UI completes Phase 5 too. The Chapter 1 playtest is still the open Phase 4 item.
 
-**Chapter 1 is being reworked before the project moves further (2026-11-12).** Playtest feedback: the theme and concept are strong, but the pixel art made props and scenes hard to understand, and play was repetitive (every page was "slide a room, carry HEAVY/OPEN/UP to a slot, reach a door"). Decisions: hand-inked vector art (ADR-0013, done); two new reader-hand mechanics, scene captions and close-up panels; and pages 1.3–1.7 rebuilt around them with varied goals, keeping 1.1, 1.2 and 1.8. Staging and the playtest wait for the reworked chapter.
+**Chapter 1 is being reworked before the project moves further (2026-11-12).** Playtest feedback: the theme and concept are strong, but the pixel art made props and scenes hard to understand, and play was repetitive (every page was "slide a room, carry HEAVY/OPEN/UP to a slot, reach a door"). Decisions and status: hand-inked vector art (ADR-0013); two new reader-hand mechanics, scene captions and close-ups (GDD §4.7, §4.8); pages 1.3–1.7 rebuilt around them, each with its own verb and goal, keeping 1.1, 1.2 and 1.8 (GDD §6). All three parts are built and tested; the Chapter 1 playtest now runs on the reworked chapter.
 
 **Phase 8 (production readiness) has started with staging**, so the playtest can run from a URL with accounts on. The pipeline and runbook are in the repo (DEPLOY.md, ADR-0012). It hasn't deployed yet: it needs the one-time account setup (Neon, Fly.io, Vercel and GitHub secrets).
 
@@ -133,12 +133,24 @@ _Last updated: 2026-11-12: Chapter 1 rework started after playtest feedback: han
   - **Performance:** in software WebGL (CI browsers, blocklisted GPUs) the vector art first dropped page 1.1 from 12 to under 5 fps and the browser tests timed out. Static art is now baked once into textures at screen resolution (`BakedLayer`); text no longer redraws for bobbing words; the neighbour, prompts and borders redraw only on change. Page 1.1: 16.7 fps in software WebGL (pixel build: 12.1), 60 fps in hardware WebGL.
   - All 85 headless tests pass unchanged; the browser e2e passes (Chromium and WebKit on macOS); the cloud e2e maps page units with the fitted (fractional) scale.
 
+- **Chapter 1 rework, part 2 (2026-11-12): scene captions and close-ups (GDD §4.7, §4.8; TDD §3.7b).**
+  - **Scene captions:** LATER. and THAT NIGHT. are loose caption cards in panel corners; the reader's hand drags them between panels (or panel mode: Q, then arrows hop a card to the next panel). A panel with a card is that scene, and moving the card un-happens it where it was. A card is refused if it would make something solid over Nib or a crate.
+  - **Conditional features:** vine (one-way leaf ledges), ice (melts to a puddle), gate, drawbridge, glow steps (one-way, spaced to a natural hop) and glow writing; characters (`when`, `solid`, an asleep pose) and props follow conditions. Night washes a room dark with a moon; LATER leaves cobwebs.
+  - **Close-ups:** round insets with a fixed focus ring that show whatever control is under it, drawn big: a lever or a combination dial. Controls are switches for features, wired doors and story triggers. Sliding a panel changes what a close-up sees.
+  - Save: optional `pages.<id>.scenes` and `.controls` (contracts too; cards restored together). New events `scene_changed` and `switch_changed`. Doors can be `labelled: false` (switch-only, so no word bypasses a lock). Sandboxes `sb_scenes` and `sb_closeups`.
+- **Chapter 1 rework, part 3 (2026-11-12): pages 1.3–1.7 rebuilt (GDD §6).**
+  - **1.3 Later** (move LATER in the right order, climb a vine out), **1.4 Close Up** (slide the lever's room under a close-up, pull it, free the neighbour), **1.5 That Night** (two cards, three rooms: vine, glow steps, a neighbour who sleeps only at night), **1.6 The Empty Room** (the neighbour's note glows at night; dial its code in a close-up; the fallen bubble is still the step), **1.7 The Long Night** (a word, a slide, a close-up and a card together). 1.1, 1.2 and 1.8 are unchanged.
+  - Every page is solved through real walking and hopping in `test_chapter1`, plus order checks (1.3 needs LATER for the vine; 1.7's ice refreezes if LATER moves too soon; 1.6's door takes no word).
+  - **Caught by the tests and fixed in the design:** 1.4's gate first stood at the doorway, which left Nib in a gutter where panels refuse to move; it now stands inside Nib's room. 1.5's glow steps first missed a natural hop (from mid-landing, and holding right); they now start over the landing's edge and sit one hop apart, and the neighbour's room is lower.
+  - Old Chapter 1 saves for 1.3–1.7 load with their unknown panels and slots ignored (save version 1 is unchanged).
+  - The browser e2e's site specs ignore Next.js prefetch aborts that WebKit reports as page errors.
+
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 85 passed |
-| Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge, settings, chapter catalogue vs the game's pages, storage key vs the game, achievements vs the game, API schemas) | `pnpm --filter @the-margin/contracts test` | 15 passed |
+| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, scene captions, close-ups, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 91 passed |
+| Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge, settings, chapter catalogue vs the game's pages, storage key vs the game, achievements vs the game, API schemas, scene and control state) | `pnpm --filter @the-margin/contracts test` | 16 passed |
 | API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 28 passed (local Postgres 14, IST timezone; CI Postgres 17) |
 | Site unit tests (bridge, progress, settings mirror, save sync incl. offline and conflicts) | `pnpm --filter @the-margin/web test` | 18 passed |
 | Lighthouse, landing page (production build) | `pnpm web:lighthouse` | Performance 99, accessibility 100 with the header's session check (earlier 98 and 100). Best practices 96 when no API is running, because the failed session request is logged |
@@ -149,7 +161,7 @@ _Last updated: 2026-11-12: Chapter 1 rework started after playtest feedback: han
 1. The `localStorage` mirror is unavailable when a browser blocks site storage (some private modes). The game still plays, with the old IndexedDB-only behaviour.
 2. Placeholder-grade art and synthesised audio. Only Chapter 1 has music; the title screen plays only room tone. The music isn't cached between sessions, so it is rebuilt on every boot (caching the rendered loop in `user://` is a possible optimisation).
 3. Only Chapter 1 is in the story; the end card follows page 1.8. The browser e2e plays pages 1.1–1.2 and 1.8 (from a seeded save); 1.3–1.7 are covered by headless real-physics solutions only.
-4. A crate can't carry another crate (a rising crate stops under one), so stacked crates don't add weight to a plate. LIGHT has no effect on panels yet. Plates have no puzzle on a story page yet.
+4. A crate can't carry another crate (a rising crate stops under one), so stacked crates don't add weight to a plate. LIGHT has no effect on panels yet. Since the rework, crates, plates and platforms appear only in sandboxes (kept for later chapters).
 5. Captions that hold words can't be rewritten by story actions (validated by `test_pages`).
 6. The sandbox page can only be opened from the command line or editor, not from the web build.
 7. The 38 MB `index.wasm` is the stock engine template (≈9 MB with Brotli). A custom slim template is a Phase 8 optimisation.
@@ -157,8 +169,8 @@ _Last updated: 2026-11-12: Chapter 1 rework started after playtest feedback: han
 9. The workflow's actions (`checkout`, `setup-node`, `pnpm/action-setup`, `upload/download-artifact`, all v4) still target the deprecated Node 20 runtime; bumping them is a small follow-up.
 10. The eraser targets only whole sketches (no partial rubbing), and sketches are axis-aligned rects. Erasing a crate's support while Nib stands underneath leaves the crate hovering above Nib until Nib steps away (crates never crush Nib). The "underdrawing revealed by erasing" (GDD §4.3) isn't built yet.
 11. **Only the first bold word in a narrator caption can be reached.** Every word in a caption shares the caption's `reach_at` point, and the nearest-slot pick keeps the first on a tie, so in `sb_mechanics` ("CRATES GO *UP*. UNTIL THEY *STOP*.") STOP can never be targeted. Story pages so far have one word per caption; `sb_platforms` uses two captions. A fix needs a design call (per-word reach points, or cycling targets).
-12. Page 1.5 has one recovery that needs a page reset: UP placed on the crate from beside it (not on top) sends it up empty, out of reach. Watch for it in the playtest; a softer recovery would need a design change.
-13. Page 1.7's "lend a word" step relies on players reading SWAP OPEN as an offer rather than a loss. Watch whether players stall in R with OPEN in hand. A narrator nudge on the first swap is a cheap fix if they do.
+12. Scene cards and close-ups are new verbs taught by a margin hint on their first page (1.3, 1.4). Watch in the playtest whether players find them unaided, and whether 1.5's two-card order is fair.
+13. A scene card's corner sits over the panel's top-right; page layouts keep that corner clear, but nothing validates it yet.
 14. The 1.8 erasure takes about 2 s and doesn't lock Nib; walking back into the sealed border during it is harmless. An erased panel can't be restored (no story action undoes it).
 15. The site has no accounts yet: the auth UI is the next Phase 5 step, and it needs the Phase 6 API to do anything. Progress shown on the site is this browser's only.
 16. `/play` and `/settings` ship Zod (about 60 KB) to validate bridge messages and settings; the landing and chapters pages don't.
@@ -178,8 +190,8 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 
 ## Next recommended tasks
 
-1. **Playtest the whole of Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). This is now the Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also measure the time to the first slide, whether players discover bold words unaided, whether 1.4's "the word that freed the room is the key" lands, whether 1.7's lend-a-word step is found (known issue 13), and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
-2. Merge the Phase 5 branch once CI, including Firefox and the Lighthouse gate, is green. That covers the third browser for the Phase 5 bar.
+1. **Playtest the reworked Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). The Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also ask whether props and scenes read at a glance now and whether the pages feel different from each other; measure whether players find the caption cards and close-ups unaided (known issue 12) and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
+2. Merge the rework PRs in order (art first, then mechanics and pages) once CI is green.
 3. **Do the one-time staging setup** (DEPLOY.md: Neon, Fly.io, Vercel, GitHub secrets), merge the staging branch, and run the deploy. Then **run the Chapter 1 playtest from the staging URL**.
 4. Phase 8 continues: the security review (R10, including restricting the API to the site's proxy), monitoring and error reporting, a production environment, and a password reset once there's an email provider.
 5. Decide how multi-word captions are reached (known issue 11) before a page needs one.

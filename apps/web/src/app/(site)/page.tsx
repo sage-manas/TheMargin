@@ -15,6 +15,10 @@ const RULES = [
     title: "Words are things",
     text: "Bold words can be lifted out of a sentence. A door labelled SHUT stays shut until you give it a better word.",
   },
+  {
+    title: "Captions change the scene",
+    text: "Drag LATER. or THAT NIGHT. into another room and time passes there: seeds grow, ice melts, people sleep. Close-ups let your hand work what's too small for Nib.",
+  },
 ];
 
 const CONTROLS: [string, React.ReactNode][] = [
@@ -22,6 +26,7 @@ const CONTROLS: [string, React.ReactNode][] = [
   ["Hop", <><kbd>Space</kbd>, <kbd>W</kbd> or <kbd>↑</kbd></>],
   ["Take, place or swap a word", <kbd>E</kbd>],
   ["Slide a lifted panel", <>Drag it with the mouse, or <kbd>Q</kbd> then the arrow keys</>],
+  ["Move a caption card, work a close-up", <>Drag the card, or click in the close-up; <kbd>Q</kbd> selects them too</>],
   ["Reset the page", <>Hold <kbd>R</kbd></>],
   ["Pause", <><kbd>Esc</kbd> or <kbd>P</kbd></>],
 ];

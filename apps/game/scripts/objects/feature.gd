@@ -10,8 +10,11 @@ extends Node2D
 ##   vine        grows up from a sprout; its leaves are one-way ledges
 ##   ice         a solid block; when inactive it is a puddle
 ##   gate        solid bars; when inactive they are raised out of the way
-##   glow_steps  one-way ledges painted in glow paint (rect = top step; the
-##               steps climb `steps` times by STEP_RISE to the right)
+##   bridge      a drawbridge plank across a gap; when inactive it stands up
+##               at the left end of the gap
+##   glow_steps  one-way ledges painted in glow paint (rect = the first
+##               step; `steps` of them climb STEP_RISE each, `advance` units
+##               apart to the right, overlapping when advance < width)
 ##   glow_text   writing in glow paint (`text`, rect = where it is written)
 
 signal changed(active: bool)
@@ -26,6 +29,7 @@ var rect := Rect2()
 var when := ""
 var text := ""
 var steps := 1
+var advance := 0.0
 var active := false
 var _set := false
 var _body: StaticBody2D
@@ -41,6 +45,7 @@ func setup(def: Dictionary) -> void:
 	steps = int(def.get("steps", 1))
 	var r: Array = def["rect"]
 	rect = Rect2(r[0], r[1], r[2], r[3])
+	advance = float(def.get("advance", rect.size.x))
 	_body = StaticBody2D.new()
 	_body.collision_layer = 0
 	for s in solid_rects():
@@ -55,7 +60,7 @@ func setup(def: Dictionary) -> void:
 
 
 func is_solid() -> bool:
-	return kind in ["vine", "ice", "gate", "glow_steps"]
+	return kind in ["vine", "ice", "gate", "glow_steps", "bridge"]
 
 
 ## Rects (panel-local) that collide while active.
@@ -72,11 +77,11 @@ func solid_rects() -> Array[Rect2]:
 				out.append(Rect2(Vector2(x, y), LEAF))
 				left = not left
 				y -= LEAF_GAP
-		"ice", "gate":
+		"ice", "gate", "bridge":
 			out.append(rect)
 		"glow_steps":
 			for i in steps:
-				out.append(Rect2(rect.position + Vector2(i * rect.size.x, -i * STEP_RISE), rect.size))
+				out.append(Rect2(rect.position + Vector2(i * advance, -i * STEP_RISE), rect.size))
 	return out
 
 
@@ -113,6 +118,8 @@ func _draw() -> void:
 			_draw_ice()
 		"gate":
 			_draw_gate()
+		"bridge":
+			_draw_bridge()
 		"glow_steps":
 			_draw_glow_steps()
 		"glow_text":
@@ -176,6 +183,22 @@ func _draw_gate() -> void:
 		Ink.line(self, Vector2(x, top), Vector2(x, top + rect.size.y), Palette.INK, Ink.W_THING)
 	Ink.line(self, Vector2(rect.position.x, top + rect.size.y - 1.0), Vector2(rect.end.x, top + rect.size.y - 1.0), Palette.INK, Ink.W_BORDER)
 	Ink.line(self, Vector2(rect.position.x, top + 4.0), Vector2(rect.end.x, top + 4.0), Palette.INK, 1.0)
+
+
+## Lowered, a plank across the gap; raised, it stands up at the left edge,
+## hinged there, with its chain.
+func _draw_bridge() -> void:
+	var hinge := Vector2(rect.position.x, rect.position.y)
+	var angle := lerpf(-PI / 2.0, 0.0, _shown)
+	var along := Vector2.from_angle(angle)
+	var across := Vector2(-along.y, along.x)
+	var plank := PackedVector2Array([hinge, hinge + along * rect.size.x, hinge + along * rect.size.x + across * rect.size.y, hinge + across * rect.size.y])
+	Ink.shape(self, plank, Palette.OCHRE, Palette.INK, Ink.W_THING)
+	for k in range(1, int(rect.size.x / 12.0)):
+		var a := hinge + along * (k * 12.0)
+		Ink.line(self, a, a + across * rect.size.y, Palette.WOOD_DARK, 0.6)
+	Ink.line(self, hinge + along * rect.size.x, hinge + Vector2(0, -rect.size.x * 0.9), Palette.SCENERY, 0.7)
+	Ink.dot(self, hinge, 1.4, Palette.INK)
 
 
 func _draw_groove() -> void:

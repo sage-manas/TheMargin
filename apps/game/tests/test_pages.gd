@@ -167,7 +167,7 @@ func _check_erasure(t, d: Dictionary, a: Dictionary) -> void:
 	t.ok(inside, "%s: respawn %s is in a fixed room that stays" % [d.id, at])
 
 
-const FEATURES := ["vine", "ice", "gate", "glow_steps", "glow_text"]
+const FEATURES := ["vine", "ice", "gate", "glow_steps", "glow_text", "bridge"]
 
 
 func test_scenes_and_closeups(t) -> void:

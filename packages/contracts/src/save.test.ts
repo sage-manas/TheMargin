@@ -87,3 +87,12 @@ test("inked sketches and collected ink are optional", () => {
   assert.deepEqual(parseSave(inked).pages.ch01_p01.sketches, { f1: "inked", f2: true });
   assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { sketches: { f1: "painted" } } } }));
 });
+
+test("page state: scene cards and close-up controls are optional and validated", () => {
+  const s = base();
+  s.pages.ch01_p03 = parseSave({ ...base(), pages: { ch01_p03: { scenes: { later: "a" }, controls: { lever1: true, safe: "417" } } } }).pages.ch01_p03;
+  assert.deepEqual(s.pages.ch01_p03.scenes, { later: "a" });
+  assert.deepEqual(s.pages.ch01_p03.controls, { lever1: true, safe: "417" });
+  assert.deepEqual(parseSave({ ...base(), pages: { ch01_p01: {} } }).pages.ch01_p01.scenes, {});
+  assert.throws(() => parseSave({ ...base(), pages: { ch01_p01: { controls: { safe: "<x>" } } } }));
+});

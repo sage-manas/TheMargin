@@ -21,4 +21,4 @@ func _draw() -> void:
 		Ink.stroke(self, Ink.round_rect_points(r.grow(-0.45), 3.0), Palette.INK, 0.9, true)
 		ComicFont.draw_centered(self, 320, 5, "RESETTING PAGE", Palette.INK)
 	elif panel_mode:
-		ComicFont.draw_centered(self, 320, 5, "PANEL MODE: ARROWS SLIDE, Q NEXT / DONE", Palette.RED)
+		ComicFont.draw_centered(self, 320, 5, "READER'S HAND: ARROWS MOVE, E PULLS, Q NEXT / DONE", Palette.RED)

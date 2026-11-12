@@ -5,7 +5,7 @@
 ## 1. Principles
 
 - **One save slot per player** (`main`) in the first release; the envelope supports more later.
-- Store **decisions, not objects**: panel positions, slot→word assignments and fired story triggers. Never node paths, velocities or animation state. The one exception is where a crate or platform stands: these move themselves after a word is placed, so their positions are the outcome of decisions. It is stored as integer pixels, never as a velocity.
+- Store **decisions, not objects** (including where each scene card sits and how each close-up control is set; what they make appear is derived): panel positions, slot→word assignments and fired story triggers. Never node paths, velocities or animation state. The one exception is where a crate or platform stands: these move themselves after a word is placed, so their positions are the outcome of decisions. It is stored as integer pixels, never as a velocity.
 - Every save is **versioned** (`version`) and **revisioned** (`revision`, monotonic per device lineage).
 - The local save is authoritative for play; the cloud copy is a mirror.
 
@@ -38,6 +38,8 @@
       "objects": { "crate1": [40, 112] },        // crate and platform positions, panel-local (optional)
       "sketches": { "wall": false, "f1": "inked" }, // pencil sketch id -> true | false (erased) | "inked" (optional)
       "collected": ["drop"],                     // ink pickups collected (optional); crumbs and ink are derived
+      "scenes": { "later": "a" },                // scene card id -> panel holding it (optional, GDD §4.7)
+      "controls": { "lever1": true, "safe": "417" }, // close-up controls: lever position or dial digits (optional, GDD §4.8)
       "fired":  ["caption_doubt"]                // once-triggers already fired
     }
   }

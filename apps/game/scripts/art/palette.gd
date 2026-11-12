@@ -24,6 +24,11 @@ const ERASER := Color("e3a6a1")        # the artist's pink rubber
 const SCENERY := Color("77726a")
 const LEAF := Color("6f8f5c")
 const WOOD_DARK := Color("a8772b")
+## Ice, and glow paint that only shows at night (GDD §4.7).
+const ICE := Color("cfe3ee")
+const GLOW := Color("d8f27a")
+## The wash over a panel at night.
+const NIGHT_WASH := Color("1b2140")
 
 
 ## A colour faded toward the panel paper, for scenery fills.

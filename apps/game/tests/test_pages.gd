@@ -3,13 +3,14 @@ extends RefCounted
 ## panels inside the page and a gutter apart, unique ids, known props and
 ## story actions, reachable `next`, pencil sketches inside their panels and
 ## within what the eraser can hold, platforms on rails that stay inside
-## their panels, fallen bubbles inside their panels, and nothing left
-## stranded in a panel the artist erases.
+## their panels, fallen bubbles inside their panels, nothing left stranded
+## in a panel the artist erases, and scene cards, close-ups and conditional
+## features that refer only to scenes and switches that exist.
 
 const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page", "erase_panel"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed"]
 ## Object type -> word categories its label accepts.
-const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"]}
+const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"], "lever": [], "dial": []}
 
 
 func _pages() -> Array:
@@ -105,6 +106,8 @@ func test_ids_and_references(t) -> void:
 					t.ok(inner.encloses(Rect2i(lo, size)) and inner.encloses(Rect2i(hi, size)), "%s: whole rail inside its panel" % o.id)
 					if o.has("label") and WordLibrary.category(o.label) == "motion":
 						t.ok(Platform.heading_for(o.label, axis) != 0, "%s: label %s runs along its rail" % [o.id, o.label])
+				if o.type in ["lever", "dial"]:
+					buttons[o.id] = true
 				if o.type == "button":
 					buttons[o.id] = true
 					t.ok(float(o.get("needs", 1.0)) > 0.0, "%s needs some weight" % o.id)
@@ -162,3 +165,59 @@ func _check_erasure(t, d: Dictionary, a: Dictionary) -> void:
 		if pd.id != a.panel and not pd.get("erased", false) and not pd.has("track") and r.encloses(Rect2(at - Vector2(Player.SIZE.x / 2.0, Player.SIZE.y), Player.SIZE)):
 			inside = true
 	t.ok(inside, "%s: respawn %s is in a fixed room that stays" % [d.id, at])
+
+
+const FEATURES := ["vine", "ice", "gate", "glow_steps", "glow_text"]
+
+
+func test_scenes_and_closeups(t) -> void:
+	for d: Dictionary in _pages():
+		var switches := {}
+		var panels := {}
+		for pd: Dictionary in d.panels:
+			panels[pd.id] = pd
+			for o: Dictionary in pd.get("objects", []):
+				if o.type in ["lever", "dial"]:
+					switches[o.id] = true
+					if o.type == "dial":
+						t.ok(str(o.code).is_valid_int() and str(o.code).length() <= 8, "%s: a dial's code is digits" % o.id)
+		var known := switches.duplicate()
+		for sc in Conditions.SCENES:
+			known[sc] = true
+		var feature_ids := {}
+		for pd: Dictionary in d.panels:
+			var inner := Rect2i(Vector2i.ONE * PageConst.BORDER, Vector2i(int(pd.rect[2]), int(pd.rect[3])) - Vector2i.ONE * PageConst.BORDER * 2)
+			for f: Dictionary in pd.get("features", []):
+				t.ok(f.kind in FEATURES, "%s: known feature kind %s" % [d.id, f.kind])
+				t.ok(not feature_ids.has(f.id), "%s: unique feature id %s" % [d.id, f.id])
+				feature_ids[f.id] = true
+				var r := Rect2i(int(f.rect[0]), int(f.rect[1]), int(f.rect[2]), int(f.rect[3]))
+				t.ok(inner.encloses(r), "%s: feature %s inside its panel" % [d.id, f.id])
+				for term in Conditions.terms(f.get("when", "")):
+					t.ok(known.has(term), "%s: %s's condition names a scene or switch: %s" % [d.id, f.id, term])
+			for n: Dictionary in pd.get("npcs", []):
+				for term in Conditions.terms(n.get("when", "")):
+					t.ok(known.has(term), "%s: %s's condition names a scene or switch: %s" % [d.id, n.id, term])
+				if n.has("when") and n.has("bubble"):
+					t.ok(not Lettering.has_slots(n.bubble.text), "%s: %s comes and goes, so their bubble holds no words" % [d.id, n.id])
+			for pr: Dictionary in pd.get("props", []):
+				for term in Conditions.terms(pr.get("when", "")):
+					t.ok(known.has(term), "%s: a prop's condition names a scene or switch: %s" % [d.id, term])
+		var held := {}
+		for c: Dictionary in d.get("cards", []):
+			t.ok(c.scene in Conditions.SCENES, "%s: card %s sets a known scene" % [d.id, c.id])
+			t.ok(panels.has(c.panel), "%s: card %s starts on a panel" % [d.id, c.id])
+			var pd: Dictionary = panels.get(c.panel, {})
+			t.ok(not pd.get("pencil", false) and not pd.get("erased", false), "%s: card %s starts on an inked panel" % [d.id, c.id])
+			t.ok(not held.has(c.panel), "%s: one card per panel (%s)" % [d.id, c.panel])
+			held[c.panel] = true
+		for cu: Dictionary in d.get("closeups", []):
+			var c := Vector2(cu.at[0], cu.at[1])
+			var r := float(cu.get("r", 28.0))
+			var box := Rect2(c - Vector2(r, r), Vector2(r, r) * 2.0)
+			t.ok(Rect2(Vector2.ZERO, Vector2(PageConst.PAGE_SIZE)).encloses(box), "%s: close-up %s on the page" % [d.id, cu.id])
+			for pd: Dictionary in d.panels:
+				if not pd.get("erased", false):
+					var pr := Rect2(pd.rect[0], pd.rect[1], pd.rect[2], pd.rect[3])
+					t.ok(not pr.intersects(box), "%s: close-up %s covers no panel (%s)" % [d.id, cu.id, pd.id])
+

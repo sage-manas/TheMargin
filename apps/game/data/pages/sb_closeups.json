@@ -1,0 +1,44 @@
+{
+  "id": "sb_closeups",
+  "chapter": "sandbox",
+  "number": 0,
+  "next": "",
+  "hint": "SANDBOX   SLIDE THE LEVER UNDER THE RING, THEN WORK IT IN THE CLOSE-UP",
+  "spawn": [100, 328],
+  "closeups": [
+    { "id": "lever_view", "at": [470, 76], "r": 30, "focus": [396, 76] },
+    { "id": "dial_view", "at": [576, 76], "r": 30, "focus": [528, 212] }
+  ],
+  "panels": [
+    {
+      "id": "h",
+      "rect": [16, 16, 200, 120],
+      "bg": "room_blue",
+      "track": { "axis": "x", "min": 16, "max": 216 },
+      "solids": [[0, 104, 200, 16]],
+      "captions": [{ "id": "cap_h", "at": [6, 6], "text": "THE LEVER WAS|OUT OF REACH." }],
+      "objects": [{ "type": "lever", "id": "lever1", "at": [180, 60] }]
+    },
+    {
+      "id": "g",
+      "rect": [16, 152, 296, 192],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 152, "to": 176 }],
+      "solids": [[0, 176, 296, 16]],
+      "captions": [{ "id": "cap_g", "at": [6, 6], "text": "A GATE STOOD|IN THE WAY." }]
+    },
+    {
+      "id": "r",
+      "rect": [320, 152, 304, 192],
+      "bg": "room_warm",
+      "openings": [{ "side": "left", "from": 152, "to": 176 }],
+      "solids": [[0, 176, 296, 16]],
+      "features": [{ "id": "gate", "kind": "gate", "rect": [10, 128, 14, 48], "when": "!lever1" }],
+      "objects": [
+        { "type": "dial", "id": "safe", "at": [200, 60], "code": "417" },
+        { "type": "door", "id": "door_r", "at": [240, 144], "button": "safe", "exit": true }
+      ],
+      "captions": [{ "id": "cap_r", "at": [40, 6], "text": "THE CODE WAS 4-1-7." }]
+    }
+  ]
+}

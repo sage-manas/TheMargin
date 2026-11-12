@@ -1,0 +1,50 @@
+{
+  "id": "sb_scenes",
+  "chapter": "sandbox",
+  "number": 0,
+  "next": "",
+  "hint": "SANDBOX   DRAG A CAPTION CARD TO ANOTHER ROOM (OR Q)",
+  "spawn": [478, 208],
+  "cards": [
+    { "id": "later", "text": "LATER.", "scene": "later", "panel": "a" },
+    { "id": "night", "text": "THAT NIGHT.", "scene": "night", "panel": "b" }
+  ],
+  "panels": [
+    {
+      "id": "a",
+      "rect": [16, 16, 296, 208],
+      "bg": "room_warm",
+      "openings": [{ "side": "right", "from": 168, "to": 192 }],
+      "solids": [[0, 192, 296, 16], [174, 48, 120, 8]],
+      "props": [{ "type": "window", "at": [40, 40] }],
+      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "ONCE, THERE|WAS A SEED." }],
+      "features": [{ "id": "vine", "kind": "vine", "rect": [150, 48, 24, 144], "when": "later" }],
+      "objects": [{ "type": "door", "id": "door_a", "at": [200, 16], "label": "OPEN", "loose": false, "exit": true }]
+    },
+    {
+      "id": "b",
+      "rect": [320, 16, 304, 208],
+      "bg": "room_blue",
+      "openings": [{ "side": "left", "from": 168, "to": 192 }],
+      "solids": [[0, 192, 296, 16]],
+      "captions": [{ "id": "cap_b", "at": [6, 6], "text": "IT WAS COLD|THAT YEAR." }],
+      "features": [{ "id": "ice", "kind": "ice", "rect": [8, 152, 24, 40], "when": "!later" }]
+    },
+    {
+      "id": "n",
+      "rect": [16, 232, 608, 112],
+      "bg": "room_warm",
+      "solids": [[0, 96, 608, 16]],
+      "props": [{ "type": "bed", "at": [400, 80] }],
+      "captions": [{ "id": "cap_n", "at": [6, 6], "text": "THE NEIGHBOUR|NEVER SLEPT." }],
+      "features": [
+        { "id": "code", "kind": "glow_text", "rect": [200, 20, 40, 10], "text": "4 1 7", "when": "night" },
+        { "id": "steps", "kind": "glow_steps", "rect": [60, 78, 20, 4], "steps": 3, "when": "night" }
+      ],
+      "npcs": [
+        { "id": "awake", "at": [300, 96], "sprite": "neighbor", "solid": true, "when": "!night", "bubble": { "id": "awake_says", "at": [250, 40], "text": "NOT BEFORE|NIGHT." } },
+        { "id": "asleep", "at": [412, 88], "sprite": "neighbor", "pose": "asleep", "when": "night" }
+      ]
+    }
+  ]
+}

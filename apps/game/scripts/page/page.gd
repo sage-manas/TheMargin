@@ -20,6 +20,11 @@ var crates: Dictionary = {}
 var platforms: Dictionary = {}
 var buttons: Dictionary = {}
 var sketches: Dictionary = {}
+## Scene captions, close-ups and what they drive (GDD §4.7, §4.8).
+var features: Dictionary = {}
+var controls: Dictionary = {}
+var cards: Dictionary = {}
+var closeups: Dictionary = {}
 ## Abilities Nib has found so far (`progress.abilities`), e.g. "eraser".
 var abilities: Array = []
 ## Crumbs the eraser can hold on this page (`eraser_holds`).
@@ -78,6 +83,16 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 
 	for pd: Dictionary in def["panels"]:
 		_build_panel(pd)
+	for cd: Dictionary in def.get("cards", []):
+		var card := SceneCard.new()
+		card.setup(cd, panels[cd["panel"]])
+		add_child(card)
+		cards[card.card_id] = card
+	for cu: Dictionary in def.get("closeups", []):
+		var c := CloseUp.new()
+		c.setup(cu, self)
+		add_child(c)
+		closeups[c.closeup_id] = c
 	_apply_state(state)
 	_bridges = DrawLayer.make(_draw_bridges, 1)
 	add_child(_bridges)
@@ -95,6 +110,7 @@ func build(page_def: Dictionary, state: Dictionary = {}, player_state: Dictionar
 	var here := player_panel()
 	_last_panel = here.panel_id if here else ""
 	_wire_buttons()
+	refresh_conditions(false)
 
 	var carried: Variant = player_state.get("carrying")
 	interaction = PlayerInteraction.new()
@@ -140,10 +156,12 @@ func _build_panel(pd: Dictionary) -> void:
 		npc.setup(n)
 		p.content.add_child(npc)
 		npcs[npc.npc_id] = npc
+		npc.panel = p
 		if n.has("bubble"):
 			var bubble := SpeechBubble.new()
 			bubble.setup(n["bubble"], npc)
 			p.content.add_child(bubble)
+			npc.bubble = bubble
 			for s in bubble.slots:
 				_register_slot(s, p)
 	# Bubbles nobody is saying any more, lying where they fell (page 1.6).
@@ -153,8 +171,21 @@ func _build_panel(pd: Dictionary) -> void:
 		p.content.add_child(fallen)
 		for s in fallen.slots:
 			_register_slot(s, p)
+	for fd: Dictionary in pd.get("features", []):
+		var f := Feature.new()
+		f.setup(fd)
+		p.content.add_child(f)
+		features[f.feature_id] = f
 	for o: Dictionary in pd.get("objects", []):
 		match o["type"]:
+			"lever", "dial":
+				var pc := PageControl.new()
+				pc.setup(o)
+				p.content.add_child(pc)
+				controls[pc.control_id] = pc
+				pc.changed.connect(func(on: bool) -> void:
+					refresh_conditions()
+					EventBus.switch_changed.emit(pc.control_id, on))
 			"door":
 				var d := Door.new()
 				d.setup(o)
@@ -210,6 +241,11 @@ func _wire_buttons() -> void:
 	for b: PlateButton in buttons.values():
 		b.refresh(false)
 	for d in doors:
+		var pc: PageControl = controls.get(d.button_id)
+		if pc:
+			d.set_powered(pc.is_on(), false)
+			pc.changed.connect(d.set_powered)
+			continue
 		var b: PlateButton = buttons.get(d.button_id)
 		if b == null:
 			continue
@@ -287,6 +323,25 @@ func _apply_state(state: Dictionary) -> void:
 			sk.reset()
 		if ink() > ink_holds:
 			collected.clear()
+
+	var saved_controls: Dictionary = state.get("controls", {})
+	for id: String in saved_controls:
+		if controls.has(id):
+			controls[id].apply_value(saved_controls[id])
+	# Cards were saved together, so they are placed together: each one where
+	# it was saved if that panel can hold a card; if two would share a panel,
+	# every card starts over.
+	var saved_scenes: Dictionary = state.get("scenes", {})
+	var placed := {}
+	for card: SceneCard in cards.values():
+		var target: ComicPanel = panels.get(str(saved_scenes.get(card.card_id, "")))
+		placed[card] = target if target and can_hold_card(target) else card.panel
+	var used := {}
+	for card: SceneCard in placed:
+		used[placed[card]] = used.get(placed[card], 0) + 1
+	if used.values().all(func(n: int) -> bool: return n == 1):
+		for card: SceneCard in placed:
+			card.panel = placed[card]
 
 
 func _restore_position(pos: Variant) -> Vector2:
@@ -545,6 +600,14 @@ func capture_state() -> Dictionary:
 		st["objects"][id] = [int(pl.position.x), int(pl.position.y)]
 	for id: String in sketches:
 		st["sketches"][id] = sketches[id].state()
+	if not cards.is_empty():
+		st["scenes"] = {}
+		for id: String in cards:
+			st["scenes"][id] = cards[id].panel.panel_id
+	if not controls.is_empty():
+		st["controls"] = {}
+		for id: String in controls:
+			st["controls"][id] = controls[id].value()
 	return st
 
 
@@ -559,6 +622,92 @@ func snapshot() -> Dictionary:
 		"carrying": interaction.carrying if interaction.carrying != "" else null,
 		"abilities": abilities.duplicate(),
 	}
+
+
+# --- scenes and switches (GDD §4.7, §4.8) ------------------------------------
+
+## The scene a panel is in: its card's ("later", "night"), or "" (now, by day).
+func scene_of(p: ComicPanel) -> String:
+	var card := _card_on(p)
+	return card.scene if card else ""
+
+
+func switches() -> Dictionary:
+	var out := {}
+	for id: String in controls:
+		out[id] = controls[id].is_on()
+	return out
+
+
+func condition_met(expr: String, p: ComicPanel) -> bool:
+	return Conditions.met(expr, scene_of(p), switches())
+
+
+func can_hold_card(p: ComicPanel) -> bool:
+	return not p.pencil and not p.erased
+
+
+func _card_on(p: ComicPanel) -> SceneCard:
+	for c: SceneCard in cards.values():
+		if c.panel == p:
+			return c
+	return null
+
+
+func _feature_panel(f: Feature) -> ComicPanel:
+	return f.get_parent().get_parent().get_parent() as ComicPanel
+
+
+## Puts every feature, character and prop in the state its conditions say.
+func refresh_conditions(animate := true) -> void:
+	var sw := switches()
+	for f: Feature in features.values():
+		var p := _feature_panel(f)
+		f.set_active(Conditions.met(f.when, scene_of(p), sw), animate)
+	for npc: Npc in npcs.values():
+		npc.set_present(Conditions.met(npc.when, scene_of(npc.panel), sw))
+	for p in panel_list:
+		p.set_scene(scene_of(p), func(expr: String) -> bool: return Conditions.met(expr, scene_of(p), sw))
+
+
+## What would block `card` landing on `target`: a feature that would turn
+## solid where Nib or a crate is. Checked before anything changes.
+func _card_blocked(card: SceneCard, target: ComicPanel) -> bool:
+	var from := card.panel
+	card.panel = target
+	var sw := switches()
+	var blocked := false
+	for f: Feature in features.values():
+		var p := _feature_panel(f)
+		if p != target and p != from:
+			continue
+		if f.active or not Conditions.met(f.when, scene_of(p), sw):
+			continue
+		var nib := Rect2(player.collision_rect().position - p.position, player.collision_rect().size)
+		if f.would_block(nib):
+			blocked = true
+		for c: Crate in crates.values():
+			if c.panel == p and f.would_block(Rect2(c.position, Crate.SIZE)):
+				blocked = true
+	card.panel = from
+	return blocked
+
+
+## Moves a scene card to `target`'s corner. Returns false (and changes
+## nothing) if that panel can't take it or something is in the way.
+func move_card(card: SceneCard, target: ComicPanel) -> bool:
+	if target == card.panel:
+		return true
+	if not can_hold_card(target) or _card_on(target) != null or _card_blocked(card, target):
+		return false
+	var from := card.panel
+	card.panel = target
+	Audio.play("place")
+	refresh_conditions()
+	EventBus.scene_changed.emit(from.panel_id, "")
+	EventBus.scene_changed.emit(target.panel_id, card.scene)
+	EventBus.state_dirty.emit()
+	return true
 
 
 # --- drawing ---------------------------------------------------------------

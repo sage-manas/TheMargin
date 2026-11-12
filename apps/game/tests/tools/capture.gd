@@ -3,7 +3,7 @@ extends Node
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
 ## Captures the page start state and the solved positions of pages 1 and 3–8, and
-## the Phase 3 sandboxes (mechanics, weight, eraser, ink, platforms).
+## the sandboxes (mechanics, weight, eraser, ink, platforms, scenes, close-ups).
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -45,6 +45,10 @@ func _ready() -> void:
 	await _shot(out, "sbp_start", "sb_platforms", {})
 	await _shot(out, "sbp_ferry", "sb_platforms", {"slots": {"ferry:label": null}, "objects": {"ferry": [176, 56], "lift1": [88, 56]}}, [432, 72], "STOP")
 	await _shot(out, "sbp_done", "sb_platforms", {"slots": {"ferry:label": null, "cap_up:0": "STOP", "box:label": "LEFT", "lift3:label": "UP"}, "objects": {"ferry": [264, 56], "lift3": [116, 88], "box": [2, 64]}}, [400, 312], "DOWN")
+	await _shot(out, "sbs_start", "sb_scenes", {})
+	await _shot(out, "sbs_moved", "sb_scenes", {"scenes": {"later": "b", "night": "n"}}, [200, 208])
+	await _shot(out, "sbc_start", "sb_closeups", {})
+	await _shot(out, "sbc_ready", "sb_closeups", {"panels": {"h": [216, 16]}, "controls": {"lever1": true, "safe": "410"}}, [420, 328])
 	await _erase_shot(out)
 	await _turn_shot(out)
 	get_tree().quit()

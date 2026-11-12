@@ -94,15 +94,18 @@ apps/game/
 ├── scenes/main.tscn          main.gd: game flow (title → page → turn → end), pause, reset
 ├── scripts/
 │   ├── art/                  palette, ink (vector kit), comic_font (original stroke lettering), figures (Nib,
-│   │                         neighbour), label_tag (word tags), prompt (key prompts), draw_layer
+│   │                         neighbour), label_tag (word tags), prompt (key prompts), draw_layer,
+│   │                         baked_layer (static art rendered once to a texture)
 │   ├── audio/                sfx_synth, music_synth (procedural, license-clean)
 │   ├── page/                 page.gd (builder + runtime), comic_panel.gd, panel_links.gd (pure)
-│   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd
+│   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd,
+│   │                         conditions.gd, scene_card.gd, closeup.gd
 │   ├── player/               player.gd (movement), player_interaction.gd, sketch_tool.gd (base),
 │   │                         player_eraser.gd (X), player_ink.gd (C)
 │   ├── words/                word_library.gd (data), word_slot.gd, lettering.gd, speech_bubble.gd, caption.gd
 │   ├── objects/              door.gd, crate.gd, button.gd (pressure plate), sketch.gd (pencil),
-│   │                         eraser_pickup.gd, ink_drop.gd, npc.gd, prop_painter.gd
+│   │                         eraser_pickup.gd, ink_drop.gd, npc.gd, prop_painter.gd,
+│   │                         feature.gd (conditional parts), page_control.gd (lever, dial)
 │   └── ui/                   title_screen, overlays (pause + end card), comic_menu, page_turn, hud
 ├── data/
 │   ├── words.json            Word definitions (data-driven)
@@ -155,11 +158,21 @@ The player controller never knows what a door or a bubble is. The eraser (X) and
 
 ### 3.7 Story triggers
 
-Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `panel_entered` (Nib is now wholly inside a panel, having last been inside another), `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `turn_page` (leave for `next`, as an exit door does), `erase_panel`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
+Page data declares `triggers: [{ on, when?, once, do: [actions] }]`. Events come from the EventBus (`panel_moved`, `link_formed`, `word_taken`, `word_placed`, `page_entered`, `panel_entered` (Nib is now wholly inside a panel, having last been inside another), `door_opened`, `button_pressed`, `button_released`, `eraser_found`, `sketch_erased`, `sketch_restored`, `ink_collected`, `sketch_inked`, `scene_changed` {panel, scene}, `switch_changed` {switch, on}). Actions are a small whitelist: `wait`, `rewrite_caption`, `write_caption`, `shake_panel`, `sfx`, `end_card`, `turn_page` (leave for `next`, as an exit door does), `erase_panel`, `emit`. Fired `once` triggers are recorded in page state so they don't replay after loading.
 
 **`erase_panel {panel, respawn}`** is the artist rubbing a whole panel out (page 1.8). It first waits until Nib is wholly inside another panel, so nobody is erased with the room. Then the panel stops being a room at once: its border and solids lose their collision layer, it reports no openings (so its links close), it no longer encloses anything, and `_panel_fits` ignores it, so a lifted panel may slide into the space it leaves. Nib is nudged clear of the border that just closed (being wholly inside a panel still overlaps its border collision by up to 6 px). The drawing is then rubbed away in 16 px rows, back and forth, holding the music duck, and only a smudge, crumbs and a ghost border are left. `respawn` moves the page spawn out of the room. Page validation requires the erased panel to be fixed and to hold nothing the page needs (objects, NPCs, bubbles, sketches, caption words). A panel can also start `erased` in data, as a smudge where an earlier page had a room.
 
 **Restore order.** A page restores lasting erasures (and their respawn) before anything else, then lifted-panel positions, then Nib. Saved panel positions are checked against each other only after all of them are applied, because one panel may rest where another started (page 1.7's R rests over V's start). If any clash, all of them start over.
+
+### 3.7b Scene captions, close-ups and conditional features (GDD §4.7, §4.8)
+
+- **`Conditions`** (`page/conditions.gd`) evaluates a condition string against a panel's scene (`later`, `night`, or "" for now) and the page's switches: a term, optionally negated with `!`, joined with `&`.
+- **`Feature`** (`objects/feature.gd`) is a panel part that exists while its `when` holds: `vine` (leaves are one-way ledges), `ice`, `gate`, `glow_steps` (one-way), `glow_text`. Each has its own `StaticBody2D` whose collision layer is switched on and off, and animates growing or melting (cut under reduced motion). NPCs (`when`, `solid`, `pose: "asleep"`) and props (`when`) follow conditions the same way.
+- **`SceneCard`** (`page/scene_card.gd`) is a page-level caption card in a panel's top-right corner. `ComicPage.move_card` checks first that no feature would turn solid over Nib or a crate, then moves it, re-evaluates every condition (`refresh_conditions`) and emits `scene_changed` for both panels. `ComicPanel.set_scene` re-bakes the ground (conditional props) and draws the scene layer (night wash and moon, or LATER cobwebs) between the ground and the room's contents.
+- **`PageControl`** (`objects/page_control.gd`, a `lever` or a `dial` object) is a switch, drawn small in its panel. **`CloseUp`** (`page/closeup.gd`) is a round inset at a fixed page point with a fixed focus ring. It shows whichever control's global position is within the ring, drawn big, and turns hand clicks into `pull()` or `turn(wheel, ±1)`. Controls emit `changed`, which re-evaluates conditions, powers wired doors (`button: "<control id>"`, as with plates) and emits `switch_changed`.
+- **The reader's hand** (`page/panel_drag.gd`) works lifted panels, cards and close-ups by mouse; panel mode (Q) cycles through all three.
+- **Save:** `pages.<id>.scenes` (card → panel) and `pages.<id>.controls` (lever bool or dial digits). Cards are restored together, like panel positions: if two would share a panel, all start where the page puts them.
+- **Validation** (`test_pages`): known feature kinds inside their panels; conditions name only scenes or switches on the page; a character that comes and goes has no words in its bubble; cards start on inked panels, one per panel; close-ups sit on the page and cover no panel.
 
 ### 3.7a Music
 

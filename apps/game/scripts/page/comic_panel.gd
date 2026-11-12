@@ -35,6 +35,11 @@ var hovered := false
 var selected := false
 var dragging := false
 var erased := false
+## The scene this panel is in ("", "later", "night"), set by the page.
+var scene := ""
+## Whether a prop's `when` holds here (set by the page with the scene).
+var _cond := func(_expr: String) -> bool: return true
+var _scene_layer: DrawLayer
 
 var visual: Node2D
 var content: Node2D
@@ -98,6 +103,8 @@ func setup(def: Dictionary) -> void:
 	visual.add_child(bg)
 	_ground = BakedLayer.make(_draw_ground, Rect2(Vector2.ZERO, Vector2(size)))
 	visual.add_child(_ground)
+	_scene_layer = DrawLayer.make(_draw_scene)
+	visual.add_child(_scene_layer)
 	content = Node2D.new()
 	content.name = "Content"
 	visual.add_child(content)
@@ -315,8 +322,36 @@ func _draw_shadow(ci: CanvasItem) -> void:
 	ci.draw_rect(Rect2(Vector2(lift, lift + 1), Vector2(size)), Color(Palette.SHADOW, 0.85))
 
 
+## The page tells the panel its scene and how to test prop conditions.
+func set_scene(new_scene: String, cond: Callable) -> void:
+	_cond = cond
+	var changed := new_scene != scene
+	scene = new_scene
+	if changed or props.any(func(pr: Dictionary) -> bool: return pr.has("when")):
+		_ground.refresh()
+	_scene_layer.queue_redraw()
+
+
+## Over the ground, under what is in the room: night washes the room dark
+## (Nib, things and lettering stay readable on top); LATER leaves cobwebs.
+func _draw_scene(ci: CanvasItem) -> void:
+	if scene == "night":
+		ci.draw_rect(Rect2(Vector2.ZERO, Vector2(size)), Color(Palette.NIGHT_WASH, 0.62))
+		var m := Vector2(size.x - 18, 18)
+		Ink.dot(ci, m, 5.0, Color(Palette.WHITE, 0.9))
+		Ink.dot(ci, m + Vector2(2.2, -1.2), 4.4, Color(Palette.NIGHT_WASH, 0.95))
+	elif scene == "later":
+		for k in 4:
+			var r := 6.0 + k * 5.0
+			Ink.stroke(ci, Ink.ellipse_points(Vector2(2, 2), Vector2(r, r), 6, 0.0, PI / 2.0), Color(Palette.SCENERY, 0.55), 0.5)
+		for a in [0.2, 0.75, 1.3]:
+			Ink.line(ci, Vector2(2, 2), Vector2(2, 2) + Vector2.from_angle(a) * 22.0, Color(Palette.SCENERY, 0.55), 0.5)
+
+
 func _draw_ground(ci: CanvasItem) -> void:
 	for p: Dictionary in props:
+		if not _cond.call(p.get("when", "")):
+			continue
 		PropPainter.paint(ci, p)
 	for s in solids:
 		# Ground: what Nib stands on is inked heavily on top, hatched below.

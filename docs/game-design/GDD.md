@@ -107,6 +107,29 @@ Adding a word means adding a data row. Adding a category means writing one handl
 - Margins, gutters and the page edge become places. Gutters are corridors. The margin is a wide white void where only words and ink exist. The page edge is a cliff above the reader's desk.
 - Final act: Nib leaves the page and reaches the reader.
 
+### 4.7 Scene captions (Chapter 1, from the rework)
+
+Playtest feedback (2026-11-12): every Chapter 1 page was "slide a room, carry a word to a slot, reach a door". Scene captions give the reader's hand a second job that changes a whole room at once.
+
+- A **scene card** is a loose narrator caption that names a time or scene: **LATER.** or **THAT NIGHT.** It sits in a panel's top-right corner, drawn as a caption box with a dog-ear (loose, can be picked up).
+- The **reader's hand** carries a card to another panel's corner (mouse drag, or panel mode: Q selects it, arrow keys hop it to the next panel that way). Each panel holds at most one card. A panel with a card *is* that scene; a panel without one is now, by day.
+- **What scenes do** is data: features, characters and props carry a condition (`when: "later"`, `"!night"`):
+  - LATER: time has passed in that room. A sprout is a vine whose leaves are ledges; ice has melted into a puddle; a candle has burned down.
+  - THAT NIGHT: the room is dark (a night wash over its paper; Nib, objects and lettering stay readable). Glow paint shows: writing (clues) and steps you can stand on. Characters go to bed.
+- **Moving a card un-happens the scene where it was.** Taking LATER away from a room grows the ice back. Order matters, and that is the puzzle.
+- **Refusals:** a card won't land if it would make something solid where Nib or a crate is (the hand buzzes and the panel shakes). A pencil sketch panel takes no card.
+- Feedback: the card ticks into its corner; a growing vine and melting ice animate (cut under reduced motion); the panel's night wash fades in.
+- Saves store which panel each card is on (`pages.<id>.scenes`); features follow from that.
+
+### 4.8 Close-ups (Chapter 1, from the rework)
+
+- A **close-up** is a round inset panel that magnifies one spot of the page, joined to it by two pencil lines (the zoom). Comics use them to show a detail too small to see; here the detail is something only the reader's hand can work.
+- **Controls** are drawn small in a panel, too small for Nib: a **lever** (on or off) or a **combination dial** (one wheel per digit, on while it shows its code). Each control is a **switch**.
+- In the close-up the control is drawn big. The reader clicks it: the lever flips; a wheel turns up (top half) or down (bottom half). Keyboard: panel mode selects the close-up, left and right pick a wheel, up and down turn it, E pulls a lever.
+- **The close-up looks at the page, not at a thing.** It shows whatever control is under its focus ring. Slide a lifted panel and the close-up sees what is now under the ring, or nothing (it is hatched).
+- **Switches drive the page:** features with `when: "<switch>"` (a gate lifts, a bridge appears), doors wired to a switch (`button: "<switch>"`, like a pressure plate), and story triggers (`switch_changed`).
+- Saves store each control's position or digits (`pages.<id>.controls`).
+
 ## 5. Chapter structure (evaluated)
 
 I checked the proposed structure against two failure modes: a first chapter with nothing to *do*, and a mid-game where each chapter feels like a separate game.

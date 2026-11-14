@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-12: Chapter 1 reworked after playtest feedback: hand-inked art, scene captions and close-ups, pages 1.3–1.7 rebuilt._
+_Last updated: 2026-11-14: Chapter 1 playtest met the Phase 4 bar; Phase 7 (Chapter 2) started._
 
 ## Current phase
 
@@ -10,7 +10,7 @@ _Last updated: 2026-11-12: Chapter 1 reworked after playtest feedback: hand-inke
 
 **Phase 6 (backend) meets its bar:** the API's integration tests pass against a real Postgres, and the offline→online sync and conflict tests pass, both as unit tests on the sync logic and end to end in Chromium and WebKit (Firefox on CI). The auth UI completes Phase 5 too. The Chapter 1 playtest is still the open Phase 4 item.
 
-**Chapter 1 is being reworked before the project moves further (2026-11-12).** Playtest feedback: the theme and concept are strong, but the pixel art made props and scenes hard to understand, and play was repetitive (every page was "slide a room, carry HEAVY/OPEN/UP to a slot, reach a door"). Decisions and status: hand-inked vector art (ADR-0013); two new reader-hand mechanics, scene captions and close-ups (GDD §4.7, §4.8); pages 1.3–1.7 rebuilt around them, each with its own verb and goal, keeping 1.1, 1.2 and 1.8 (GDD §6). All three parts are built and tested; the Chapter 1 playtest now runs on the reworked chapter.
+**Chapter 1 is being reworked before the project moves further (2026-11-12).** Playtest feedback: the theme and concept are strong, but the pixel art made props and scenes hard to understand, and play was repetitive (every page was "slide a room, carry HEAVY/OPEN/UP to a slot, reach a door"). Decisions and status: hand-inked vector art (ADR-0013); two new reader-hand mechanics, scene captions and close-ups (GDD §4.7, §4.8); pages 1.3–1.7 rebuilt around them, each with its own verb and goal, keeping 1.1, 1.2 and 1.8 (GDD §6). All three parts were merged (PRs #15, #16), and **the playtest on the reworked chapter met the Phase 4 bar** (reported 2026-11-14). Phase 4 is done, and Phase 7 starts with Chapter 2, "The Border" (GDD §4.9, §4.10, §6b).
 
 **Phase 8 (production readiness) has started with staging**, so the playtest can run from a URL with accounts on. The pipeline and runbook are in the repo (DEPLOY.md, ADR-0012). It hasn't deployed yet: it needs the one-time account setup (Neon, Fly.io, Vercel and GitHub secrets).
 
@@ -145,6 +145,12 @@ _Last updated: 2026-11-12: Chapter 1 reworked after playtest feedback: hand-inke
   - Old Chapter 1 saves for 1.3–1.7 load with their unknown panels and slots ignored (save version 1 is unchanged).
   - The browser e2e's site specs ignore Next.js prefetch aborts that WebKit reports as page errors.
 
+- **Phase 7 (2026-11-14): Chapter 2 mechanics, swapping and stretching (GDD §4.9, §4.10; TDD §3.7c).** The reworked Chapter 1 met its playtest bar; PRs #15 and #16 merged.
+  - **Swap:** panels in a swap group (one size) trade places when the hand drops one on another (or Q, then an arrow). Contents and Nib travel with them and links re-form. Refused in a gutter or with a pinned panel. Saved as positions, restored only as a rearrangement.
+  - **Stretch:** a panel's right border, drawn with a grip, drags between a min and max width; floors written to the border follow it, right-side openings move with it, and the border stops short of anything in the room and of Nib. Saved as `pages.<id>.sizes` (contracts too).
+  - Sandboxes `sb_swap` and `sb_stretch`; 5 new tests (swap order and linking, carrying Nib, round trips and impossible saves; stretching across a gap to link, refusals at content and Nib); page validation for swap groups and stretch ranges.
+  - Docs: GDD §4.9, §4.10 and the Chapter 2 plan (§6b); risks reviewed (R1, R2 lowered).
+
 ## Test status
 
 | Suite | Command | Result |
@@ -190,9 +196,9 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 
 ## Next recommended tasks
 
-1. **Playtest the reworked Chapter 1 (pages 1.1–1.8) with 3–5 people** who haven't seen it (`pnpm game:export && pnpm game:serve`). The Phase 4 exit bar: ≥ 70 % unaided completion, median 20–35 min. Also ask whether props and scenes read at a glance now and whether the pages feel different from each other; measure whether players find the caption cards and close-ups unaided (known issue 12) and whether 1.8's erasure reads as both loss and opening. This still gates Chapter 2 (R1, R2).
-2. Merge the rework PRs in order (art first, then mechanics and pages) once CI is green.
-3. **Do the one-time staging setup** (DEPLOY.md: Neon, Fly.io, Vercel, GitHub secrets), merge the staging branch, and run the deploy. Then **run the Chapter 1 playtest from the staging URL**.
+1. ~~Playtest the reworked Chapter 1~~ Done 2026-11-14: the Phase 4 bar was met. Run Chapter 2's playtest the same way (3–5 new players, the same bar).
+2. **Chapter 2 (Phase 7):** swapping and stretching (mechanics, sandboxes, tests), then pages 2.1–2.8 one verb and goal each, then its palette and music, then its playtest.
+3. **Do the one-time staging setup** (DEPLOY.md: Neon, Fly.io, Vercel, GitHub secrets; the pipeline is already on `main`) and run the first deploy, so Chapter 2's playtest can run from a URL with accounts on.
 4. Phase 8 continues: the security review (R10, including restricting the API to the site's proxy), monitoring and error reporting, a production environment, and a password reset once there's an email provider.
 5. Decide how multi-word captions are reached (known issue 11) before a page needs one.
 6. Listen to "Margins" in a browser and tune by ear (levels, duck depth), including the duck during the 1.8 erasure.

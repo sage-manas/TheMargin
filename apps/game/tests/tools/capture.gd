@@ -3,7 +3,7 @@ extends Node
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
 ## Captures the page start state and the solved positions of pages 1 and 3–8, and
-## the sandboxes (mechanics, weight, eraser, ink, platforms, scenes, close-ups).
+## the sandboxes (mechanics, weight, eraser, ink, platforms, scenes, close-ups, swap, stretch).
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -50,6 +50,10 @@ func _ready() -> void:
 	await _shot(out, "sbs_moved", "sb_scenes", {"scenes": {"later": "b", "night": "n"}}, [200, 208])
 	await _shot(out, "sbc_start", "sb_closeups", {})
 	await _shot(out, "sbc_ready", "sb_closeups", {"panels": {"h": [216, 16]}, "controls": {"lever1": true, "safe": "410"}}, [420, 328])
+	await _shot(out, "sbw2_start", "sb_swap", {})
+	await _shot(out, "sbw2_swapped", "sb_swap", {"panels": {"door_room": [416, 16], "hall": [16, 16], "start": [216, 16]}})
+	await _shot(out, "sbt_start", "sb_stretch", {})
+	await _shot(out, "sbt_stretched", "sb_stretch", {"sizes": {"a": [304, 144]}}, [200, 144])
 	await _erase_shot(out)
 	await _turn_shot(out)
 	get_tree().quit()

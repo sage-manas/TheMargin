@@ -284,6 +284,15 @@ func _apply_state(state: Dictionary) -> void:
 			for q: ComicPanel in starts:
 				q.position = starts[q]
 			break
+	_restore_swaps(saved_panels)
+	var saved_sizes: Dictionary = state.get("sizes", {})
+	for id: String in saved_sizes:
+		var sp: ComicPanel = panels.get(id)
+		var sz: Variant = saved_sizes[id]
+		if sp and sp.is_stretchable() and sz is Array and sz.size() == 2:
+			var w := int(sz[0])
+			if _width_allowed(sp, w):
+				sp.set_width(w)
 	var saved_slots: Dictionary = state.get("slots", {})
 	for id: String in saved_slots:
 		var s: WordSlot = slots.get(id)
@@ -587,8 +596,12 @@ func turn() -> void:
 func capture_state() -> Dictionary:
 	var st := {"panels": {}, "slots": {}, "objects": {}, "sketches": {}, "collected": collected.keys(), "fired": story.persisted_fired()}
 	for p in panel_list:
-		if p.is_lifted():
+		if p.is_lifted() or p.is_swappable():
 			st["panels"][p.panel_id] = [int(p.position.x), int(p.position.y)]
+		if p.is_stretchable():
+			if not st.has("sizes"):
+				st["sizes"] = {}
+			st["sizes"][p.panel_id] = [p.size.x, p.size.y]
 	for id: String in slots:
 		var w: String = slots[id].word
 		st["slots"][id] = w if w != "" else null
@@ -622,6 +635,104 @@ func snapshot() -> Dictionary:
 		"carrying": interaction.carrying if interaction.carrying != "" else null,
 		"abilities": abilities.duplicate(),
 	}
+
+
+# --- swapping and stretching (GDD §4.9, §4.10) --------------------------------
+
+## Trades the places of two panels of the same swap group, with everything
+## in them (Nib too). Returns false, changing nothing, if it isn't allowed.
+func swap_panels(a: ComicPanel, b: ComicPanel) -> bool:
+	if a == b or not a.is_swappable() or not b.is_swappable() or a.swap_group != b.swap_group:
+		return false
+	if a.size != b.size or a.is_pinned() or b.is_pinned() or is_player_in_gutter():
+		return false
+	var pa := a.position
+	var pb := b.position
+	var nib := player.collision_rect() if player else Rect2()
+	var carried_by := a if a.encloses(nib) else (b if b.encloses(nib) else null)
+	a.position = pb
+	b.position = pa
+	if carried_by == a:
+		player.position += pb - pa
+	elif carried_by == b:
+		player.position += pa - pb
+	Audio.play("page_turn", 0.05, -6.0)
+	relink()
+	EventBus.panel_moved.emit(a.panel_id, Vector2i(a.position))
+	EventBus.panel_moved.emit(b.panel_id, Vector2i(b.position))
+	EventBus.panel_released.emit(a.panel_id)
+	EventBus.state_dirty.emit()
+	return true
+
+
+## Saved swap positions are a rearrangement of where each group started;
+## anything else (a moved group, a stale save) is ignored.
+func _restore_swaps(saved: Dictionary) -> void:
+	var groups := {}
+	for p in panel_list:
+		if p.is_swappable():
+			if not groups.has(p.swap_group):
+				groups[p.swap_group] = []
+			groups[p.swap_group].append(p)
+	for g: String in groups:
+		var members: Array = groups[g]
+		var starts := []
+		var wanted := {}
+		for p: ComicPanel in members:
+			starts.append(Vector2i(p.position))
+			var pos: Variant = saved.get(p.panel_id)
+			if pos is Array and pos.size() == 2:
+				wanted[p] = Vector2i(int(pos[0]), int(pos[1]))
+		if wanted.size() != members.size():
+			continue
+		var targets := wanted.values()
+		var ok := true
+		for st: Vector2i in starts:
+			if targets.count(st) != 1:
+				ok = false
+		if ok:
+			for p: ComicPanel in members:
+				p.position = Vector2(wanted[p])
+
+
+func _width_allowed(p: ComicPanel, w: int) -> bool:
+	if w < int(p.stretch["min"]) or w > int(p.stretch["max"]) or w % PageConst.GRID != 0:
+		return false
+	if w < p.size.x and float(w) - PageConst.BORDER < p.content_right() + 2.0:
+		return false
+	var r := Rect2i(Vector2i(p.position), Vector2i(w, p.size.y)).grow(PageConst.GUTTER)
+	for other in panel_list:
+		if other != p and not other.erased and r.intersects(other.rect()):
+			return false
+	return true
+
+
+## Moves a stretchable panel's right border toward width `target`, a grid
+## step at a time, stopping short of anything in the room, another panel,
+## or Nib in a gutter. Returns the number of steps.
+func stretch_panel_toward(p: ComicPanel, target: int) -> int:
+	if not p.is_stretchable():
+		return 0
+	var goal := clampi(snappedi(target, PageConst.GRID), int(p.stretch["min"]), int(p.stretch["max"]))
+	var moved := 0
+	while p.size.x != goal:
+		if is_player_in_gutter():
+			break
+		var w := p.size.x + PageConst.GRID * signi(goal - p.size.x)
+		if w < p.size.x:
+			var nib := player.collision_rect() if player else Rect2()
+			if p.encloses(nib) and nib.end.x > p.position.x + w - PageConst.BORDER - 1.0:
+				break
+		if not _width_allowed(p, w):
+			break
+		p.set_width(w)
+		moved += 1
+		Audio.play("tick", 0.08, -4.0)
+		relink()
+	if moved:
+		EventBus.panel_released.emit(p.panel_id)
+		EventBus.state_dirty.emit()
+	return moved
 
 
 # --- scenes and switches (GDD §4.7, §4.8) ------------------------------------
@@ -741,6 +852,15 @@ func _draw_static(ci: CanvasItem) -> void:
 
 
 func _draw_lanes(ci: CanvasItem) -> void:
+	for p in panel_list:
+		if p.is_stretchable():
+			# How far the right border can go: its widest reach, dashed.
+			var r := Rect2(p.rect())
+			var reach := Rect2(r.position, Vector2(float(p.stretch["max"]), r.size.y))
+			var col := Color(Palette.PENCIL, 0.55)
+			Ink.dashed(ci, reach.position, reach.size.x, 0, 0.75, col, 5.0, 4.0)
+			Ink.dashed(ci, Vector2(reach.position.x, reach.end.y - 0.75), reach.size.x, 0, 0.75, col, 5.0, 4.0)
+			Ink.dashed(ci, Vector2(reach.end.x - 0.75, reach.position.y), reach.size.y, 1, 0.75, col, 5.0, 4.0)
 	for p in panel_list:
 		if not p.is_lifted():
 			continue

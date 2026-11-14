@@ -8,10 +8,10 @@
 | 1 Foundation | Monorepo, Godot project, contracts, CI | `pnpm -r build` passes; Godot tests pass headless; web export builds in CI ✅ |
 | 2 Prototype | Browser-playable pages 1.1–1.2 | A first-time player solves 1.1 in the **browser export** without help; save/refresh restores state; all automated tests green (automated ✅, human playtest pending) |
 | 3 Mechanic framework (done for Chapter 1; resize/swap deferred to Chapter 2) | Panels (resize/swap), words (all categories), eraser, ink, triggers, music | Each system has unit tests plus one sandbox page |
-| **4 Chapter 1** (reworked 2026-11-12 after playtest feedback: hand-inked art, scene captions, close-ups, pages 1.3–1.7 rebuilt; playtest pending) | Pages 1.1–1.8, audio, polish | Playtest: ≥ 70 % unaided completion, median 20–35 min |
+| 4 Chapter 1 (reworked 2026-11-12 after playtest feedback) | Pages 1.1–1.8, audio, polish | Playtest: ≥ 70 % unaided completion, median 20–35 min ✅ (met 2026-11-14) |
 | **5 Web platform** (automated bar met: landing, launcher, auth UI, chapters, settings) | Landing, launcher, auth UI, chapters, settings | The game launches reliably from `/play` in 3 browsers; Lighthouse ≥ 90 performance and accessibility on the landing page |
 | **6 Backend** (automated bar met: API integration, offline→online sync and conflict tests) | Auth, saves, progression, achievements, settings | API integration tests green; offline→online sync and conflict tests green |
-| 7 Expansion | Chapters 2+, art and audio pass | Per-chapter playtest bars |
+| **7 Expansion** (started 2026-11-14: Chapter 2 "The Border") | Chapters 2+, art and audio pass | Per-chapter playtest bars |
 | **8 Production** (started: staging pipeline) | Perf, security, monitoring, deploy automation | Release checklist complete in staging |
 | 9 Release | Production deploy | The deployed game works end to end (E2E suite against production) |
 
@@ -55,6 +55,11 @@
 23. Eraser prototype on a sandbox page (pencil layer, crumbs) ✅ (`sketches` in panel data, the eraser as a found ability, derived crumbs with a capacity; sandbox `sb_eraser`).
 24. Ink trace prototype ✅ (traceable and `faint` sketches, ink drops and inkwells, the hat's capacity, derived ink; both tools share `SketchTool`; sandbox `sb_ink`).
 25. Music system with per-chapter loops and ducking ✅ (scores as data in `data/music.json`, synthesised incrementally; chapter 1 "Margins"; ducks while the artist letters or shakes; MUSIC volume in settings; sandbox `sb_music`).
+
+### Now (Phase 7)
+31. Chapter 2 mechanics: swapping panels and stretching borders (GDD §4.9, §4.10), with sandboxes and tests.
+32. Chapter 2 pages 2.1–2.8 (GDD §6b), each solved through real physics; palette (newsprint and cyan) and music.
+33. Chapter 2 playtest (same bar as Chapter 1).
 
 ### Later
 26. Pages 1.3–1.8 and the chapter finale ✅. 1.3–1.5 (`ch01_p03`–`ch01_p05`; 1.2 now turns to 1.3) and 1.6–1.8 (`ch01_p06`–`ch01_p08`: fallen bubbles, `erase_panel`, `panel_entered`; the end card follows 1.8), each with a real-physics solution test. Finishing the chapter records `completedChapters` and sends `CHAPTER_COMPLETED`; the browser e2e plays the finale from a seeded save. **Reworked (2026-11-12)** after playtest feedback: hand-inked art (ADR-0013), scene captions and close-ups (GDD §4.7, §4.8), and pages 1.3–1.7 rebuilt with a different verb and goal each. Next: the Chapter 1 playtest (Phase 4 exit bar).

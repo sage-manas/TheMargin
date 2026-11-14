@@ -3,58 +3,321 @@
   "chapter": "ch01",
   "number": 5,
   "next": "ch01_p06",
-  "spawn": [56, 328],
-  "panels": [
+  "spawn": [
+    60,
+    328
+  ],
+  "cards": [
     {
-      "id": "k1",
-      "rect": [16, 16, 176, 328],
-      "bg": "room_warm",
-      "openings": [{ "side": "right", "from": 288, "to": 312 }],
-      "solids": [[0, 312, 176, 16]],
-      "props": [
-        { "type": "window", "at": [100, 120] },
-        { "type": "frame", "at": [40, 200] },
-        { "type": "plant", "at": [140, 296] }
-      ],
-      "captions": [{ "id": "cap_k1", "at": [6, 6], "text": "THE ONLY WAY|LEFT WAS *UP*.", "reach_at": [56, 312] }]
+      "id": "later",
+      "text": "LATER.",
+      "scene": "later",
+      "panel": "w"
     },
     {
-      "id": "k2",
-      "rect": [200, 16, 208, 200],
-      "bg": "room_blue",
-      "track": { "axis": "y", "min": 16, "max": 144 },
-      "openings": [
-        { "side": "left", "from": 160, "to": 184 },
-        { "side": "right", "from": 40, "to": 64 }
-      ],
-      "solids": [[0, 184, 208, 16], [160, 64, 48, 16], [128, 0, 32, 40]],
-      "props": [
-        { "type": "lamp", "at": [24, 152] },
-        { "type": "window", "at": [40, 60] }
-      ],
-      "captions": [{ "id": "cap_k2", "at": [6, 6], "text": "THE STAIRS WERE|NEVER FINISHED." }],
-      "objects": [{ "type": "crate", "id": "box5", "at": [132, 160] }]
-    },
-    {
-      "id": "k3",
-      "rect": [416, 16, 208, 80],
-      "bg": "room_warm",
-      "openings": [{ "side": "left", "from": 40, "to": 64 }],
-      "solids": [[0, 64, 208, 16]],
-      "captions": [{ "id": "cap_k3", "at": [6, 6], "text": "AT THE TOP,|A DOOR." }],
-      "objects": [{ "type": "door", "id": "door5", "at": [176, 32], "label": "OPEN", "loose": false, "exit": true }]
-    },
-    {
-      "id": "k4",
-      "rect": [416, 104, 208, 240],
-      "bg": "sketch",
-      "pencil": true,
-      "props": [
-        { "type": "stairs_sketch", "at": [60, 210] },
-        { "type": "ghost_nib", "at": [28, 194] }
-      ],
-      "notes": [{ "at": [20, 20], "text": "STILL LATER." }]
+      "id": "night",
+      "text": "THAT NIGHT.",
+      "scene": "night",
+      "panel": "m"
     }
   ],
-  "triggers": []
+  "panels": [
+    {
+      "id": "s1",
+      "rect": [
+        16,
+        184,
+        200,
+        160
+      ],
+      "bg": "room_warm",
+      "openings": [
+        {
+          "side": "right",
+          "from": 12,
+          "to": 36
+        },
+        {
+          "side": "right",
+          "from": 120,
+          "to": 144
+        }
+      ],
+      "solids": [
+        [
+          0,
+          144,
+          200,
+          16
+        ],
+        [
+          124,
+          36,
+          74,
+          8
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_s1",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE STAIRS|WERE GONE."
+        }
+      ],
+      "features": [
+        {
+          "id": "vine",
+          "kind": "vine",
+          "rect": [
+            100,
+            36,
+            24,
+            108
+          ],
+          "when": "later"
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "rect": [
+        224,
+        16,
+        192,
+        328
+      ],
+      "bg": "room_blue",
+      "openings": [
+        {
+          "side": "left",
+          "from": 180,
+          "to": 204
+        },
+        {
+          "side": "left",
+          "from": 288,
+          "to": 312
+        },
+        {
+          "side": "right",
+          "from": 90,
+          "to": 114
+        }
+      ],
+      "solids": [
+        [
+          0,
+          312,
+          192,
+          16
+        ],
+        [
+          0,
+          204,
+          60,
+          8
+        ],
+        [
+          157,
+          114,
+          35,
+          6
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            60,
+            120
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_s2",
+          "at": [
+            6,
+            6
+          ],
+          "text": "ONLY THE NIGHT|KNEW THE WAY."
+        }
+      ],
+      "features": [
+        {
+          "id": "steps",
+          "kind": "glow_steps",
+          "rect": [
+            45,
+            186,
+            26,
+            4
+          ],
+          "steps": 4,
+          "advance": 28,
+          "when": "night"
+        }
+      ]
+    },
+    {
+      "id": "m",
+      "rect": [
+        424,
+        16,
+        200,
+        136
+      ],
+      "bg": "room_warm",
+      "openings": [
+        {
+          "side": "left",
+          "from": 90,
+          "to": 114
+        }
+      ],
+      "solids": [
+        [
+          0,
+          114,
+          200,
+          22
+        ]
+      ],
+      "props": [
+        {
+          "type": "bed",
+          "at": [
+            36,
+            98
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_m",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE NEIGHBOUR|SLEPT AT LAST."
+        }
+      ],
+      "npcs": [
+        {
+          "id": "awake",
+          "at": [
+            140,
+            114
+          ],
+          "sprite": "neighbor",
+          "solid": true,
+          "when": "!night",
+          "bubble": {
+            "id": "awake_says",
+            "at": [
+              52,
+              52
+            ],
+            "text": "I NEVER SLEEP.|NOT BEFORE NIGHT."
+          }
+        },
+        {
+          "id": "asleep",
+          "at": [
+            56,
+            106
+          ],
+          "sprite": "neighbor",
+          "pose": "asleep",
+          "when": "night"
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door5",
+          "at": [
+            168,
+            82
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "w",
+      "rect": [
+        424,
+        160,
+        200,
+        184
+      ],
+      "bg": "plain",
+      "solids": [
+        [
+          0,
+          168,
+          200,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            80,
+            60
+          ]
+        },
+        {
+          "type": "table",
+          "at": [
+            130,
+            152
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_w",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE CLOCK|STRUCK TWELVE."
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "woke",
+      "on": "scene_changed",
+      "when": {
+        "panel": "m",
+        "scene": ""
+      },
+      "do": [
+        {
+          "action": "wait",
+          "sec": 0.4
+        },
+        {
+          "action": "emote",
+          "npc": "awake",
+          "text": "?!"
+        },
+        {
+          "action": "rewrite_caption",
+          "caption": "cap_m",
+          "text": "THE NEIGHBOUR|STOOD GUARD."
+        }
+      ]
+    }
+  ]
 }

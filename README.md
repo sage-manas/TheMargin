@@ -45,13 +45,13 @@ API setup: copy the variables from `apps/api/.env.example` into your environment
 
 The site loads the game from `NEXT_PUBLIC_GAME_BUILD_URL` (a folder holding a web export and its `build.json`). Locally it defaults to `/game`, which Next.js proxies to `pnpm game:serve`. See `apps/web/.env.example`.
 
-To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5. To open a mechanic sandbox page directly (it never touches the save), run `godot --path apps/game -- --page=sb_mechanics` (crates and panel words), `--page=sb_weight` (pressure plates), `--page=sb_platforms` (moving platforms), `--page=sb_eraser`, `--page=sb_ink`, or `--page=sb_music` (chapter music and ducking).
+To play in the editor, open `apps/game/project.godot` in Godot 4.7.2 and press F5. To open a mechanic sandbox page directly (it never touches the save), run `godot --path apps/game -- --page=sb_mechanics` (crates and panel words), `--page=sb_weight` (pressure plates), `--page=sb_platforms` (moving platforms), `--page=sb_eraser`, `--page=sb_ink`, `--page=sb_music` (chapter music and ducking), `--page=sb_scenes` (scene captions: LATER and THAT NIGHT) or `--page=sb_closeups` (close-ups: a lever and a combination dial).
 
 `pnpm e2e` runs Chromium and Firefox. On macOS, add WebKit with `E2E_WEBKIT=1 pnpm e2e`.
 
 ## Controls
 
-A/D walk · Space hop · E take/place words · X erase · C trace in ink · drag lifted panels with the mouse (or Q for keyboard panel mode) · hold R to reset the page · Esc pause.
+A/D walk · Space hop · E take/place words · X erase · C trace in ink · the reader's hand (mouse, or Q for keyboard mode): drag lifted panels and caption cards, click controls in close-ups · hold R to reset the page · Esc pause.
 
 ## Documentation
 

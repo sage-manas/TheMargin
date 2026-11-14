@@ -3,76 +3,249 @@
   "chapter": "ch01",
   "number": 4,
   "next": "ch01_p05",
-  "spawn": [56, 144],
+  "hint": "SLIDE THE ROOM, THEN WORK THE LEVER IN THE CLOSE-UP (CLICK, OR Q THEN E)",
+  "spawn": [
+    80,
+    328
+  ],
+  "closeups": [
+    {
+      "id": "view",
+      "at": [
+        480,
+        80
+      ],
+      "r": 34,
+      "focus": [
+        396,
+        86
+      ]
+    }
+  ],
   "panels": [
     {
-      "id": "s",
-      "rect": [16, 16, 176, 144],
-      "bg": "room_warm",
-      "openings": [{ "side": "right", "from": 104, "to": 128 }],
-      "solids": [[0, 128, 176, 16]],
-      "props": [
-        { "type": "bed", "at": [14, 112] },
-        { "type": "window", "at": [110, 44] }
+      "id": "h",
+      "rect": [
+        16,
+        16,
+        200,
+        120
       ],
-      "captions": [{ "id": "cap_s", "at": [6, 6], "text": "SOME ROOMS|NEVER MOVED." }]
-    },
-    {
-      "id": "l",
-      "rect": [200, 16, 200, 144],
       "bg": "room_blue",
-      "track": { "axis": "y", "min": 16, "max": 200 },
-      "openings": [
-        { "side": "left", "from": 104, "to": 128 },
-        { "side": "right", "from": 104, "to": 128 }
+      "track": {
+        "axis": "x",
+        "min": 16,
+        "max": 216
+      },
+      "solids": [
+        [
+          0,
+          104,
+          200,
+          16
+        ]
       ],
-      "solids": [[0, 128, 200, 16]],
       "props": [
-        { "type": "stool", "at": [140, 118] },
-        { "type": "frame", "at": [130, 60] }
+        {
+          "type": "window",
+          "at": [
+            60,
+            40
+          ]
+        }
       ],
-      "captions": [{ "id": "cap_l", "at": [6, 6], "text": "THIS ROOM WAS *HEAVY*.", "reach_at": [48, 128] }]
-    },
-    {
-      "id": "t",
-      "rect": [408, 16, 216, 168],
-      "bg": "sketch",
-      "pencil": true,
-      "props": [{ "type": "ghost_nib", "at": [150, 134] }],
-      "notes": [{ "at": [20, 20], "text": "HEAVY ROOMS|STAY PUT." }]
-    },
-    {
-      "id": "b",
-      "rect": [16, 168, 176, 176],
-      "bg": "room_warm",
-      "openings": [{ "side": "right", "from": 136, "to": 160 }],
-      "solids": [[0, 160, 176, 16], [0, 112, 48, 16]],
-      "props": [{ "type": "lamp", "at": [120, 128] }],
-      "captions": [{ "id": "cap_b", "at": [6, 6], "text": "THE OLD BOX WAS|NEVER HEAVY ENOUGH." }],
+      "captions": [
+        {
+          "id": "cap_h",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE LEVER WAS|UP HERE."
+        }
+      ],
       "objects": [
-        { "type": "button", "id": "plate4", "at": [2, 160], "needs": 2 },
-        { "type": "crate", "id": "box4", "at": [10, 136] }
+        {
+          "type": "lever",
+          "id": "lever1",
+          "at": [
+            180,
+            70
+          ]
+        }
       ]
     },
     {
-      "id": "x",
-      "rect": [408, 192, 216, 152],
+      "id": "a",
+      "rect": [
+        16,
+        152,
+        296,
+        192
+      ],
       "bg": "room_warm",
-      "openings": [{ "side": "left", "from": 112, "to": 136 }],
-      "solids": [[0, 136, 216, 16]],
-      "props": [{ "type": "plant", "at": [24, 120] }],
-      "captions": [{ "id": "cap_x", "at": [6, 6], "text": "THE DOOR WAITED|FOR THE BOX." }],
-      "objects": [{ "type": "door", "id": "door4", "at": [176, 104], "button": "plate4", "exit": true }]
+      "openings": [
+        {
+          "side": "right",
+          "from": 152,
+          "to": 176
+        }
+      ],
+      "solids": [
+        [
+          0,
+          176,
+          296,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "lamp",
+          "at": [
+            200,
+            144
+          ]
+        },
+        {
+          "type": "bed",
+          "at": [
+            20,
+            160
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_a",
+          "at": [
+            6,
+            6
+          ],
+          "text": "NEXT DOOR, THE|NEIGHBOUR WAITED."
+        }
+      ],
+      "features": [
+        {
+          "id": "gate",
+          "kind": "gate",
+          "rect": [
+            272,
+            128,
+            14,
+            48
+          ],
+          "when": "!lever1"
+        }
+      ]
+    },
+    {
+      "id": "n",
+      "rect": [
+        320,
+        152,
+        304,
+        192
+      ],
+      "bg": "room_blue",
+      "openings": [
+        {
+          "side": "left",
+          "from": 152,
+          "to": 176
+        }
+      ],
+      "solids": [
+        [
+          0,
+          176,
+          304,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            230,
+            40
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_n",
+          "at": [
+            40,
+            6
+          ],
+          "text": "THEY HAD BEEN|LOCKED IN."
+        }
+      ],
+      "npcs": [
+        {
+          "id": "neighbor",
+          "at": [
+            180,
+            176
+          ],
+          "sprite": "neighbor",
+          "bubble": {
+            "id": "neighbor_says",
+            "at": [
+              110,
+              104
+            ],
+            "text": "LET ME OUT!|THE LEVER'S UP THERE."
+          }
+        }
+      ]
     }
   ],
   "triggers": [
     {
-      "id": "until_now",
-      "on": "word_taken",
-      "when": { "slot": "cap_l:0" },
+      "id": "unlocked",
+      "on": "switch_changed",
+      "when": {
+        "switch": "lever1",
+        "on": true
+      },
       "do": [
-        { "action": "wait", "sec": 0.5 },
-        { "action": "rewrite_caption", "caption": "cap_s", "text": "SOME ROOMS|NEVER MOVED.|UNTIL NOW." }
+        {
+          "action": "emote",
+          "npc": "neighbor",
+          "text": "!"
+        },
+        {
+          "action": "wait",
+          "sec": 0.6
+        },
+        {
+          "action": "rewrite_caption",
+          "caption": "cap_n",
+          "text": "AND THEN,|THEY WEREN'T."
+        }
+      ]
+    },
+    {
+      "id": "reunited",
+      "on": "panel_entered",
+      "when": {
+        "panel": "n"
+      },
+      "do": [
+        {
+          "action": "emote",
+          "npc": "neighbor",
+          "text": "THANKS!"
+        },
+        {
+          "action": "wait",
+          "sec": 1.4
+        },
+        {
+          "action": "turn_page"
+        }
       ]
     }
   ]

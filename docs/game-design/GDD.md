@@ -107,6 +107,29 @@ Adding a word means adding a data row. Adding a category means writing one handl
 - Margins, gutters and the page edge become places. Gutters are corridors. The margin is a wide white void where only words and ink exist. The page edge is a cliff above the reader's desk.
 - Final act: Nib leaves the page and reaches the reader.
 
+### 4.7 Scene captions (Chapter 1, from the rework)
+
+Playtest feedback (2026-11-12): every Chapter 1 page was "slide a room, carry a word to a slot, reach a door". Scene captions give the reader's hand a second job that changes a whole room at once.
+
+- A **scene card** is a loose narrator caption that names a time or scene: **LATER.** or **THAT NIGHT.** It sits in a panel's top-right corner, drawn as a caption box with a dog-ear (loose, can be picked up).
+- The **reader's hand** carries a card to another panel's corner (mouse drag, or panel mode: Q selects it, arrow keys hop it to the next panel that way). Each panel holds at most one card. A panel with a card *is* that scene; a panel without one is now, by day.
+- **What scenes do** is data: features, characters and props carry a condition (`when: "later"`, `"!night"`):
+  - LATER: time has passed in that room. A sprout is a vine whose leaves are ledges; ice has melted into a puddle; a candle has burned down.
+  - THAT NIGHT: the room is dark (a night wash over its paper; Nib, objects and lettering stay readable). Glow paint shows: writing (clues) and steps you can stand on. Characters go to bed.
+- **Moving a card un-happens the scene where it was.** Taking LATER away from a room grows the ice back. Order matters, and that is the puzzle.
+- **Refusals:** a card won't land if it would make something solid where Nib or a crate is (the hand buzzes and the panel shakes). A pencil sketch panel takes no card.
+- Feedback: the card ticks into its corner; a growing vine and melting ice animate (cut under reduced motion); the panel's night wash fades in.
+- Saves store which panel each card is on (`pages.<id>.scenes`); features follow from that.
+
+### 4.8 Close-ups (Chapter 1, from the rework)
+
+- A **close-up** is a round inset panel that magnifies one spot of the page, joined to it by two pencil lines (the zoom). Comics use them to show a detail too small to see; here the detail is something only the reader's hand can work.
+- **Controls** are drawn small in a panel, too small for Nib: a **lever** (on or off) or a **combination dial** (one wheel per digit, on while it shows its code). Each control is a **switch**.
+- In the close-up the control is drawn big. The reader clicks it: the lever flips; a wheel turns up (top half) or down (bottom half). Keyboard: panel mode selects the close-up, left and right pick a wheel, up and down turn it, E pulls a lever.
+- **The close-up looks at the page, not at a thing.** It shows whatever control is under its focus ring. Slide a lifted panel and the close-up sees what is now under the ring, or nothing (it is hatched).
+- **Switches drive the page:** features with `when: "<switch>"` (a gate lifts, a bridge appears), doors wired to a switch (`button: "<switch>"`, like a pressure plate), and story triggers (`switch_changed`).
+- Saves store each control's position or digits (`pages.<id>.controls`).
+
 ## 5. Chapter structure (evaluated)
 
 I checked the proposed structure against two failure modes: a first chapter with nothing to *do*, and a mid-game where each chapter feels like a separate game.
@@ -115,7 +138,7 @@ I checked the proposed structure against two failure modes: a first chapter with
 
 | # | Title | New rule | Combined with | Story beat |
 |---|---|---|---|---|
-| 01 | The Page | Panels connect where floors line up; bold words are loose | (none) | The world is a comic. The narrator becomes uncertain. |
+| 01 | The Page | Panels connect where floors line up; bold words are loose; the reader moves scene captions and works close-ups (§4.7, §4.8) | (none) | The world is a comic. The narrator becomes uncertain. |
 | 02 | The Border | Resizing and swapping panels; gutters as space | Words on panels | Someone outside is moving the panels. |
 | 03 | The Words | Words change NPC dialogue and object behaviour | Words reshape panels; sentences as logic | Characters are trapped by their lines. |
 | 04 | The Eraser | Erase pencil, restore with crumbs | Erasing borders; erasing words | There's an older drawing underneath. |
@@ -164,32 +187,31 @@ Recovery: every state is reversible without a reset. Words can always go back, p
 
 A single large panel on an otherwise blank page. Nib lands, and a caption writes itself in a different, scratchier hand: WHO MOVED MY PANELS? A beat later the panel border trembles. End card: CHAPTER 1 CONTINUES.
 
-### Pages 1.3–1.8 (Phase 4, completing the chapter)
+### Pages 1.3–1.8 (reworked 2026-11-12)
 
-- 1.3 Two lifted panels, one on a horizontal track and one vertical, must be arranged in sequence.
-- 1.4 A panel can only be lowered after a word is removed from it (HEAVY on the panel's caption). The first light combination of words and panels.
-- 1.5 A three-panel staircase: floor alignments form a path upward, using UP on a crate.
+Page 1.2 turns to 1.3 with the story action `turn_page`. The end card follows 1.8.
 
-Page 1.2 no longer ends the build: after the artist writes WHO MOVED MY PANELS? and shakes the panel, the page turns itself (story action `turn_page`).
+**Why the rework.** Playtest feedback: the theme and concept land, but the first Chapter 1 had one loop on every page ("slide a room, carry HEAVY, OPEN or UP to a slot, walk through a door") and its pixel props were hard to read. The reworked middle pages each introduce or twist one verb and end in a different goal. Panels and words remain the base (1.1 teaches them; 1.7 brings them back with everything else), and two reader-hand mechanics join them: scene captions (§4.7) and close-ups (§4.8). Crates, plates and platforms stay in the toolbox (sandboxes) for later chapters.
 
-**Built (Phase 4):**
+| Page | New verb | Goal |
+|---|---|---|
+| 1.3 Later | Moving a scene card, in the right order | Climb out through a high door |
+| 1.4 Close Up | Sliding a room under a close-up; working its lever | Free the neighbour (the page turns when Nib reaches them) |
+| 1.5 That Night | Two cards across three rooms | Get past the neighbour, who sleeps only at night |
+| 1.6 The Empty Room | Reading a glow note at night; dialling it in a close-up | Unlock the door the neighbour left |
+| 1.7 The Long Night | Everything at once: a word, a slide, a close-up, a card | Reach the last door and give it the right word |
+| 1.8 From the Top | (the artist acts) | Go on after the first room is erased |
 
-- **1.3 "Next Door".** Nib wakes in A (fixed). H, on a horizontal track, sits away from A; V, on a vertical track, starts down beside the exit room E, so the way out is visible from the start. The reader slides H over to A, rides H back across with Nib inside, raises V (empty) to meet H, then rides V down to E. The sequence is forced: H must fetch Nib before it can deliver them, and V can only bring Nib down if it went up empty first. Linking A and H makes the narrator add WASN'T THERE? A pencil note in the gutter reads LEAVE THESE WHERE I PUT THEM.
-- **1.4 "The Heavy Room".** The middle room L is captioned THIS ROOM WAS **HEAVY**, so it lies flat and won't slide. Taking HEAVY frees it; riding L down links it to two rooms. The exit door is wired to a plate under an old box, and the box is tucked under a shelf too low for Nib to stand on it. Nib weighs 1, the plate needs 2, and only HEAVY on the box presses it, so the word that freed the room is the key. A pencil panel notes HEAVY ROOMS STAY PUT.
-- **1.5 "The Stairs".** UP is in the tall start room's caption. Lifted K2 starts aligned with the exit room at the top, so the reader lowers it to the start room. Nib hops onto the crate in K2, labels it UP from on top and rides it up under a beam onto a ledge; the reader then raises K2 back to the top. The pencil stairs from page 1.1 return, still unfinished (STILL LATER.). Recovery: an UP placed from beside the crate sends it up empty, out of reach, so that needs R (page reset).
-- 1.6 A narrative page: the neighbour's panel is empty, and their bubble lies on the floor.
-- 1.7 Combination set-piece: carry a word through three rearranged panels.
-- 1.8 Chapter finale: the artist erases P1, the little room where Nib woke up, while Nib watches from the next panel.
-
-**Built (Phase 4, completing the chapter):**
-
-- **1.6 "The Empty Room".** The neighbour's blue room from page 1.1 is back on its vertical track, set too high, and the reader lowers it to meet Nib's room. Nobody is in it. Their bubble, THIS DOOR WON'T **OPEN**. NOT ONCE. NOT EVER., lies on the floor with its tail pointing at nobody. A bubble nobody is saying any more is a thing, solid enough to stand on. The exit door, labelled **SHUT**, is on a ledge one hop too high from the floor, so Nib climbs onto the fallen words, takes OPEN from on top (THEY ALWAYS SAID THE SAME THING becomes NOW THEY SAID NOTHING AT ALL.), hops to the ledge and swaps OPEN onto the door. Putting SHUT back into the bubble still makes the 1.1 joke, but nobody is left to react. The pencil panel shows the neighbour sketched and crossed out: TOO MANY CHARACTERS.
-- **1.7 "The Long Way".** Nib takes OPEN off the door behind them (THE DOOR BEHIND WAS LEFT OPEN becomes THERE WAS NO GOING BACK.) and has to carry it to the last door through three lifted panels, holding only that word. H (horizontal track) fetches Nib and ferries them across. R (vertical track) is captioned IT ALL CAME TO A **STOP**., so it won't move. Nib's hands are full, so the only way to free R is to *lend* it OPEN: the swap leaves OPEN in the caption, which a panel ignores. V sits in the bottom row right under R's shaft, so R stops a gutter above it until the reader slides V over, where it becomes the bridge to the exit room. With R down, Nib swaps STOP back (pinning R where it now is) to get OPEN back, crosses V and swaps OPEN onto the SHUT door. The pencil note asks CUT THIS PAGE?
+- **1.3 "Later".** Two tall rooms. In the left one a vine has grown to a door on a high ledge, because the LATER. card sits in its corner. Nib starts in the right room, and between the two is a block of ice: it's still cold there. Moving LATER to Nib's room melts the ice, but the vine shrinks back to a seed. Once Nib is through, moving LATER back grows the vine again (and refreezes the ice behind). Nib climbs leaf to leaf and leaves by the door. *(Learn: a caption card changes a whole room; moving it un-happens it where it was; order matters.)* The narrator follows: IT WAS COLD THAT YEAR becomes AND THEN, IT WASN'T. A margin hint names the hand's new verb.
+- **1.4 "Close Up".** The neighbour from 1.1 is locked in next door behind a gate: LET ME OUT! THE LEVER'S UP THERE. The lever is a tiny detail on the wall of a lifted room on the top row. A close-up hangs to the right, its ring over an empty stretch of page, so it shows nothing (hatched). Sliding the lever's room until the lever is under the ring brings the lever into the close-up, where the reader pulls it: the gate lifts, and when Nib reaches the neighbour (THANKS!) the page turns. *(Learn: close-ups magnify a spot of the page, not a thing; the reader works what is too small for Nib.)* The gate stands inside Nib's own room, so Nib is never left in a gutter (where panels refuse to move) while waiting at it.
+- **1.5 "That Night".** Three rooms and two cards. Nib starts at the foot of a stairwell whose stairs are gone. THAT NIGHT. is with the neighbour, who sleeps at last; LATER. hangs in a room where the clock struck twelve. LATER in the first stairwell grows a vine up to a landing. THAT NIGHT in the second stairwell lights glow-paint steps up to the neighbour's room, but takes the night away from the neighbour, who wakes and stands guard in front of the door (I NEVER SLEEP. NOT BEFORE NIGHT.). Once Nib is up, THAT NIGHT goes back to the neighbour, who sleeps, and Nib slips past. *(Two cards, three places to be: the first planning puzzle.)* A fall from the steps lands Nib in the stairwell's bottom, which links back to the first, so nothing needs a reset while LATER still grows the vine.
+- **1.6 "The Empty Room".** The neighbour's blue room again, on its track and set too high; lowered, it meets Nib's room. Nobody is in it. Their bubble, THIS DOOR WON'T **OPEN**. NOT ONCE. NOT EVER., lies on the floor as a solid thing, the step up to the ledge where the door is. The door has no word tag: it has a combination lock, which a close-up in the corner of the page sees once the room is lowered. THAT NIGHT. starts in Nib's room. Moved to the empty room, it shows what the neighbour left in glow paint: FOR NIB: 3 0 8. The narrator: THEY ALWAYS SAID THE SAME THING becomes BUT THEY LEFT A NOTE. Taking OPEN from the bubble still makes the old joke (NOW THEY SAID NOTHING AT ALL.), but no word opens this door. The pencil panel: the neighbour sketched and crossed out, TOO MANY CHARACTERS.
+- **1.7 "The Long Night".** The set-piece. Nib takes **OPEN** from THE DOOR BEHIND WAS LEFT OPEN. The middle room has a pit, a drawbridge raised, and ice that is melted only while LATER. is there. The bridge's lever is in a lifted room below, and a close-up across the page looks at the spot that room must slide to. Lever pulled, bridge down, Nib crosses while it is LATER in the middle room, then moves LATER on to the last room, where a vine grows to the exit door's ledge (refreezing the ice behind). Up the vine, OPEN onto the door labelled **SHUT**. Moving LATER too soon freezes the ice in Nib's way: put it back. The pencil panel asks CUT THIS PAGE?
 - **1.8 "From the Top".** The little room from page 1.1, the same layout and the same caption, but the rest of the page is already rubbed out. When Nib steps wholly into the next room, the artist's eraser rubs the little room out, row by row (story action `erase_panel`), and writes FROM THE TOP. The narrator's AND THAT WAS ALL THERE WAS. becomes AND THEN, THERE WASN'T. The erasure is also the way out. Lifted L, below, couldn't rise past the little room before. Now it can rise into the space it left (THERE WAS ROOM AFTER ALL.), meet the next room, and carry Nib down to the exit (AND SO THE STORY WENT ON.). The end card closes Chapter 1. This seeds Chapter 6: the artist's corrections are tools.
 
 ## 7. Puzzle checklist (every page)
 
-- **Objective:** an exit (door, page corner, or linked opening) is visible from the start.
+- **Objective:** the goal is visible from the start: an exit (door or linked opening) or a person to reach. Pages vary the goal and the main verb (§6); no two neighbouring pages share both.
 - **Starting state:** fully visible; the whole page fits on one screen.
 - **Clues:** loose (dashed) border segments, lifted panels (shadow), bold words, labels on objects.
 - **Consistent solution:** only the published rules are needed.

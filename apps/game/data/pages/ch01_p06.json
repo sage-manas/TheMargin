@@ -4,6 +4,8 @@
   "number": 6,
   "next": "ch01_p07",
   "spawn": [60, 168],
+  "cards": [{ "id": "night", "text": "THAT NIGHT.", "scene": "night", "panel": "a" }],
+  "closeups": [{ "id": "lock_view", "at": [520, 284], "r": 34, "focus": [524, 134] }],
   "panels": [
     {
       "id": "a",
@@ -26,18 +28,22 @@
       "solids": [[0, 128, 400, 16], [336, 96, 64, 32]],
       "props": [
         { "type": "stool", "at": [120, 118] },
-        { "type": "window", "at": [150, 36] }
+        { "type": "window", "at": [180, 36] }
       ],
       "captions": [{ "id": "cap_n", "at": [6, 6], "text": "THEY ALWAYS SAID|THE SAME THING." }],
+      "features": [{ "id": "note", "kind": "glow_text", "rect": [40, 44, 60, 20], "text": "FOR NIB:|3 0 8", "when": "night" }],
       "bubbles": [{ "id": "fallen", "at": [200, 128], "text": "THIS DOOR WON'T *OPEN*.|NOT ONCE. NOT EVER." }],
-      "objects": [{ "type": "door", "id": "door6", "at": [360, 64], "label": "SHUT", "loose": true, "exit": true }]
+      "objects": [
+        { "type": "dial", "id": "lock", "at": [300, 94], "code": "308" },
+        { "type": "door", "id": "door6", "at": [360, 64], "button": "lock", "labelled": false, "exit": true }
+      ]
     },
     {
       "id": "b",
-      "rect": [16, 208, 608, 136],
+      "rect": [16, 224, 400, 120],
       "bg": "sketch",
       "pencil": true,
-      "props": [{ "type": "ghost_neighbor", "at": [292, 44], "crossed": true }],
+      "props": [{ "type": "ghost_neighbor", "at": [184, 30], "crossed": true }],
       "notes": [{ "at": [20, 20], "text": "TOO MANY|CHARACTERS." }]
     }
   ],
@@ -49,6 +55,15 @@
       "do": [
         { "action": "wait", "sec": 0.5 },
         { "action": "rewrite_caption", "caption": "cap_n", "text": "NOW THEY SAID|NOTHING AT ALL." }
+      ]
+    },
+    {
+      "id": "the_note",
+      "on": "scene_changed",
+      "when": { "panel": "n", "scene": "night" },
+      "do": [
+        { "action": "wait", "sec": 0.6 },
+        { "action": "rewrite_caption", "caption": "cap_n", "text": "BUT THEY|LEFT A NOTE." }
       ]
     }
   ]

@@ -24,6 +24,10 @@ export const PageStateSchema = z.object({
   sketches: z.record(z.string(), z.union([z.boolean(), z.literal("inked")])).default({}),
   // Ink pickups already collected on the page.
   collected: z.array(z.string()).default([]),
+  // Scene cards (GDD §4.7): card id -> the panel whose corner holds it.
+  scenes: z.record(z.string(), z.string()).default({}),
+  // Close-up controls (GDD §4.8): a lever's position, or a dial's digits.
+  controls: z.record(z.string(), z.union([z.boolean(), z.string().regex(/^\d{1,8}$/)])).default({}),
   fired: z.array(z.string()).default([]),
 });
 

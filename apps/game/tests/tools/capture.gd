@@ -3,7 +3,7 @@ extends Node
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
 ## Captures the page start state and the solved positions of pages 1 and 3–8, and
-## the Phase 3 sandboxes (mechanics, weight, eraser, ink, platforms).
+## the sandboxes (mechanics, weight, eraser, ink, platforms, scenes, close-ups).
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -15,17 +15,18 @@ func _ready() -> void:
 	await _shot(out, "p01_open", "ch01_p01", {"panels": {"p3": [416, 72]}, "slots": {"nb:0": null, "door1:label": "OPEN"}}, [560, 328], "SHUT")
 	await _shot(out, "p02", "ch01_p02", {})
 	await _shot(out, "p03_start", "ch01_p03", {})
-	await _shot(out, "p03_ferried", "ch01_p03", {"panels": {"v": [464, 16]}}, [420, 144])
-	await _shot(out, "p03_down", "ch01_p03", {}, [540, 320])
+	await _shot(out, "p03_thawed", "ch01_p03", {"scenes": {"later": "b"}}, [200, 328])
+	await _shot(out, "p03_climb", "ch01_p03", {}, [128, 238])
 	await _shot(out, "p04_start", "ch01_p04", {})
-	await _shot(out, "p04_pressed", "ch01_p04", {"panels": {"l": [200, 200]}, "slots": {"cap_l:0": null, "box4:label": "HEAVY"}}, [80, 328])
+	await _shot(out, "p04_open", "ch01_p04", {"panels": {"h": [216, 16]}, "controls": {"lever1": true}}, [250, 328])
 	await _shot(out, "p05_start", "ch01_p05", {})
-	await _shot(out, "p05_risen", "ch01_p05", {"panels": {"k2": [200, 144]}, "slots": {"cap_k1:0": null, "box5:label": "UP"}, "objects": {"box5": [132, 54]}}, [345, 197])
+	await _shot(out, "p05_steps", "ch01_p05", {"scenes": {"later": "s1", "night": "s2"}}, [256, 220])
+	await _shot(out, "p05_asleep", "ch01_p05", {"scenes": {"later": "s1", "night": "m"}}, [520, 130])
 	await _shot(out, "p06_start", "ch01_p06", {})
-	await _shot(out, "p06_taken", "ch01_p06", {"panels": {"n": [224, 40]}, "slots": {"fallen:0": null}, "fired": ["said_nothing"]}, [530, 144], "OPEN")
+	await _shot(out, "p06_night", "ch01_p06", {"panels": {"n": [224, 40]}, "scenes": {"night": "n"}, "controls": {"lock": "308"}}, [100, 168])
 	await _shot(out, "p07_start", "ch01_p07", {})
-	await _shot(out, "p07_lent", "ch01_p07", {"panels": {"h": [216, 16], "v": [432, 200]}, "slots": {"door_back:label": null, "cap_r:0": "OPEN"}, "fired": ["no_going_back"]}, [372, 144], "STOP")
-	await _shot(out, "p07_down", "ch01_p07", {"panels": {"h": [216, 16], "r": [320, 200], "v": [432, 200]}, "slots": {"door_back:label": null, "cap_r:0": "STOP"}, "fired": ["no_going_back"]}, [372, 328], "OPEN")
+	await _shot(out, "p07_bridge", "ch01_p07", {"panels": {"v": [424, 224]}, "controls": {"lever1": true}}, [300, 144], "OPEN")
+	await _shot(out, "p07_vine", "ch01_p07", {"panels": {"v": [424, 224]}, "controls": {"lever1": true}, "scenes": {"later": "r"}, "slots": {"cap_a:0": null}}, [512, 144], "OPEN")
 	await _shot(out, "p08_start", "ch01_p08", {})
 	await _shot(out, "p08_erased", "ch01_p08", {"fired": ["from_the_top"]}, [300, 144])
 	await _shot(out, "p08_risen", "ch01_p08", {"panels": {"l": [16, 16]}, "fired": ["from_the_top"]}, [120, 144])
@@ -45,6 +46,10 @@ func _ready() -> void:
 	await _shot(out, "sbp_start", "sb_platforms", {})
 	await _shot(out, "sbp_ferry", "sb_platforms", {"slots": {"ferry:label": null}, "objects": {"ferry": [176, 56], "lift1": [88, 56]}}, [432, 72], "STOP")
 	await _shot(out, "sbp_done", "sb_platforms", {"slots": {"ferry:label": null, "cap_up:0": "STOP", "box:label": "LEFT", "lift3:label": "UP"}, "objects": {"ferry": [264, 56], "lift3": [116, 88], "box": [2, 64]}}, [400, 312], "DOWN")
+	await _shot(out, "sbs_start", "sb_scenes", {})
+	await _shot(out, "sbs_moved", "sb_scenes", {"scenes": {"later": "b", "night": "n"}}, [200, 208])
+	await _shot(out, "sbc_start", "sb_closeups", {})
+	await _shot(out, "sbc_ready", "sb_closeups", {"panels": {"h": [216, 16]}, "controls": {"lever1": true, "safe": "410"}}, [420, 328])
 	await _erase_shot(out)
 	await _turn_shot(out)
 	get_tree().quit()

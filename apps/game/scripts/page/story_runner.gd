@@ -6,7 +6,7 @@ extends Node
 ## triggers are saved (unless persist=false) and their lasting effects are
 ## re-applied instantly on load instead of replaying.
 
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed"]
 
 ## The artist's hand shaking a panel quiets the music this long (GDD §10).
 const SHAKE_DUCK_SEC := 1.5
@@ -39,6 +39,8 @@ func setup(owner_page: ComicPage, trigger_defs: Array, fired_ids: Array) -> void
 	EventBus.sketch_restored.connect(func(s: String) -> void: _on("sketch_restored", {"sketch": s}))
 	EventBus.ink_collected.connect(func(o: String) -> void: _on("ink_collected", {"object": o}))
 	EventBus.sketch_inked.connect(func(s: String) -> void: _on("sketch_inked", {"sketch": s}))
+	EventBus.scene_changed.connect(func(p: String, sc: String) -> void: _on("scene_changed", {"panel": p, "scene": sc}))
+	EventBus.switch_changed.connect(func(id: String, on: bool) -> void: _on("switch_changed", {"switch": id, "on": on}))
 
 
 ## The `erase_panel` actions of fired triggers, so a page can free their

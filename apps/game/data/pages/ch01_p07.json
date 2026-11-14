@@ -3,88 +3,70 @@
   "chapter": "ch01",
   "number": 7,
   "next": "ch01_p08",
-  "spawn": [88, 144],
+  "spawn": [60, 144],
+  "cards": [{ "id": "later", "text": "LATER.", "scene": "later", "panel": "p" }],
+  "closeups": [{ "id": "view", "at": [110, 256], "r": 34, "focus": [524, 264] }],
   "panels": [
     {
-      "id": "s",
-      "rect": [16, 16, 112, 144],
+      "id": "a",
+      "rect": [16, 16, 192, 144],
       "bg": "room_warm",
       "openings": [{ "side": "right", "from": 104, "to": 128 }],
-      "solids": [[0, 128, 112, 16]],
-      "props": [{ "type": "frame", "at": [60, 52] }],
-      "captions": [{ "id": "cap_s", "at": [6, 6], "text": "THE DOOR BEHIND|WAS LEFT OPEN." }],
-      "objects": [{ "type": "door", "id": "door_back", "at": [10, 96], "label": "OPEN", "loose": true }]
+      "solids": [[0, 128, 192, 16]],
+      "props": [{ "type": "window", "at": [130, 40] }],
+      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "THE DOOR BEHIND|WAS LEFT *OPEN*.", "reach_at": [60, 128] }]
     },
     {
-      "id": "h",
-      "rect": [216, 16, 96, 144],
+      "id": "p",
+      "rect": [216, 16, 200, 144],
       "bg": "room_blue",
-      "track": { "axis": "x", "min": 136, "max": 216 },
       "openings": [
         { "side": "left", "from": 104, "to": 128 },
         { "side": "right", "from": 104, "to": 128 }
       ],
-      "solids": [[0, 128, 96, 16]],
-      "props": [{ "type": "lamp", "at": [40, 96] }]
+      "solids": [[0, 128, 64, 16], [136, 128, 64, 16]],
+      "captions": [{ "id": "cap_p", "at": [6, 6], "text": "THE NIGHT|WAS LONG." }],
+      "features": [
+        { "id": "bridge", "kind": "bridge", "rect": [64, 128, 72, 6], "when": "lever1" },
+        { "id": "ice", "kind": "ice", "rect": [150, 88, 20, 40], "when": "!later" }
+      ]
     },
     {
       "id": "r",
-      "rect": [320, 16, 104, 144],
+      "rect": [424, 16, 200, 144],
       "bg": "room_warm",
-      "track": { "axis": "y", "min": 16, "max": 200 },
-      "openings": [
-        { "side": "left", "from": 104, "to": 128 },
-        { "side": "right", "from": 104, "to": 128 }
-      ],
-      "solids": [[0, 128, 104, 16]],
-      "props": [{ "type": "window", "at": [60, 50] }],
-      "captions": [{ "id": "cap_r", "at": [6, 6], "text": "IT ALL CAME|TO A *STOP*.", "reach_at": [52, 128] }]
-    },
-    {
-      "id": "q",
-      "rect": [432, 16, 192, 176],
-      "bg": "sketch",
-      "pencil": true,
-      "props": [{ "type": "ghost_nib", "at": [120, 136] }],
-      "notes": [{ "at": [20, 20], "text": "CUT THIS|PAGE?" }]
-    },
-    {
-      "id": "b",
-      "rect": [16, 168, 296, 176],
-      "bg": "sketch",
-      "pencil": true,
-      "props": [{ "type": "stairs_sketch", "at": [100, 156] }]
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 200, 16], [100, 56, 98, 6]],
+      "captions": [{ "id": "cap_r", "at": [6, 6], "text": "AT THE TOP,|A WAY OUT." }],
+      "features": [{ "id": "vine", "kind": "vine", "rect": [76, 56, 24, 72], "when": "later" }],
+      "objects": [{ "type": "door", "id": "door7", "at": [120, 24], "label": "SHUT", "loose": true, "exit": true }]
     },
     {
       "id": "v",
-      "rect": [320, 200, 96, 144],
+      "rect": [424, 168, 200, 120],
       "bg": "room_blue",
-      "track": { "axis": "x", "min": 320, "max": 432 },
-      "openings": [
-        { "side": "left", "from": 104, "to": 128 },
-        { "side": "right", "from": 104, "to": 128 }
-      ],
-      "solids": [[0, 128, 96, 16]],
-      "props": [{ "type": "stool", "at": [42, 118] }]
+      "track": { "axis": "y", "min": 168, "max": 224 },
+      "solids": [[0, 104, 200, 16]],
+      "captions": [{ "id": "cap_v", "at": [6, 6], "text": "THE LEVER WAS|DOWN HERE." }],
+      "objects": [{ "type": "lever", "id": "lever1", "at": [100, 40] }]
     },
     {
-      "id": "e",
-      "rect": [536, 200, 88, 144],
-      "bg": "room_warm",
-      "openings": [{ "side": "left", "from": 104, "to": 128 }],
-      "solids": [[0, 128, 88, 16]],
-      "captions": [{ "id": "cap_e", "at": [6, 6], "text": "THE OTHER|SIDE." }],
-      "objects": [{ "type": "door", "id": "door7", "at": [52, 96], "label": "SHUT", "loose": true, "exit": true }]
+      "id": "k",
+      "rect": [216, 168, 200, 176],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [{ "type": "ghost_nib", "at": [80, 100] }],
+      "notes": [{ "at": [16, 16], "text": "CUT THIS|PAGE?" }]
     }
   ],
   "triggers": [
     {
-      "id": "no_going_back",
-      "on": "word_taken",
-      "when": { "slot": "door_back:label" },
+      "id": "lowered",
+      "on": "switch_changed",
+      "when": { "switch": "lever1", "on": true },
       "do": [
         { "action": "wait", "sec": 0.5 },
-        { "action": "rewrite_caption", "caption": "cap_s", "text": "THERE WAS NO|GOING BACK." }
+        { "action": "rewrite_caption", "caption": "cap_p", "text": "THEN, A WAY|ACROSS." }
       ]
     }
   ]

@@ -52,6 +52,9 @@ async function waitFor(page: Page, pred: (m: GameToWeb) => boolean, timeout = 90
 
 test.beforeEach(async ({ page }) => {
   page.on("pageerror", (e) => {
+    // Leaving a page cancels Next.js's route prefetches; WebKit reports the
+    // cancelled fetch as an error. Anything else fails the test.
+    if (/_rsc=/.test(e.message)) return;
     throw e;
   });
 });

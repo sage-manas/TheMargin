@@ -58,9 +58,10 @@ test("every achievement the game unlocks is defined", async () => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       const p = join(dir, e.name);
       if (e.isDirectory()) walk(p);
-      else if (/\.(json|gd)$/.test(e.name)) for (const m of readFileSync(p, "utf8").matchAll(/"code": *"([A-Z0-9_]+)"/g)) codes.add(m[1]);
+      else if (/\.(json|gd)$/.test(e.name)) for (const m of readFileSync(p, "utf8").matchAll(/"code": *"([A-Z][A-Z0-9_]*)"/g)) codes.add(m[1]);
     }
   };
+  // Achievement codes start with a letter; combination-dial codes are digits.
   for (const d of ["data", "scripts", "autoload"]) walk(join(root, d));
   assert.ok(codes.size >= 3);
   for (const c of codes) assert.ok(ACHIEVEMENTS.some((a) => a.code === c), c);

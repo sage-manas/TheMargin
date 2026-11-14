@@ -3,75 +3,52 @@
   "chapter": "ch01",
   "number": 3,
   "next": "ch01_p04",
-  "spawn": [56, 144],
+  "hint": "DRAG THE CAPTION CARD TO ANOTHER ROOM (OR Q)",
+  "spawn": [520, 328],
+  "cards": [{ "id": "later", "text": "LATER.", "scene": "later", "panel": "a" }],
   "panels": [
     {
       "id": "a",
-      "rect": [16, 16, 160, 144],
+      "rect": [16, 16, 296, 328],
       "bg": "room_warm",
-      "openings": [{ "side": "right", "from": 104, "to": 128 }],
-      "solids": [[0, 128, 160, 16]],
-      "props": [
-        { "type": "window", "at": [96, 44] },
-        { "type": "plant", "at": [10, 112] }
-      ],
-      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "NEXT DOOR, THERE|WAS ANOTHER ROOM." }]
+      "openings": [{ "side": "right", "from": 288, "to": 312 }],
+      "solids": [[0, 312, 296, 16], [124, 96, 170, 8]],
+      "props": [{ "type": "window", "at": [30, 150] }],
+      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "ONCE, THERE|WAS A SEED." }],
+      "features": [{ "id": "vine", "kind": "vine", "rect": [100, 96, 24, 216], "when": "later" }],
+      "objects": [{ "type": "door", "id": "door3", "at": [200, 64], "label": "OPEN", "loose": false, "exit": true }]
     },
     {
-      "id": "h",
-      "rect": [296, 16, 160, 144],
+      "id": "b",
+      "rect": [320, 16, 304, 328],
       "bg": "room_blue",
-      "track": { "axis": "x", "min": 184, "max": 296 },
-      "openings": [
-        { "side": "left", "from": 104, "to": 128 },
-        { "side": "right", "from": 104, "to": 128 }
-      ],
-      "solids": [[0, 128, 160, 16]],
+      "openings": [{ "side": "left", "from": 288, "to": 312 }],
+      "solids": [[0, 312, 304, 16]],
       "props": [
-        { "type": "lamp", "at": [24, 96] },
-        { "type": "rug", "at": [60, 126] }
+        { "type": "window", "at": [180, 60] },
+        { "type": "plant", "at": [250, 296] }
       ],
-      "captions": [{ "id": "cap_h", "at": [6, 6], "text": "IT NEVER STAYED|WHERE IT WAS PUT." }]
-    },
-    {
-      "id": "v",
-      "rect": [464, 192, 160, 152],
-      "bg": "room_blue",
-      "track": { "axis": "y", "min": 16, "max": 192 },
-      "openings": [{ "side": "left", "from": 104, "to": 128 }],
-      "solids": [[0, 128, 160, 24]],
-      "props": [
-        { "type": "stool", "at": [104, 118] },
-        { "type": "window", "at": [100, 40] }
-      ],
-      "captions": [{ "id": "cap_v", "at": [6, 6], "text": "THE LAST ROOM|WENT UP AND DOWN." }]
-    },
-    {
-      "id": "e",
-      "rect": [16, 192, 440, 152],
-      "bg": "room_warm",
-      "openings": [{ "side": "right", "from": 104, "to": 128 }],
-      "solids": [[0, 128, 440, 24]],
-      "props": [
-        { "type": "table", "at": [200, 112] },
-        { "type": "frame", "at": [210, 60] },
-        { "type": "window", "at": [320, 44] }
-      ],
-      "captions": [{ "id": "cap_e", "at": [6, 6], "text": "AND DOWNSTAIRS,|A WAY OUT." }],
-      "objects": [
-        { "type": "door", "id": "door3", "at": [48, 96], "label": "OPEN", "loose": false, "exit": true }
-      ]
+      "captions": [{ "id": "cap_b", "at": [6, 6], "text": "IT WAS COLD|THAT YEAR." }],
+      "features": [{ "id": "ice", "kind": "ice", "rect": [8, 272, 24, 40], "when": "!later" }]
     }
   ],
-  "notes": [{ "at": [192, 172], "text": "LEAVE THESE WHERE I PUT THEM." }],
   "triggers": [
     {
-      "id": "another_room",
-      "on": "link_formed",
-      "when": { "a": "a", "b": "h" },
+      "id": "thawed",
+      "on": "scene_changed",
+      "when": { "panel": "b", "scene": "later" },
       "do": [
         { "action": "wait", "sec": 0.6 },
-        { "action": "rewrite_caption", "caption": "cap_a", "text": "NEXT DOOR, THERE|WAS ANOTHER ROOM.|WASN'T THERE?" }
+        { "action": "rewrite_caption", "caption": "cap_b", "text": "AND THEN,|IT WASN'T." }
+      ]
+    },
+    {
+      "id": "grown",
+      "on": "scene_changed",
+      "when": { "panel": "a", "scene": "later" },
+      "do": [
+        { "action": "wait", "sec": 0.6 },
+        { "action": "rewrite_caption", "caption": "cap_a", "text": "LATER, THERE|WAS A WAY UP." }
       ]
     }
   ]

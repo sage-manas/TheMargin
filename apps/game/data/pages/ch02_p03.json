@@ -1,0 +1,156 @@
+{
+  "id": "ch02_p03",
+  "chapter": "ch02",
+  "number": 3,
+  "next": "ch02_p04",
+  "spawn": [
+    60,
+    144
+  ],
+  "panels": [
+    {
+      "id": "w",
+      "rect": [
+        16,
+        16,
+        464,
+        144
+      ],
+      "bg": "news",
+      "stretch": {
+        "min": 200,
+        "max": 464
+      },
+      "openings": [
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          -1,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "bed",
+          "at": [
+            24,
+            112
+          ]
+        },
+        {
+          "type": "window",
+          "at": [
+            150,
+            40
+          ]
+        },
+        {
+          "type": "table",
+          "at": [
+            220,
+            112
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_w",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE ROOM TOOK|ALL THE SPACE."
+        }
+      ]
+    },
+    {
+      "id": "l",
+      "rect": [
+        432,
+        200,
+        192,
+        144
+      ],
+      "bg": "news_cyan",
+      "track": {
+        "axis": "y",
+        "min": 16,
+        "max": 200
+      },
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_l",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE WAY OUT|WAS DOWN HERE."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door23",
+          "at": [
+            130,
+            96
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "note",
+      "rect": [
+        16,
+        168,
+        408,
+        176
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "notes": [
+        {
+          "at": [
+            24,
+            24
+          ],
+          "text": "TOO MUCH ROOM."
+        }
+      ],
+      "props": [
+        {
+          "type": "ghost_nib",
+          "at": [
+            260,
+            90
+          ]
+        }
+      ]
+    }
+  ]
+}

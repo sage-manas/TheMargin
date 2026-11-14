@@ -25,6 +25,8 @@ var features: Dictionary = {}
 var controls: Dictionary = {}
 var cards: Dictionary = {}
 var closeups: Dictionary = {}
+## The reader's most recent swap, which the artist may undo (swap_back).
+var last_swap: Array = []
 ## Abilities Nib has found so far (`progress.abilities`), e.g. "eraser".
 var abilities: Array = []
 ## Crumbs the eraser can hold on this page (`eraser_holds`).
@@ -641,7 +643,7 @@ func snapshot() -> Dictionary:
 
 ## Trades the places of two panels of the same swap group, with everything
 ## in them (Nib too). Returns false, changing nothing, if it isn't allowed.
-func swap_panels(a: ComicPanel, b: ComicPanel) -> bool:
+func swap_panels(a: ComicPanel, b: ComicPanel, by_artist := false) -> bool:
 	if a == b or not a.is_swappable() or not b.is_swappable() or a.swap_group != b.swap_group:
 		return false
 	if a.size != b.size or a.is_pinned() or b.is_pinned() or is_player_in_gutter():
@@ -662,7 +664,27 @@ func swap_panels(a: ComicPanel, b: ComicPanel) -> bool:
 	EventBus.panel_moved.emit(b.panel_id, Vector2i(b.position))
 	EventBus.panel_released.emit(a.panel_id)
 	EventBus.state_dirty.emit()
+	if not by_artist:
+		last_swap = [a, b]
+		EventBus.panels_swapped.emit(a.panel_id, b.panel_id)
 	return true
+
+
+## The artist puts the reader's last swap back (page 2.4), unless Nib is in
+## one of the two panels: the artist won't move a room with Nib in it.
+## Returns whether it did.
+func swap_back() -> bool:
+	if last_swap.size() != 2:
+		return false
+	var a: ComicPanel = last_swap[0]
+	var b: ComicPanel = last_swap[1]
+	var nib := player.collision_rect()
+	if a.encloses(nib) or b.encloses(nib):
+		return false
+	last_swap = []
+	a.shake()
+	b.shake()
+	return swap_panels(a, b, true)
 
 
 ## Saved swap positions are a rearrangement of where each group started;
@@ -754,8 +776,12 @@ func condition_met(expr: String, p: ComicPanel) -> bool:
 	return Conditions.met(expr, scene_of(p), switches())
 
 
-func can_hold_card(p: ComicPanel) -> bool:
-	return not p.pencil and not p.erased
+## A panel takes a scene card if it is inked and wide enough to hold one
+## beside its own caption (page 2.5: a room too narrow has no room for LATER).
+func can_hold_card(p: ComicPanel, card: SceneCard = null) -> bool:
+	if p.pencil or p.erased:
+		return false
+	return card == null or p.size.x >= card.size().x + SceneCard.INSET * 2.0 + 40.0
 
 
 func _card_on(p: ComicPanel) -> SceneCard:
@@ -809,7 +835,7 @@ func _card_blocked(card: SceneCard, target: ComicPanel) -> bool:
 func move_card(card: SceneCard, target: ComicPanel) -> bool:
 	if target == card.panel:
 		return true
-	if not can_hold_card(target) or _card_on(target) != null or _card_blocked(card, target):
+	if not can_hold_card(target, card) or _card_on(target) != null or _card_blocked(card, target):
 		return false
 	var from := card.panel
 	card.panel = target

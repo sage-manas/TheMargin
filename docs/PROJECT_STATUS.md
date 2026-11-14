@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-14: Chapter 1 playtest met the Phase 4 bar; Phase 7 (Chapter 2) started._
+_Last updated: 2026-11-14: Chapter 2 "The Border" built (swap, stretch, pages 2.1–2.8); its playtest is next._
 
 ## Current phase
 
@@ -151,11 +151,18 @@ _Last updated: 2026-11-14: Chapter 1 playtest met the Phase 4 bar; Phase 7 (Chap
   - Sandboxes `sb_swap` and `sb_stretch`; 5 new tests (swap order and linking, carrying Nib, round trips and impossible saves; stretching across a gap to link, refusals at content and Nib); page validation for swap groups and stretch ranges.
   - Docs: GDD §4.9, §4.10 and the Chapter 2 plan (§6b); risks reviewed (R1, R2 lowered).
 
+- **Phase 7 (2026-11-14): Chapter 2 pages 2.1–2.8 (GDD §6b).**
+  - **Pages:** 2.1 Reading Order (swap), 2.2 Stretch, 2.3 Make Room (narrow so a lifted room can pass), 2.4 Someone Outside (the artist swaps back unless Nib is in the room), 2.5 Room for Later (stretch until a caption card fits), 2.6 Close Shave (swap the lever under a close-up), 2.7 Page Layout (slide, word, swap), 2.8 The Border (stretch the artist's box). Every page solved through real physics in `test_chapter2`.
+  - **Chapter flow:** page 1.8 now turns to 2.1. A chapter's end records it (`completedChapters`, `CHAPTER_COMPLETED`) and shows a chapter card (END OF CHAPTER 1, NEXT: CHAPTER 2: THE BORDER, with TURN THE PAGE or BACK TO TITLE); the end card follows 2.8. The save's `progress.chapter` follows the page; the title shows the save's chapter. `data/chapters.json` holds numbers and titles, checked against the site's catalogue.
+  - **New:** a `panels_swapped` event and the artist's `swap_back` story action (refused, with its own line, while Nib is in either room); a caption card needs a panel wide enough to hold it beside a caption; drawbridges draw their chain only while raised (the stray line on 1.7 is gone).
+  - **Look and sound:** Chapter 2 palette (`news`, `news_cyan`) and music, "Gutters" (D Dorian, 96 bpm).
+  - **Site and API:** Chapter 2 is released in the catalogue (chapters page, progression: available once Chapter 1 is done); a `CH02_COMPLETE` achievement; landing copy updated.
+
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
-| Godot unit + integration (incl. real-physics playthroughs of pages 1.1 and 1.3–1.8, scene captions, close-ups, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 91 passed |
+| Godot unit + integration (incl. real-physics playthroughs of pages 1.1, 1.3–1.8 and 2.1–2.8, scene captions, close-ups, swap, stretch, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 105 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge, settings, chapter catalogue vs the game's pages, storage key vs the game, achievements vs the game, API schemas, scene and control state) | `pnpm --filter @the-margin/contracts test` | 16 passed |
 | API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 28 passed (local Postgres 14, IST timezone; CI Postgres 17) |
 | Site unit tests (bridge, progress, settings mirror, save sync incl. offline and conflicts) | `pnpm --filter @the-margin/web test` | 18 passed |
@@ -197,7 +204,7 @@ See [ADRs](architecture/decisions/README.md): 0001 engine/renderer/threads, 0002
 ## Next recommended tasks
 
 1. ~~Playtest the reworked Chapter 1~~ Done 2026-11-14: the Phase 4 bar was met. Run Chapter 2's playtest the same way (3–5 new players, the same bar).
-2. **Chapter 2 (Phase 7):** swapping and stretching (mechanics, sandboxes, tests), then pages 2.1–2.8 one verb and goal each, then its palette and music, then its playtest.
+2. **Playtest Chapter 2** with 3–5 new players, against the same bar (≥ 70 % unaided completion, median 20–35 min for the chapter). Watch: whether the ⇄ badge and the border grip are found unaided, whether 2.4's "move the room you're in" answer lands, and whether 2.5's "no room for the card" refusal reads.
 3. **Do the one-time staging setup** (DEPLOY.md: Neon, Fly.io, Vercel, GitHub secrets; the pipeline is already on `main`) and run the first deploy, so Chapter 2's playtest can run from a URL with accounts on.
 4. Phase 8 continues: the security review (R10, including restricting the API to the site's proxy), monitoring and error reporting, a production environment, and a password reset once there's an email provider.
 5. Decide how multi-word captions are reached (known issue 11) before a page needs one.

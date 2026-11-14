@@ -6,7 +6,7 @@ import { browserStorage } from "@/lib/storage.ts";
 // The label depends on this browser's save, so it starts generic on the
 // server and updates after hydration. A plain <a>: /play needs a fresh page.
 export function PlayLink() {
-  const [label, setLabel] = useState("Play chapter 1");
+  const [label, setLabel] = useState("Play");
   useEffect(() => {
     const text = continueLabel(readLocalProgress(browserStorage()));
     if (text) setLabel(text);

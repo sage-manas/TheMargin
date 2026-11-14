@@ -7,8 +7,8 @@ extends RefCounted
 ## in a panel the artist erases, and scene cards, close-ups and conditional
 ## features that refer only to scenes and switches that exist.
 
-const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page", "erase_panel"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed"]
+const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page", "erase_panel", "swap_back"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed", "panels_swapped"]
 ## Object type -> word categories its label accepts.
 const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"], "lever": [], "dial": []}
 

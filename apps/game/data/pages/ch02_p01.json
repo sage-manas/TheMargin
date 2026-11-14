@@ -1,0 +1,218 @@
+{
+  "id": "ch02_p01",
+  "chapter": "ch02",
+  "number": 1,
+  "next": "ch02_p02",
+  "hint": "DRAG A PANEL WITH THE BADGE ONTO ANOTHER TO SWAP THEM (OR Q)",
+  "spawn": [
+    300,
+    144
+  ],
+  "panels": [
+    {
+      "id": "door_room",
+      "rect": [
+        16,
+        16,
+        192,
+        144
+      ],
+      "bg": "news",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "plant",
+          "at": [
+            30,
+            112
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_d",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THEN, A DOOR."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door21",
+          "at": [
+            130,
+            96
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "start",
+      "rect": [
+        216,
+        16,
+        192,
+        144
+      ],
+      "bg": "news",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "bed",
+          "at": [
+            20,
+            112
+          ]
+        },
+        {
+          "type": "window",
+          "at": [
+            110,
+            40
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_s",
+          "at": [
+            6,
+            6
+          ],
+          "text": "FIRST, A ROOM."
+        }
+      ]
+    },
+    {
+      "id": "hall",
+      "rect": [
+        416,
+        16,
+        192,
+        144
+      ],
+      "bg": "news_cyan",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        },
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "lamp",
+          "at": [
+            90,
+            96
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_h",
+          "at": [
+            6,
+            6
+          ],
+          "text": "AND A HALL."
+        }
+      ]
+    },
+    {
+      "id": "note",
+      "rect": [
+        16,
+        168,
+        592,
+        176
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [
+        {
+          "type": "ghost_nib",
+          "at": [
+            420,
+            90
+          ]
+        }
+      ],
+      "notes": [
+        {
+          "at": [
+            24,
+            24
+          ],
+          "text": "PANELS ARE READ|LEFT TO RIGHT."
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "at_last",
+      "on": "panel_entered",
+      "when": {
+        "panel": "door_room"
+      },
+      "do": [
+        {
+          "action": "rewrite_caption",
+          "caption": "cap_d",
+          "text": "THEN, AT LAST,|A DOOR."
+        }
+      ]
+    }
+  ]
+}

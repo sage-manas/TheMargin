@@ -24,6 +24,8 @@ signal sketch_inked(sketch_id: String)
 signal scene_changed(panel_id: String, scene: String)
 ## A close-up control's switch turned on or off.
 signal switch_changed(switch_id: String, on: bool)
+## The reader swapped two panels (GDD §4.9). Not sent for the artist's swaps.
+signal panels_swapped(a: String, b: String)
 signal achievement_unlocked(code: String)
 ## Something worth persisting changed; GameState coalesces these into one save.
 signal state_dirty

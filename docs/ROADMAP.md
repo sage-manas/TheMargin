@@ -57,9 +57,9 @@
 25. Music system with per-chapter loops and ducking ✅ (scores as data in `data/music.json`, synthesised incrementally; chapter 1 "Margins"; ducks while the artist letters or shakes; MUSIC volume in settings; sandbox `sb_music`).
 
 ### Now (Phase 7)
-31. Chapter 2 mechanics: swapping panels and stretching borders (GDD §4.9, §4.10), with sandboxes and tests.
-32. Chapter 2 pages 2.1–2.8 (GDD §6b), each solved through real physics; palette (newsprint and cyan) and music.
-33. Chapter 2 playtest (same bar as Chapter 1).
+31. Chapter 2 mechanics: swapping panels and stretching borders (GDD §4.9, §4.10), with sandboxes and tests ✅.
+32. Chapter 2 pages 2.1–2.8 (GDD §6b), each solved through real physics; palette (newsprint and cyan) and music ✅; chapter cards between chapters ✅.
+33. Chapter 2 playtest (same bar as Chapter 1). Next.
 
 ### Later
 26. Pages 1.3–1.8 and the chapter finale ✅. 1.3–1.5 (`ch01_p03`–`ch01_p05`; 1.2 now turns to 1.3) and 1.6–1.8 (`ch01_p06`–`ch01_p08`: fallen bubbles, `erase_panel`, `panel_entered`; the end card follows 1.8), each with a real-physics solution test. Finishing the chapter records `completedChapters` and sends `CHAPTER_COMPLETED`; the browser e2e plays the finale from a seeded save. **Reworked (2026-11-12)** after playtest feedback: hand-inked art (ADR-0013), scene captions and close-ups (GDD §4.7, §4.8), and pages 1.3–1.7 rebuilt with a different verb and goal each. Next: the Chapter 1 playtest (Phase 4 exit bar).

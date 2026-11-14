@@ -1,0 +1,164 @@
+{
+  "id": "ch02_p02",
+  "chapter": "ch02",
+  "number": 2,
+  "next": "ch02_p03",
+  "hint": "DRAG THE GRIP ON THE BORDER TO STRETCH THE ROOM (OR Q)",
+  "spawn": [
+    60,
+    144
+  ],
+  "panels": [
+    {
+      "id": "a",
+      "rect": [
+        16,
+        16,
+        200,
+        144
+      ],
+      "bg": "news",
+      "stretch": {
+        "min": 120,
+        "max": 304
+      },
+      "openings": [
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          -1,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "lamp",
+          "at": [
+            120,
+            96
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_a",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE ROOM WAS|TOO SMALL."
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "rect": [
+        328,
+        16,
+        296,
+        144
+      ],
+      "bg": "news_cyan",
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          296,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            150,
+            40
+          ]
+        },
+        {
+          "type": "plant",
+          "at": [
+            250,
+            112
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_b",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE WORLD WAS|FURTHER AWAY."
+        }
+      ]
+    },
+    {
+      "id": "note",
+      "rect": [
+        16,
+        168,
+        608,
+        176
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "notes": [
+        {
+          "at": [
+            24,
+            24
+          ],
+          "text": "MAKE ROOM."
+        }
+      ],
+      "props": [
+        {
+          "type": "stairs_sketch",
+          "at": [
+            420,
+            150
+          ]
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "arrived",
+      "on": "panel_entered",
+      "when": {
+        "panel": "b"
+      },
+      "do": [
+        {
+          "action": "rewrite_caption",
+          "caption": "cap_b",
+          "text": "AND THEN,|IT WASN'T."
+        },
+        {
+          "action": "wait",
+          "sec": 0.8
+        },
+        {
+          "action": "turn_page"
+        }
+      ]
+    }
+  ]
+}

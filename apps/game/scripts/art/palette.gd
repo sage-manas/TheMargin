@@ -19,16 +19,17 @@ const WHITE := Color("fbf7ea")
 const NIGHT := Color("2f2b3d")
 const ERASER := Color("e3a6a1")        # the artist's pink rubber
 
-## Characters used in text-grid sprites (see Sprites).
-const SPRITE_MAP := {
-	"K": INK,
-	"W": WHITE,
-	"R": RED,
-	"B": BLUE,
-	"Y": OCHRE,
-	"P": PENCIL,
-	"G": SHADOW,
-}
+## Scenery lines: furniture and decoration are drawn thin in this grey, so
+## the things Nib can use (heavy ink) stand out (GDD §9).
+const SCENERY := Color("77726a")
+const LEAF := Color("6f8f5c")
+const WOOD_DARK := Color("a8772b")
+
+
+## A colour faded toward the panel paper, for scenery fills.
+static func muted(c: Color, k := 0.45) -> Color:
+	return c.lerp(PAPER, k)
+
 
 ## Panel background presets referenced by page data ("bg").
 ## paper/dot colours plus halftone strength at the top and bottom of the panel.

@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-08: Phase 8 started: staging deploy pipeline (Vercel + Fly.io + Neon)._
+_Last updated: 2026-11-12: Chapter 1 rework started after playtest feedback: hand-inked art (done); new mechanics and pages 1.3–1.7 next._
 
 ## Current phase
 
@@ -9,6 +9,8 @@ _Last updated: 2026-11-08: Phase 8 started: staging deploy pipeline (Vercel + Fl
 **Phase 5 (web platform) has started alongside the playtest**, since it doesn't depend on Chapter 2. The site has its landing page, `/play` launcher, chapters and settings pages; the auth UI is next. Of the exit bar, Lighthouse is met (landing page: performance 98–100, accessibility 100) and `/play` launches in Chromium, Firefox (CI) and WebKit.
 
 **Phase 6 (backend) meets its bar:** the API's integration tests pass against a real Postgres, and the offline→online sync and conflict tests pass, both as unit tests on the sync logic and end to end in Chromium and WebKit (Firefox on CI). The auth UI completes Phase 5 too. The Chapter 1 playtest is still the open Phase 4 item.
+
+**Chapter 1 is being reworked before the project moves further (2026-11-12).** Playtest feedback: the theme and concept are strong, but the pixel art made props and scenes hard to understand, and play was repetitive (every page was "slide a room, carry HEAVY/OPEN/UP to a slot, reach a door"). Decisions: hand-inked vector art (ADR-0013, done); two new reader-hand mechanics, scene captions and close-up panels; and pages 1.3–1.7 rebuilt around them with varied goals, keeping 1.1, 1.2 and 1.8. Staging and the playtest wait for the reworked chapter.
 
 **Phase 8 (production readiness) has started with staging**, so the playtest can run from a URL with accounts on. The pipeline and runbook are in the repo (DEPLOY.md, ADR-0012). It hasn't deployed yet: it needs the one-time account setup (Neon, Fly.io, Vercel and GitHub secrets).
 
@@ -122,6 +124,14 @@ _Last updated: 2026-11-08: Phase 8 started: staging deploy pipeline (Vercel + Fl
   - **Workflow** `deploy-staging.yml`: after CI passes on `main` (or by hand), deploy the API, export the game into the site and deploy it to Vercel prebuilt, then smoke-test (`infrastructure/scripts/smoke.mjs`).
   - **CI job `api-image`** builds the image on every PR, runs its release step against Postgres 17, boots it and checks health and seeded data.
   - Checked locally: a production site build with the game bundled and no game server, with the API behind `/v1`, passed all 6 smoke checks and the site and cloud browser tests (Chromium 7/7).
+
+- **Chapter 1 rework, part 1 (2026-11-12): hand-inked art (ADR-0013, GDD §9).**
+  - **Rendering:** `canvas_items` stretch with fractional scaling, linear filtering, no pixel snapping. The 640×360 page stays the coordinate system, so page data, physics, saves and tests are unchanged; everything is drawn at the window's resolution.
+  - **Drawing kit:** `Ink` re-implemented as antialiased vector strokes (same API, plus shapes, ellipses, arrowheads and named line weights). `ComicFont` replaces the 5×7 bitmap font: original single-stroke hand-lettering with the same metrics, so every caption and bubble keeps its layout. `Figures` replaces the text-grid sprites: Nib (pen-nib cap, face that looks ahead, streaming scarf, striding legs) and the neighbour, each with a pencil-ghost style. Paper, halftone and page-turn shaders work in continuous units.
+  - **Readability rules:** heavy ink for things Nib can use (crates with planks and braces, doors with panels and a knob, raised plates with a "press" chevron, planks with grain), thin grey lines and muted colours for scenery. One `LabelTag` for every label: an empty one shows a red dashed outline. Movable panels carry chevrons pointing along their track (red under the hand), and every lifted panel's lane is dashed faintly on the page. Linked openings are inked corridors. Key prompts are keycaps (`Prompt`). Speech bubbles have curved tails; thoughts are puff bubbles.
+  - `PixelMenu` is now `ComicMenu`; `pixel_font.gd` and `sprites.gd` are gone. The title reads PLAYTEST BUILD.
+  - **Performance:** in software WebGL (CI browsers, blocklisted GPUs) the vector art first dropped page 1.1 from 12 to under 5 fps and the browser tests timed out. Static art is now baked once into textures at screen resolution (`BakedLayer`); text no longer redraws for bobbing words; the neighbour, prompts and borders redraw only on change. Page 1.1: 16.7 fps in software WebGL (pixel build: 12.1), 60 fps in hardware WebGL.
+  - All 85 headless tests pass unchanged; the browser e2e passes (Chromium and WebKit on macOS); the cloud e2e maps page units with the fitted (fractional) scale.
 
 ## Test status
 

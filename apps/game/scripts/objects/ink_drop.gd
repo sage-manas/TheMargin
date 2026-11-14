@@ -51,21 +51,22 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var bob := 0.0 if Settings.reduced_motion else roundf(sin(_time * 3.0) * 0.6)
+	var bob := 0.0 if Settings.reduced_motion else sin(_time * 3.0) * 0.6
 	if refused:
-		PixelFont.draw_centered(self, 0, -28, "HAT FULL", Palette.PENCIL)
+		ComicFont.draw_centered(self, 0, -28, "HAT FULL", Palette.PENCIL)
 	if is_well():
 		# A tipped inkwell, its spill pooling on the floor, one dot per drop.
-		Ink.box(self, Rect2(-5, -10, 10, 10), Palette.BLUE_LIGHT)
-		draw_rect(Rect2(-3, -12, 6, 2), Palette.INK)
-		draw_rect(Rect2(-4, -6, 8, 5), Palette.INK)
-		draw_rect(Rect2(4, -1, 6, 1), Palette.INK)
+		Ink.rounded_box(self, Rect2(-5, -10, 10, 10), Palette.BLUE_LIGHT, Palette.INK, 2.0, Ink.W_THING)
+		Ink.box(self, Rect2(-2.5, -12.5, 5, 2.5), Palette.INK, Palette.INK, 0.8)
+		Ink.rounded_box(self, Rect2(-4, -6, 8, 5), Palette.INK, Palette.INK, 1.5, 0.6)
+		Ink.ellipse(self, Vector2(7, -0.5), Vector2(3.5, 0.9), Palette.INK, Palette.INK, 0.4)
 		for i in drops:
-			draw_rect(Rect2(-(drops * 3 - 1) / 2.0 + i * 3, -16 + bob, 2, 2), Palette.INK)
+			Ink.dot(self, Vector2(-(drops * 3 - 1) / 2.0 + i * 3 + 1, -15 + bob), 1.0, Palette.INK)
 		return
-	# A single drop: a teardrop of ink with a glint.
-	draw_rect(Rect2(-1, -8 + bob, 2, 2), Palette.INK)
-	draw_rect(Rect2(-2, -6 + bob, 4, 2), Palette.INK)
-	draw_rect(Rect2(-3, -4 + bob, 6, 3), Palette.INK)
-	draw_rect(Rect2(-1, -4 + bob, 1, 1), Palette.WHITE)
-	draw_rect(Rect2(-2, 0, 4, 1), Palette.SHADOW)
+	# A single drop: a teardrop of ink with a glint, and its shadow.
+	Ink.ellipse(self, Vector2(0, 0), Vector2(2.4, 0.6), Palette.SHADOW, Palette.SHADOW, 0.3)
+	var drop := PackedVector2Array([Vector2(0, -8.5 + bob)])
+	for p in Ink.ellipse_points(Vector2(0, -3 + bob), Vector2(2.8, 2.8), 14, -PI * 0.15, PI * 1.15):
+		drop.append(p)
+	draw_colored_polygon(drop, Palette.INK)
+	Ink.dot(self, Vector2(-1, -3.5 + bob), 0.6, Palette.WHITE)

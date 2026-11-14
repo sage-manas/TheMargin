@@ -6,13 +6,12 @@ extends Control
 
 signal chosen(action: String)
 
-const PAPER := preload("res://shaders/paper.gdshader")
 
-var menu: PixelMenu
+var menu: ComicMenu
 var has_save := false
-var _art: Control
+var _art: BakedLayer
+var _figure: Control
 var _time := 0.0
-var _nib: Array[Texture2D] = []
 
 
 func _ready() -> void:
@@ -21,22 +20,20 @@ func _ready() -> void:
 	var bg := ColorRect.new()
 	bg.color = Palette.PAGE
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var mat := ShaderMaterial.new()
-	mat.shader = PAPER
-	mat.set_shader_parameter("paper", Palette.PAGE)
-	mat.set_shader_parameter("fiber", Palette.PAGE_FIBER)
-	bg.material = mat
 	add_child(bg)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_art = Control.new()
-	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The paper and lettering never change, so they are baked once.
+	_art = BakedLayer.make(_paint, Rect2(0, 0, 640, 360))
 	add_child(_art)
-	_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_art.draw.connect(_paint)
-	menu = PixelMenu.new()
+	# Nib moves; the lettering doesn't, so only Nib's layer redraws per frame.
+	_figure = Control.new()
+	_figure.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_figure)
+	_figure.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_figure.draw.connect(_paint_nib)
+	menu = ComicMenu.new()
 	add_child(menu)
 	menu.chosen.connect(_on_menu)
-	_nib = Sprites.frames("nib_idle")
 	refresh(false)
 
 
@@ -60,19 +57,24 @@ func _on_menu(action: String) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	_art.queue_redraw()
+	_figure.queue_redraw()
 
 
-func _paint() -> void:
-	var ci := _art
+func _paint(ci: CanvasItem) -> void:
+	Ink.paper_fibres(ci, Rect2(0, 0, 640, 360), 7)
 	var panel := Rect2(120, 52, 400, 140)
 	ci.draw_rect(Rect2(panel.position + Vector2(4, 5), panel.size), Palette.SHADOW)
-	Ink.box(ci, panel, Palette.PAPER, Palette.INK, 2)
-	PixelFont.draw_centered(ci, 320, 82, "THE MARGIN", Palette.INK, true, 4)
-	ci.draw_rect(Rect2(160, 118, 320, 2), Palette.INK)
-	PixelFont.draw_centered(ci, 320, 132, "ESCAPE THE DRAWING.", Palette.RED)
-	# Nib stands on the title rule, at the edge of the lettering.
-	var frame := 1 if fmod(_time, 3.4) > 3.25 else 0
-	ci.draw_texture(_nib[frame], Vector2(466, 104))
-	PixelFont.draw(ci, Vector2(128, 178), "CHAPTER 1: THE PAGE", Palette.PENCIL)
-	PixelFont.draw(ci, Vector2(16, 344), "PROTOTYPE BUILD", Palette.PENCIL)
+	Ink.box(ci, panel, Palette.PAPER, Palette.INK, Ink.W_BORDER)
+	ComicFont.draw_centered(ci, 320, 82, "THE MARGIN", Palette.INK, true, 4)
+	Ink.line(ci, Vector2(160, 119), Vector2(480, 119), Palette.INK, Ink.W_BORDER)
+	ComicFont.draw_centered(ci, 320, 132, "ESCAPE THE DRAWING.", Palette.RED)
+	ComicFont.draw(ci, Vector2(128, 178), "CHAPTER 1: THE PAGE", Palette.PENCIL)
+	ComicFont.draw(ci, Vector2(16, 344), "PLAYTEST BUILD", Palette.PENCIL)
+
+
+## Nib stands on the title rule, at the edge of the lettering.
+func _paint_nib() -> void:
+	_figure.draw_set_transform(Vector2(474, 118), 0.0, Vector2(1.6, 1.6))
+	Figures.nib(_figure, Vector2.ZERO, -1, "idle", _time * 0.6, fmod(_time, 3.4) > 3.25)
+	_figure.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+

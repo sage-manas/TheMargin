@@ -64,17 +64,18 @@ the-margin/
 
 ## 3. Godot architecture
 
-### 3.1 Engine configuration (ADR-0001, ADR-0002)
+### 3.1 Engine configuration (ADR-0001, ADR-0002, ADR-0013)
 
 | Setting | Value | Why |
 |---|---|---|
 | Version | Godot 4.7.2-stable | Current 4.x maintenance release (2026-08-18) |
 | Renderer | Compatibility (OpenGL ES 3 / WebGL 2) | The only renderer supported for Web export |
 | Threads | Off (`variant/thread_support=false`) | No SharedArrayBuffer, so no COOP/COEP headers. The site, embeds and CDN stay simple. |
-| Base resolution | 640×360 | One comic page per screen at a size where 5×7 lettering is legible. Scales ×2 to 720p and ×3 to 1080p. |
-| Stretch | `mode=viewport`, `aspect=keep`, `scale_mode=integer` | True pixel-perfect output, letterboxed on paper colour |
-| Textures | Nearest filter, no mipmaps | No blur |
-| 2D snapping | `snap_2d_transforms_to_pixel` and `snap_2d_vertices_to_pixel` on | No sub-pixel shimmer |
+| Base resolution | 640×360 page units | One comic page per screen. Page data, physics and saves use these units. |
+| Stretch | `mode=canvas_items`, `aspect=keep`, `scale_mode=fractional` | Drawing happens at the window's resolution (one unit = 2 px at 720p, 3 px at 1080p), letterboxed on paper colour |
+| Textures | Linear filter | No texture art remains; text and figures are vector strokes |
+| 2D snapping | Off | Strokes are antialiased; snapping would make thin lines uneven |
+| Art | Antialiased vector drawing through `Ink`, `Figures`, `ComicFont`, `LabelTag`, `Prompt` | Hand-inked look; line weight separates usable things from scenery (GDD §9) |
 | Physics | 60 Hz | Matches the display target |
 
 ### 3.2 Project layout
@@ -92,7 +93,8 @@ apps/game/
 │   └── web_bridge.gd         JavaScriptBridge adapter; no-op outside web
 ├── scenes/main.tscn          main.gd: game flow (title → page → turn → end), pause, reset
 ├── scripts/
-│   ├── art/                  palette, pixel_font (original 5×7), sprites (text grids), ink, draw_layer
+│   ├── art/                  palette, ink (vector kit), comic_font (original stroke lettering), figures (Nib,
+│   │                         neighbour), label_tag (word tags), prompt (key prompts), draw_layer
 │   ├── audio/                sfx_synth, music_synth (procedural, license-clean)
 │   ├── page/                 page.gd (builder + runtime), comic_panel.gd, panel_links.gd (pure)
 │   │                         panel_drag.gd (reader's hand), story_runner.gd (triggers), page_const.gd
@@ -101,12 +103,12 @@ apps/game/
 │   ├── words/                word_library.gd (data), word_slot.gd, lettering.gd, speech_bubble.gd, caption.gd
 │   ├── objects/              door.gd, crate.gd, button.gd (pressure plate), sketch.gd (pencil),
 │   │                         eraser_pickup.gd, ink_drop.gd, npc.gd, prop_painter.gd
-│   └── ui/                   title_screen, overlays (pause + end card), pixel_menu, page_turn, hud
+│   └── ui/                   title_screen, overlays (pause + end card), comic_menu, page_turn, hud
 ├── data/
 │   ├── words.json            Word definitions (data-driven)
 │   └── pages/ch01_p01.json   Page definitions: panels, openings, solids, objects, bubbles, triggers
 │                             (sb_*.json are mechanic sandboxes, opened with `-- --page=<id>`, never saved)
-├── shaders/                  paper.gdshader, page_turn.gdshader
+├── shaders/                  paper, halftone, page_turn (continuous page units, edged per screen pixel)
 └── tests/                    Headless test runner + suites
 ```
 
@@ -253,7 +255,7 @@ The `/play` page loads the engine script from the build URL and runs it on a `<c
 1. Install `window.TheMarginBridge` and queue `SET_SETTINGS` from the site's mirror.
 2. Fetch `build.json` (written by the export script: executable name, versions, file sizes for the progress bar).
 3. Load `<build>/index.js`, check `Engine.getMissingFeatures`, then `init` the engine, preload the pack to the fixed in-memory path `index.pck`, and `start` with `--main-pack index.pck`, so a build works from any URL.
-4. Resize policy 0: the launcher sizes the canvas in device pixels to fill the stage below its toolbar, and Godot integer-scales inside it. Fullscreen is requested on the stage, not by Godot.
+4. Resize policy 0: the launcher sizes the canvas in device pixels to fill the stage below its toolbar, and Godot scales the page to fit inside it (ADR-0013). Fullscreen is requested on the stage, not by Godot.
 
 An engine can start only once per document, so every link to and from `/play` is a full page load. The canvas takes focus on start and again after toolbar clicks. The launcher also re-dispatches every game message as a `themargin:message` DOM event.
 

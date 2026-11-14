@@ -4,7 +4,7 @@ import { CloudSaveSchema, GameToWebSchema, LOCAL_SAVE_KEY, type GameToWeb, type 
 // Accounts and cloud saves end to end: the site, the API behind its /v1
 // proxy, and the real game (TDD §4.3, backlog 29).
 // 764 px tall leaves a 1280×720 stage below the launcher's toolbar: the page at
-// ×2, where drags land on the grid in every engine (at ×1 WebKit drops a step).
+// exactly ×2, so drags map to whole page units in every engine.
 const VIEWPORT = { width: 1280, height: 764 };
 test.use({ baseURL: "http://localhost:3000", viewport: VIEWPORT });
 test.skip(process.env.E2E_CLOUD === "0", "needs the API and Postgres");
@@ -71,10 +71,10 @@ async function newGame(page: Page): Promise<void> {
   await page.waitForTimeout(400);
 }
 
-/** Slides page 1.1's lifted panel P3 down `dy` page pixels. Godot integer-scales the 640×360 page, centred in the canvas. */
+/** Slides page 1.1's lifted panel P3 down `dy` page units. Godot scales the 640×360 page to fit, centred in the canvas (ADR-0013). */
 async function slideP3(page: Page, dy: number): Promise<void> {
   const box = (await page.locator("#game-canvas").boundingBox())!;
-  const scale = Math.max(1, Math.floor(Math.min(box.width / 640, box.height / 360)));
+  const scale = Math.min(box.width / 640, box.height / 360);
   const at = (x: number, y: number) => [box.x + (box.width - 640 * scale) / 2 + x * scale, box.y + (box.height - 360 * scale) / 2 + y * scale] as const;
   await page.mouse.move(...at(520, 76));
   await page.mouse.down();

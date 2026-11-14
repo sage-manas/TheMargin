@@ -21,6 +21,10 @@ var slots: Array[WordSlot] = []
 var _lettering: Lettering
 var _time := 0.0
 var _ducking := false
+var _loose: DrawLayer
+## The caption is static between changes, so its drawing is baked.
+var _static: BakedLayer
+var _look := ""
 
 
 func setup(def: Dictionary) -> void:
@@ -29,6 +33,8 @@ func setup(def: Dictionary) -> void:
 	text = def.get("text", "")
 	var at: Array = def["at"]
 	position = Vector2(at[0], at[1])
+	_static = BakedLayer.make(_paint, Rect2())
+	add_child(_static)
 	if style == "narrator" and Lettering.has_slots(text):
 		_lettering = Lettering.new()
 		var r: Array = def.get("reach_at", [at[0] + 16, at[1] + 16])
@@ -36,24 +42,40 @@ func setup(def: Dictionary) -> void:
 		for s in _lettering.slots:
 			s.anchor_offset = Vector2(r[0], r[1]) - position
 		slots = _lettering.slots
+		_loose = DrawLayer.make(func(ci: CanvasItem) -> void: _lettering.draw(ci, Vector2(4, 3), 0.0, "loose"))
+		add_child(_loose)
+	_static.area = _area()
 
 
 func on_slot_changed(_slot: WordSlot) -> void:
-	queue_redraw()
+	_redraw()
 
 
 func refresh(_animate := false) -> void:
-	queue_redraw()
+	_redraw()
+
+
+func _redraw() -> void:
+	if _static:
+		_static.refresh(_area())
+	if _loose:
+		_loose.queue_redraw()
 
 
 func slot_prompt_position(slot: WordSlot) -> Vector2:
 	return global_position + _lettering.slot_top(slot)
 
 
+## Only the loose words move (by moving their layer); the caption redraws
+## when its words or highlights change.
 func _process(delta: float) -> void:
 	if _lettering:
 		_time += delta
-		queue_redraw()
+		_loose.position.y = 0.0 if Settings.reduced_motion else sin(_time * 4.0) * 0.6
+		var look := _lettering.look()
+		if look != _look:
+			_look = look
+			_redraw()
 
 
 func set_text_instant(t: String) -> void:
@@ -63,7 +85,7 @@ func set_text_instant(t: String) -> void:
 	text = t
 	_visible_chars = -1
 	_strike = 0.0
-	queue_redraw()
+	_redraw()
 
 
 ## Strikes out the current text, then letters the new text in.
@@ -83,7 +105,7 @@ func rewrite(new_text: String) -> void:
 
 func _set_strike(v: float) -> void:
 	_strike = v
-	queue_redraw()
+	_redraw()
 
 
 ## Letters text in one character at a time.
@@ -99,10 +121,10 @@ func write(new_text: String) -> void:
 		_visible_chars += 1
 		if _visible_chars % 4 == 1 and text[_visible_chars - 1] != " ":
 			Audio.play("scratch", 0.1, -6.0)
-		queue_redraw()
+		_redraw()
 		await get_tree().create_timer(CHAR_TIME * (2.0 if style == "artist" else 1.0)).timeout
 	_visible_chars = -1
-	queue_redraw()
+	_redraw()
 	_set_ducking(false)
 
 
@@ -128,36 +150,50 @@ func _shown_text() -> String:
 	return text.substr(0, _visible_chars)
 
 
-func _draw() -> void:
+## The caption's area for its baked drawing: the box, with room for a
+## strike-through and the artist's larger, uneven lettering.
+func _area() -> Rect2:
+	var scale := 2 if style == "artist" else 1
+	var lines := ComicFont.split_lines(text)
+	var w := 16
+	for l in lines:
+		w = maxi(w, ComicFont.measure(l, true) * scale)
+	if _lettering:
+		w = maxi(w, _lettering.max_width())
+	return Rect2(-2, -2, w + 14, lines.size() * ComicFont.LINE_HEIGHT * scale + 10)
+
+
+func _paint(ci: CanvasItem) -> void:
 	if text == "":
 		return
 	if _lettering:
-		var box := Vector2(_lettering.width() + 8, _lettering.lines.size() * PixelFont.LINE_HEIGHT + 4)
-		Ink.box(self, Rect2(Vector2.ZERO, box), Palette.CAPTION)
-		_lettering.draw(self, Vector2(4, 3), 0.0 if Settings.reduced_motion else roundf(sin(_time * 4.0) * 0.6))
+		var box := Vector2(_lettering.width() + 8, _lettering.lines.size() * ComicFont.LINE_HEIGHT + 4)
+		Ink.box(ci, Rect2(Vector2.ZERO, box), Palette.CAPTION, Palette.INK, 1.0)
+		_lettering.draw(ci, Vector2(4, 3), 0.0, "static")
 		return
 	var scale := 2 if style == "artist" else 1
-	var lines := PixelFont.split_lines(text)
+	var lines := ComicFont.split_lines(text)
 	var width := 0
 	for l in lines:
-		width = maxi(width, PixelFont.measure(l) * scale)
-	var size := Vector2(width + 8, lines.size() * PixelFont.LINE_HEIGHT * scale + 4)
+		width = maxi(width, ComicFont.measure(l) * scale)
+	var size := Vector2(width + 8, lines.size() * ComicFont.LINE_HEIGHT * scale + 4)
 	if style == "narrator":
-		Ink.box(self, Rect2(Vector2.ZERO, size), Palette.CAPTION)
+		Ink.box(ci, Rect2(Vector2.ZERO, size), Palette.CAPTION, Palette.INK, 1.0)
 	var color := Palette.PENCIL if style == "artist" else Palette.INK
-	var shown := PixelFont.split_lines(_shown_text())
+	var shown := ComicFont.split_lines(_shown_text())
 	for i in shown.size():
-		var pos := Vector2(4, 3 + i * PixelFont.LINE_HEIGHT * scale)
+		var pos := Vector2(4, 3 + i * ComicFont.LINE_HEIGHT * scale)
 		if style == "artist":
 			# Hand-lettered: each character sits on a slightly uneven baseline.
-			var x := 0
-			for ci in shown[i].length():
-				var ch := shown[i][ci]
-				var jitter := 1 if (ci * 7 + i * 3) % 5 == 0 else 0
-				x += PixelFont.draw(self, pos + Vector2(x, jitter), ch, color, false, scale)
+			var x := 0.0
+			for k in shown[i].length():
+				var ch := shown[i][k]
+				var jitter := 0.6 * sin(k * 2.3 + i * 1.7)
+				x += ComicFont.draw(ci, pos + Vector2(x, jitter), ch, color, false, scale)
 		else:
-			PixelFont.draw(self, pos, shown[i], color)
+			ComicFont.draw(ci, pos, shown[i], color)
 	if _strike > 0.0:
 		for i in lines.size():
-			var lw := PixelFont.measure(lines[i]) * scale
-			draw_rect(Rect2(3, 6 + i * PixelFont.LINE_HEIGHT * scale, (lw + 2) * _strike, 1), Palette.RED)
+			var lw := ComicFont.measure(lines[i]) * scale
+			var y := 6.5 + i * ComicFont.LINE_HEIGHT * scale
+			Ink.line(ci, Vector2(3, y + 0.4), Vector2(3 + (lw + 2) * _strike, y - 0.4), Palette.RED, 1.0)

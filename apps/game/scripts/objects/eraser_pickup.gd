@@ -35,10 +35,11 @@ func _physics_process(delta: float) -> void:
 func _draw() -> void:
 	var r := Rect2(Vector2(-SIZE.x / 2.0, -SIZE.y), SIZE)
 	# A rubber block in a paper sleeve, worn to a slant at one end.
-	Ink.box(self, r, Palette.ERASER)
-	Ink.box(self, Rect2(r.position + Vector2(5, 0), Vector2(5, SIZE.y)), Palette.WHITE)
-	draw_rect(Rect2(r.position, Vector2(2, 1)), Palette.PAPER)
+	var block := PackedVector2Array([r.position + Vector2(2, 0), Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y), r.position + Vector2(0, 2)])
+	Ink.shape(self, block, Palette.ERASER, Palette.INK, Ink.W_THING)
+	Ink.box(self, Rect2(r.position + Vector2(5, 0), Vector2(5, SIZE.y)), Palette.WHITE, Palette.INK, 0.9)
 	# A glint, so a still object on a busy page still catches the eye.
 	if Settings.reduced_motion or fmod(_time, 2.0) < 0.25:
-		draw_rect(Rect2(r.position + Vector2(-3, -4), Vector2(1, 3)), Palette.RED)
-		draw_rect(Rect2(r.position + Vector2(-4, -3), Vector2(3, 1)), Palette.RED)
+		var g := r.position + Vector2(-3, -3)
+		Ink.line(self, g - Vector2(0, 2), g + Vector2(0, 2), Palette.RED, 0.9)
+		Ink.line(self, g - Vector2(2, 0), g + Vector2(2, 0), Palette.RED, 0.9)

@@ -6,7 +6,7 @@ extends AnimatableBody2D
 ## there; a `halt` word holds it where it is. It only takes words it can
 ## obey: a platform on an up-down rail refuses LEFT and RIGHT.
 ##
-## Like a crate it moves in whole pixels and never leaves its rail, and it
+## Like a crate it moves in whole page units and never leaves its rail, and it
 ## handles Nib explicitly (Nib is on Player.LAYER): it carries Nib and any
 ## crate resting on top, and stops rather than move into Nib or push a rider
 ## into something.
@@ -130,7 +130,7 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 
 
-## Moves one pixel along the rail (`dir` is -1 or +1) with everything riding
+## Moves one unit along the rail (`dir` is -1 or +1) with everything riding
 ## on it. Returns false when blocked: by the end of the rail, by panel
 ## geometry or crates in the way, by Nib (when not riding), or when a rider
 ## has no room to come along.
@@ -202,22 +202,14 @@ func _rests_on(r: Rect2) -> bool:
 
 func _draw() -> void:
 	_draw_rail()
+	# A plank, heavy-inked like everything Nib can use, with a wood grain.
 	var plank := Rect2(Vector2.ZERO, size)
-	Ink.box(self, plank, Palette.OCHRE)
-	draw_rect(Rect2(2, 2, size.x - 4, 1), Palette.SHADOW)
-
-	# The label hangs on a plate under the middle of the plank.
-	var bold := slot.word != ""
-	var w := PixelFont.measure(slot.word, true) + 6 if bold else 16
-	var plate := Rect2(roundf(size.x / 2.0 - w / 2.0), HEIGHT + 1, w, 11)
-	draw_rect(Rect2(plate.position.x + 2, HEIGHT - 1, 1, 2), Palette.INK)
-	draw_rect(Rect2(plate.end.x - 3, HEIGHT - 1, 1, 2), Palette.INK)
-	Ink.box(self, plate, Palette.WHITE, Palette.RED if slot.highlighted else Palette.INK)
-	if bold:
-		var bob := 0.0 if (Settings.reduced_motion or not slot.loose) else roundf(sin(Time.get_ticks_msec() / 250.0) * 0.6)
-		PixelFont.draw_centered(self, size.x / 2.0, plate.position.y + 2 + bob, slot.word, Palette.RED if slot.loose else Palette.INK, true)
-	else:
-		draw_rect(Rect2(plate.position.x + 3, plate.position.y + 8, w - 6, 1), Palette.PENCIL)
+	Ink.box(self, plank, Palette.OCHRE, Palette.INK, Ink.W_THING)
+	Ink.line(self, Vector2(3, 2.2), Vector2(size.x - 6, 2.2), Palette.WOOD_DARK, 0.6)
+	# The label hangs on a tag under the middle of the plank.
+	var tag := LabelTag.draw(self, Vector2(size.x / 2.0, HEIGHT + 1.5), slot, 16.0)
+	for x in [tag.position.x + 3, tag.end.x - 3]:
+		Ink.line(self, Vector2(x, HEIGHT - 0.5), Vector2(x, tag.position.y), Palette.INK, 0.6)
 
 
 ## The rail is a dotted pencil guide fixed to the panel, from where the plank
@@ -227,17 +219,16 @@ func _draw_rail() -> void:
 	from[axis] += rail_min
 	from[1 - axis] += _fixed
 	var length := float(rail_max - rail_min)
+	var col := Palette.PENCIL
 	if axis == 1:
-		var x := roundf(size.x / 2.0)
+		var x := size.x / 2.0
 		var top := from.y + HEIGHT / 2.0
-		for y in range(0, int(length) + 1, 3):
-			draw_rect(Rect2(x, top + y, 1, 2), Palette.PENCIL)
-		draw_rect(Rect2(x - 3, top - 1, 7, 1), Palette.PENCIL)
-		draw_rect(Rect2(x - 3, top + length + 1, 7, 1), Palette.PENCIL)
+		Ink.dashed(self, Vector2(x - 0.4, top), length, 1, 0.8, col, 2.0, 2.0)
+		Ink.line(self, Vector2(x - 3.5, top - 0.5), Vector2(x + 3.5, top - 0.5), col, 1.0)
+		Ink.line(self, Vector2(x - 3.5, top + length + 1.5), Vector2(x + 3.5, top + length + 1.5), col, 1.0)
 	else:
-		var y := roundf(HEIGHT / 2.0)
+		var y := HEIGHT / 2.0
 		var left := from.x
-		for x in range(0, int(length + size.x) + 1, 3):
-			draw_rect(Rect2(left + x, y, 2, 1), Palette.PENCIL)
-		draw_rect(Rect2(left - 1, y - 3, 1, 7), Palette.PENCIL)
-		draw_rect(Rect2(left + length + size.x, y - 3, 1, 7), Palette.PENCIL)
+		Ink.dashed(self, Vector2(left, y - 0.4), length + size.x, 0, 0.8, col, 2.0, 2.0)
+		Ink.line(self, Vector2(left - 0.5, y - 3.5), Vector2(left - 0.5, y + 3.5), col, 1.0)
+		Ink.line(self, Vector2(left + length + size.x + 0.5, y - 3.5), Vector2(left + length + size.x + 0.5, y + 3.5), col, 1.0)

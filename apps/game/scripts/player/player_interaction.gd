@@ -8,6 +8,7 @@ var player: Player
 var carrying := ""
 var target: WordSlot
 var verb := ""
+var _showing := false
 
 
 func setup(owner_page: ComicPage, owner_player: Player, carried: String) -> void:
@@ -20,7 +21,11 @@ func setup(owner_page: ComicPage, owner_player: Player, carried: String) -> void
 
 func _process(_delta: float) -> void:
 	_refresh_target()
-	queue_redraw()
+	# Redraw only while a prompt is up (it follows Nib), and once to clear it.
+	var showing := target != null
+	if showing or _showing:
+		queue_redraw()
+	_showing = showing
 
 
 func _refresh_target() -> void:
@@ -92,9 +97,4 @@ func _draw() -> void:
 	var label := verb.to_upper()
 	if verb != "take":
 		label += " " + carrying
-	var w := PixelFont.measure(label) + 14
-	var r := Rect2(roundf(p.x - w / 2.0), p.y - 12, w, 11)
-	Ink.box(self, r, Palette.WHITE)
-	Ink.box(self, Rect2(r.position + Vector2(2, 2), Vector2(7, 7)), Palette.INK, Palette.INK)
-	PixelFont.draw(self, r.position + Vector2(3, 2), "E", Palette.WHITE)
-	PixelFont.draw(self, r.position + Vector2(11, 2), label, Palette.INK)
+	Prompt.draw(self, p + Vector2(0, -13), "E", label)

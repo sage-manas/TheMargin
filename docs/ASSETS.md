@@ -4,9 +4,9 @@ Every font, image, sound and piece of music in the game must appear here with it
 
 | Asset | Location | Origin | Licence |
 |---|---|---|---|
-| 5×7 lettering font (regular + bold) | `apps/game/scripts/art/pixel_font.gd` | Original, authored for THE MARGIN | Project-owned |
-| Nib, neighbour sprites | `apps/game/scripts/art/sprites.gd` | Original text-grid pixel art | Project-owned |
-| Props, panels, page, halftone, paper texture | `scripts/objects/prop_painter.gd`, `shaders/*.gdshader` | Original, procedural | Project-owned |
+| Hand-lettering font (`ComicFont`, regular + bold) | `apps/game/scripts/art/comic_font.gd` | Original single-stroke glyphs, authored for THE MARGIN (ADR-0013) | Project-owned |
+| Nib and the neighbour (`Figures`) | `apps/game/scripts/art/figures.gd` | Original vector drawings in code | Project-owned |
+| Props, objects, panels, page, halftone, paper texture | `scripts/art/ink.gd`, `scripts/objects/*.gd`, `shaders/*.gdshader` | Original, procedural vector drawing | Project-owned |
 | All sound effects and ambience | `apps/game/scripts/audio/sfx_synth.gd` | Synthesised at runtime from code | Project-owned |
 | Chapter music ("Margins", Ch 1) | scores in `apps/game/data/music.json`, synthesised by `scripts/audio/music_synth.gd` | Original composition, synthesised at runtime | Project-owned |
 | Godot Engine runtime (`index.wasm`, `index.js`) | export output | Godot Engine 4.7.2 | MIT. Credit required in the about/legal page |

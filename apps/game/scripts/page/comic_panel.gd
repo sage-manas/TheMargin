@@ -39,7 +39,8 @@ var erased := false
 var visual: Node2D
 var content: Node2D
 var _border_body: StaticBody2D
-var _ink: DrawLayer
+var _ink: BakedLayer
+var _ground: BakedLayer
 var _shadow: DrawLayer
 var _shake_t := 0.0
 var _time := 0.0
@@ -48,6 +49,7 @@ var _smudge: DrawLayer
 ## Rubbing progress, 0..1 across every row; -1 when not rubbing.
 var _erase_p := -1.0
 var _ducking := false
+var _look := []
 
 
 func setup(def: Dictionary) -> void:
@@ -94,11 +96,13 @@ func setup(def: Dictionary) -> void:
 	mat.set_shader_parameter("size", Vector2(size))
 	bg.material = mat
 	visual.add_child(bg)
-	visual.add_child(DrawLayer.make(_draw_ground))
+	_ground = BakedLayer.make(_draw_ground, Rect2(Vector2.ZERO, Vector2(size)))
+	visual.add_child(_ground)
 	content = Node2D.new()
 	content.name = "Content"
 	visual.add_child(content)
-	_ink = DrawLayer.make(_draw_ink)
+	# Chevrons and loose openings reach a few units outside the border.
+	_ink = BakedLayer.make(_draw_ink, Rect2(Vector2(-10, -10), Vector2(size) + Vector2(20, 20)))
 	visual.add_child(_ink)
 	_rebuild_border()
 	if def.get("erased", false):
@@ -197,7 +201,7 @@ func set_gaps(new_gaps: Array) -> void:
 		return
 	gaps = new_gaps
 	_rebuild_border()
-	_ink.queue_redraw()
+	_ink.refresh()
 
 
 func shake() -> void:
@@ -210,8 +214,13 @@ func _process(delta: float) -> void:
 		_shake_t -= delta
 		visual.position = Vector2(roundf(sin(_time * 70.0) * 2.0), 0) if _shake_t > 0.0 else Vector2.ZERO
 	if is_lifted():
+		# The shadow bobs every frame (one rect); the border only redraws
+		# when the hand's state on it changes.
 		_shadow.queue_redraw()
-		_ink.queue_redraw()
+		var look := [hovered, selected, dragging, is_pinned()]
+		if look != _look:
+			_look = look
+			_ink.refresh()
 
 
 # --- collision -------------------------------------------------------------
@@ -303,22 +312,23 @@ func _draw_shadow(ci: CanvasItem) -> void:
 		lift = 1.0
 	elif not Settings.reduced_motion:
 		lift += 2.0 if dragging else roundf(sin(_time * 2.2))
-	ci.draw_rect(Rect2(Vector2(lift, lift + 1), Vector2(size)), Palette.SHADOW)
+	ci.draw_rect(Rect2(Vector2(lift, lift + 1), Vector2(size)), Color(Palette.SHADOW, 0.85))
 
 
 func _draw_ground(ci: CanvasItem) -> void:
 	for p: Dictionary in props:
 		PropPainter.paint(ci, p)
 	for s in solids:
+		# Ground: what Nib stands on is inked heavily on top, hatched below.
 		var r := Rect2(s)
 		ci.draw_rect(r, Palette.PAPER_DARK)
 		Ink.hatch(ci, r.grow_individual(0, -3, 0, 0), Palette.SHADOW)
-		ci.draw_rect(Rect2(r.position, Vector2(r.size.x, 2)), Palette.INK)
-		ci.draw_rect(Rect2(r.position, Vector2(1, r.size.y)), Palette.INK)
-		ci.draw_rect(Rect2(r.end.x - 1, r.position.y, 1, r.size.y), Palette.INK)
+		Ink.line(ci, r.position + Vector2(0, 1), Vector2(r.end.x, r.position.y + 1), Palette.INK, Ink.W_BORDER)
+		Ink.line(ci, r.position + Vector2(0.5, 0), Vector2(r.position.x + 0.5, r.end.y), Palette.INK, 1.0)
+		Ink.line(ci, Vector2(r.end.x - 0.5, r.position.y), Vector2(r.end.x - 0.5, r.end.y), Palette.INK, 1.0)
 	for n: Dictionary in notes:
 		var at: Array = n["at"]
-		PixelFont.draw_lines(ci, Vector2(at[0], at[1]), n["text"], Palette.PENCIL)
+		ComicFont.draw_lines(ci, Vector2(at[0], at[1]), n["text"], Palette.PENCIL)
 
 
 func _openings_on(side: String) -> Array:
@@ -335,10 +345,10 @@ func _draw_ink(ci: CanvasItem) -> void:
 	var w := size.x
 	var h := size.y
 	if pencil:
-		Ink.dashed(ci, Vector2(0, 0), w, 0, 1, Palette.PENCIL, 6, 2)
-		Ink.dashed(ci, Vector2(0, h - 1), w, 0, 1, Palette.PENCIL, 6, 2)
-		Ink.dashed(ci, Vector2(0, 0), h, 1, 1, Palette.PENCIL, 6, 2)
-		Ink.dashed(ci, Vector2(w - 1, 0), h, 1, 1, Palette.PENCIL, 6, 2)
+		Ink.dashed(ci, Vector2(0, 0), w, 0, 0.8, Palette.PENCIL, 6, 2)
+		Ink.dashed(ci, Vector2(0, h - 0.8), w, 0, 0.8, Palette.PENCIL, 6, 2)
+		Ink.dashed(ci, Vector2(0, 0), h, 1, 0.8, Palette.PENCIL, 6, 2)
+		Ink.dashed(ci, Vector2(w - 0.8, 0), h, 1, 0.8, Palette.PENCIL, 6, 2)
 		return
 	var b := PageConst.BORDER
 	var color := Palette.RED if selected else Palette.INK
@@ -355,8 +365,8 @@ func _draw_ink(ci: CanvasItem) -> void:
 			# Loose ink: an unlinked opening is drawn as a dashed line.
 			for seg: Array in PanelLinks.subtract_intervals(op[0], op[1], gs):
 				var from := Vector2(seg[0], spec[1]) if spec[0] == 0 else Vector2(spec[1], seg[0])
-				Ink.dashed(ci, from, seg[1] - seg[0], spec[0], b, color, 3, 3)
-	if is_lifted() and (hovered or selected) and not dragging and not is_pinned():
+				Ink.dashed(ci, from, seg[1] - seg[0], spec[0], b, color, 3.5, 2.5)
+	if is_lifted() and not dragging and not is_pinned():
 		_draw_track_arrows(ci)
 
 
@@ -368,14 +378,17 @@ func _ink_segment(ci: CanvasItem, spec: Array, a: int, z: int, color: Color) -> 
 		ci.draw_rect(Rect2(spec[1], a, b, z - a), color)
 
 
+## Chevrons on a movable panel's edges, pointing the way it slides. Always
+## shown, so movable rooms read at a glance; red when the hand is on it.
 func _draw_track_arrows(ci: CanvasItem) -> void:
 	var c := Vector2(size) / 2.0
-	var col := Palette.RED
-	if track.get("axis") == "y":
-		for i in 3:
-			ci.draw_rect(Rect2(c.x - i, -6 + i, i * 2 + 1, 1), col)
-			ci.draw_rect(Rect2(c.x - i, size.y + 5 - i, i * 2 + 1, 1), col)
-	else:
-		for i in 3:
-			ci.draw_rect(Rect2(-6 + i, c.y - i, 1, i * 2 + 1), col)
-			ci.draw_rect(Rect2(size.x + 5 - i, c.y - i, 1, i * 2 + 1), col)
+	var col := Palette.RED if (hovered or selected) else Color(Palette.INK, 0.7)
+	var pairs := [[Vector2(c.x, -2.5), Vector2(0, -1)], [Vector2(c.x, size.y + 2.5), Vector2(0, 1)]] if track.get("axis") == "y" \
+		else [[Vector2(-2.5, c.y), Vector2(-1, 0)], [Vector2(size.x + 2.5, c.y), Vector2(1, 0)]]
+	for pr: Array in pairs:
+		var base: Vector2 = pr[0]
+		var d: Vector2 = pr[1]
+		var n := Vector2(-d.y, d.x)
+		for k in 2:
+			var tip := base + d * (2.5 + k * 3.0)
+			Ink.stroke(ci, PackedVector2Array([tip - d * 2.5 + n * 3.0, tip, tip - d * 2.5 - n * 3.0]), col, 1.2)

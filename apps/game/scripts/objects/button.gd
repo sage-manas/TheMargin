@@ -91,19 +91,15 @@ func _physics_process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	# The housing is set into the floor; the plate sits proud until pressed.
+	# A pressure plate: the housing is set into the floor; the plate sits
+	# proud until pressed, with a chevron saying "press".
 	var housing := Rect2(-2, -1, SIZE.x + 4, 3)
-	Ink.box(self, housing, Palette.NIGHT)
+	Ink.box(self, housing, Palette.NIGHT, Palette.INK, 1.0)
 	var rise := 1.0 if pressed else SIZE.y
-	Ink.box(self, Rect2(0, -rise, SIZE.x, rise + 1), Palette.RED if pressed else Palette.OCHRE)
-
+	var plate := Rect2(0, -rise, SIZE.x, rise + 1)
+	Ink.rounded_box(self, plate, Palette.RED if pressed else Palette.OCHRE, Palette.INK, 1.0, Ink.W_THING)
+	if not pressed:
+		var c := Vector2(SIZE.x / 2.0, -rise - 3.0)
+		Ink.stroke(self, PackedVector2Array([c + Vector2(-2.5, -1.5), c, c + Vector2(2.5, -1.5)]), Color(Palette.INK, 0.55), 0.8)
 	# The label is stencilled on the floor below the plate.
-	var bold := slot.word != ""
-	var w := PixelFont.measure(slot.word, true) + 6 if bold else 16
-	var plate := Rect2(roundf(SIZE.x / 2.0 - w / 2.0), 3, w, 11)
-	Ink.box(self, plate, Palette.WHITE, Palette.RED if slot.highlighted else Palette.INK)
-	if bold:
-		var bob := 0.0 if (Settings.reduced_motion or not slot.loose) else roundf(sin(Time.get_ticks_msec() / 250.0) * 0.6)
-		PixelFont.draw_centered(self, SIZE.x / 2.0, plate.position.y + 2 + bob, slot.word, Palette.RED if slot.loose else Palette.INK, true)
-	else:
-		draw_rect(Rect2(plate.position.x + 3, plate.position.y + 8, w - 6, 1), Palette.PENCIL)
+	LabelTag.draw(self, Vector2(SIZE.x / 2.0, 3), slot, 16.0)

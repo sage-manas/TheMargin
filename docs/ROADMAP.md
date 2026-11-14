@@ -30,7 +30,7 @@
 ### Now (Phase 1 + 2)
 1. Repo root: README, `.gitignore`, `.editorconfig`, pnpm workspace, `.godot-version`.
 2. Godot project config (renderer, resolution, stretch, input map, autoloads).
-3. Art kernel: palette, original 5×7 pixel font (regular + bold), text-grid sprites.
+3. Art kernel: palette, original 5×7 pixel font (regular + bold), text-grid sprites. *(Replaced by hand-inked vector art, ADR-0013.)*
 4. Audio kernel: SFX synthesiser, audio autoload, web audio unlock.
 5. `PanelLinks` pure solver + tests.
 6. `ComicPanel` (draw, clip, generated border collision, bridges).

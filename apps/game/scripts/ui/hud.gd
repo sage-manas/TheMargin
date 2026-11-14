@@ -16,8 +16,9 @@ func _draw() -> void:
 	if reset_progress > 0.0:
 		var w := 120.0
 		var r := Rect2(320 - w / 2.0, 3, w, 10)
-		Ink.box(self, r, Palette.WHITE)
+		Ink.rounded_box(self, r, Palette.WHITE, Palette.INK, 3.0, 0.9)
 		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2((w - 2) * reset_progress, 8)), Palette.CAPTION)
-		PixelFont.draw_centered(self, 320, 5, "RESETTING PAGE", Palette.INK)
+		Ink.stroke(self, Ink.round_rect_points(r.grow(-0.45), 3.0), Palette.INK, 0.9, true)
+		ComicFont.draw_centered(self, 320, 5, "RESETTING PAGE", Palette.INK)
 	elif panel_mode:
-		PixelFont.draw_centered(self, 320, 5, "PANEL MODE: ARROWS SLIDE, Q NEXT / DONE", Palette.RED)
+		ComicFont.draw_centered(self, 320, 5, "PANEL MODE: ARROWS SLIDE, Q NEXT / DONE", Palette.RED)

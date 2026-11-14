@@ -15,6 +15,7 @@ var target: Sketch
 var verb := ""
 ## Which of Nib's tools this is, so two prompts and pip rows stack (0 = lowest).
 var row := 0
+var _showing := false
 
 
 func setup(owner_page: ComicPage, owner_player: Player, tool_row := 0) -> void:
@@ -76,7 +77,13 @@ func pips() -> Array:
 
 func _process(_delta: float) -> void:
 	_refresh_target()
-	queue_redraw()
+	# Redraw only while pips or a prompt are up (they follow Nib), and once
+	# more to clear them.
+	var p := pips()
+	var showing: bool = target != null or int(p[0]) > 0
+	if showing or _showing:
+		queue_redraw()
+	_showing = showing
 
 
 func _refresh_target() -> void:
@@ -135,21 +142,12 @@ func _draw() -> void:
 	if held > 0 or target:
 		var head := to_local(player.global_position) + Vector2(-(holds * 3 - 1) / 2.0, -18 - lift)
 		for i in holds:
-			draw_rect(Rect2(roundf(head.x) + i * 3, head.y, 2, 2), p[2] if i < held else Palette.SHADOW)
+			Ink.dot(self, head + Vector2(i * 3 + 1, 1), 1.0, p[2] if i < held else Palette.SHADOW)
 	if target == null:
 		return
 	var text := label()
 	var acting := acts(verb)
-	var w := PixelFont.measure(text) + (14 if acting else 6)
-	var at := _prompt_at()
-	var r := Rect2(roundf(at.x - w / 2.0), at.y, w, 11)
-	Ink.box(self, r, Palette.WHITE, Palette.INK if acting else Palette.PENCIL)
-	if acting:
-		Ink.box(self, Rect2(r.position + Vector2(2, 2), Vector2(7, 7)), Palette.INK, Palette.INK)
-		PixelFont.draw(self, r.position + Vector2(3, 2), key(), Palette.WHITE)
-		PixelFont.draw(self, r.position + Vector2(11, 2), text, Palette.INK)
-	else:
-		PixelFont.draw(self, r.position + Vector2(3, 2), text, Palette.PENCIL)
+	Prompt.draw(self, _prompt_at(), key(), text, acting)
 
 
 ## Above Nib's head (and above a carried word's tag), not above the sketch:

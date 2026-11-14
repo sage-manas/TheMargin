@@ -80,7 +80,7 @@ func test_ids_and_references(t) -> void:
 					t.ok(m.get_string(1) == "" or WordLibrary.exists(m.get_string(1)), "bubble word exists: %s" % m.get_string(1))
 				var lt := Lettering.new()
 				lt.parse(b.text, b.id, null, null, Vector2.ZERO)
-				var bs := Vector2i(lt.max_width() + SpeechBubble.PAD.x * 2, lt.lines.size() * PixelFont.LINE_HEIGHT + SpeechBubble.PAD.y * 2 - 2)
+				var bs := Vector2i(lt.max_width() + SpeechBubble.PAD.x * 2, lt.lines.size() * ComicFont.LINE_HEIGHT + SpeechBubble.PAD.y * 2 - 2)
 				t.ok(inner.encloses(Rect2i(Vector2i(int(b.at[0]), int(b.at[1]) - bs.y), bs)), "%s: fallen bubble inside its panel" % b.id)
 			if pd.get("erased", false):
 				t.ok(not pd.has("track"), "%s/%s: an erased panel lies flat" % [d.id, pd.id])

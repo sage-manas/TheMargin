@@ -62,7 +62,7 @@ test.beforeEach(async ({ page }) => {
 test("the landing page leads to /play and offers to continue a save", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("The Margin");
-  await expect(page.getByRole("link", { name: "Play", exact: true })).toHaveAttribute("href", "/play");
+  await expect(page.getByRole("link", { name: "Start reading" })).toHaveAttribute("href", "/play");
 
   await seed(page, { [LOCAL_SAVE_KEY]: save({ page: "ch01_p04", completedPages: ["ch01_p01", "ch01_p02", "ch01_p03"] }) });
   await page.reload();

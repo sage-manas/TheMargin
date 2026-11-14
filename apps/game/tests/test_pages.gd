@@ -7,8 +7,8 @@ extends RefCounted
 ## in a panel the artist erases, and scene cards, close-ups and conditional
 ## features that refer only to scenes and switches that exist.
 
-const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page", "erase_panel"]
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed"]
+const ACTIONS := ["wait", "rewrite_caption", "write_caption", "emote", "shake_panel", "sfx", "achievement", "end_card", "turn_page", "erase_panel", "swap_back"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed", "panels_swapped"]
 ## Object type -> word categories its label accepts.
 const OBJECTS := {"door": ["state"], "crate": ["motion", "halt", "mass"], "button": ["mass"], "eraser": [], "ink": [], "platform": ["motion", "halt"], "lever": [], "dial": []}
 
@@ -220,4 +220,28 @@ func test_scenes_and_closeups(t) -> void:
 				if not pd.get("erased", false):
 					var pr := Rect2(pd.rect[0], pd.rect[1], pd.rect[2], pd.rect[3])
 					t.ok(not pr.intersects(box), "%s: close-up %s covers no panel (%s)" % [d.id, cu.id, pd.id])
+
+
+func test_swaps_and_stretches(t) -> void:
+	for d: Dictionary in _pages():
+		var groups := {}
+		for pd: Dictionary in d.panels:
+			if pd.has("swap"):
+				t.ok(not pd.has("track") and not pd.has("stretch"), "%s/%s: a swappable panel neither slides nor stretches" % [d.id, pd.id])
+				if not groups.has(pd.swap):
+					groups[pd.swap] = []
+				groups[pd.swap].append(pd)
+			if pd.has("stretch"):
+				var lo := int(pd.stretch.min)
+				var hi := int(pd.stretch.max)
+				var w := int(pd.rect[2])
+				t.ok(not pd.has("track"), "%s/%s: a stretchable panel doesn't slide" % [d.id, pd.id])
+				t.ok(lo % PageConst.GRID == 0 and hi % PageConst.GRID == 0 and lo <= w and w <= hi, "%s/%s: starts within its stretch, on the grid" % [d.id, pd.id])
+				var reach := Rect2i(int(pd.rect[0]), int(pd.rect[1]), hi, int(pd.rect[3]))
+				t.ok(Rect2i(Vector2i.ZERO, PageConst.PAGE_SIZE).encloses(reach), "%s/%s: its widest reach is on the page" % [d.id, pd.id])
+		for g: String in groups:
+			var members: Array = groups[g]
+			t.ok(members.size() >= 2, "%s: swap group %s has a partner" % [d.id, g])
+			for pd: Dictionary in members:
+				t.ok(int(pd.rect[2]) == int(members[0].rect[2]) and int(pd.rect[3]) == int(members[0].rect[3]), "%s: swap group %s is all one size" % [d.id, g])
 

@@ -1,0 +1,154 @@
+{
+  "id": "ch02_p05",
+  "chapter": "ch02",
+  "number": 5,
+  "next": "ch02_p06",
+  "spawn": [
+    40,
+    328
+  ],
+  "cards": [
+    {
+      "id": "later",
+      "text": "LATER.",
+      "scene": "later",
+      "panel": "r"
+    }
+  ],
+  "panels": [
+    {
+      "id": "n",
+      "rect": [
+        16,
+        16,
+        48,
+        328
+      ],
+      "bg": "news",
+      "stretch": {
+        "min": 48,
+        "max": 200
+      },
+      "openings": [
+        {
+          "side": "right",
+          "from": 72,
+          "to": 96
+        }
+      ],
+      "solids": [
+        [
+          0,
+          312,
+          -1,
+          16
+        ],
+        [
+          36,
+          96,
+          -1,
+          8
+        ]
+      ],
+      "features": [
+        {
+          "id": "vine",
+          "kind": "vine",
+          "rect": [
+            12,
+            96,
+            24,
+            216
+          ],
+          "when": "later"
+        }
+      ]
+    },
+    {
+      "id": "r",
+      "rect": [
+        224,
+        16,
+        400,
+        112
+      ],
+      "bg": "news_cyan",
+      "openings": [
+        {
+          "side": "left",
+          "from": 72,
+          "to": 96
+        }
+      ],
+      "solids": [
+        [
+          0,
+          96,
+          400,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            180,
+            30
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_r",
+          "at": [
+            6,
+            6
+          ],
+          "text": "LATER, THERE WOULD|BE A WAY UP."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door25",
+          "at": [
+            300,
+            64
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "note",
+      "rect": [
+        224,
+        136,
+        400,
+        208
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "notes": [
+        {
+          "at": [
+            24,
+            24
+          ],
+          "text": "NO ROOM|FOR LATER."
+        }
+      ],
+      "props": [
+        {
+          "type": "stairs_sketch",
+          "at": [
+            200,
+            180
+          ]
+        }
+      ]
+    }
+  ]
+}

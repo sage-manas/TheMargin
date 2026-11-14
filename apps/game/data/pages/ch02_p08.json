@@ -1,0 +1,167 @@
+{
+  "id": "ch02_p08",
+  "chapter": "ch02",
+  "number": 8,
+  "next": "",
+  "spawn": [
+    48,
+    328
+  ],
+  "panels": [
+    {
+      "id": "desk",
+      "rect": [
+        16,
+        16,
+        608,
+        176
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [
+        {
+          "type": "ghost_neighbor",
+          "at": [
+            420,
+            60
+          ],
+          "crossed": true
+        },
+        {
+          "type": "ghost_nib",
+          "at": [
+            520,
+            80
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "artist",
+          "at": [
+            24,
+            24
+          ],
+          "text": "",
+          "style": "artist"
+        }
+      ]
+    },
+    {
+      "id": "box",
+      "rect": [
+        16,
+        200,
+        64,
+        144
+      ],
+      "bg": "news",
+      "stretch": {
+        "min": 64,
+        "max": 296
+      },
+      "openings": [
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          -1,
+          16
+        ]
+      ]
+    },
+    {
+      "id": "x",
+      "rect": [
+        320,
+        200,
+        304,
+        144
+      ],
+      "bg": "news_cyan",
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          304,
+          16
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_x",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE STORY|WENT ON."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door28",
+          "at": [
+            240,
+            96
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "boxed",
+      "on": "page_entered",
+      "do": [
+        {
+          "action": "wait",
+          "sec": 0.4
+        },
+        {
+          "action": "shake_panel",
+          "panel": "box"
+        },
+        {
+          "action": "write_caption",
+          "caption": "artist",
+          "text": "STAY IN|YOUR BOX."
+        }
+      ]
+    },
+    {
+      "id": "broke_out",
+      "on": "panel_released",
+      "when": {
+        "panel": "box"
+      },
+      "do": [
+        {
+          "action": "wait",
+          "sec": 0.4
+        },
+        {
+          "action": "write_caption",
+          "caption": "artist",
+          "text": "...FINE.|GO ON, THEN."
+        }
+      ]
+    }
+  ]
+}

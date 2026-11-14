@@ -43,6 +43,9 @@ func current_page() -> String:
 
 func set_current_page(page_id: String) -> void:
 	save["progress"]["page"] = page_id
+	# Story pages are "chNN_pNN": the chapter is the page's prefix.
+	if page_id.begins_with("ch") and page_id.length() >= 4:
+		save["progress"]["chapter"] = page_id.substr(0, 4)
 	# Words belong to the page they were found on; a carried word stays behind.
 	save["player"] = {"position": null, "carrying": null}
 

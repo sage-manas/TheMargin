@@ -1,0 +1,179 @@
+{
+  "id": "ch02_p07",
+  "chapter": "ch02",
+  "number": 7,
+  "next": "ch02_p08",
+  "spawn": [
+    300,
+    144
+  ],
+  "panels": [
+    {
+      "id": "d",
+      "rect": [
+        16,
+        16,
+        192,
+        144
+      ],
+      "bg": "news_cyan",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_d",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE LAST DOOR."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door27",
+          "at": [
+            130,
+            96
+          ],
+          "label": "SHUT",
+          "loose": true,
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "a",
+      "rect": [
+        216,
+        16,
+        192,
+        144
+      ],
+      "bg": "news",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            110,
+            40
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_a",
+          "at": [
+            6,
+            6
+          ],
+          "text": "NIB, AGAIN."
+        }
+      ]
+    },
+    {
+      "id": "e",
+      "rect": [
+        432,
+        16,
+        192,
+        144
+      ],
+      "bg": "news",
+      "track": {
+        "axis": "x",
+        "min": 416,
+        "max": 432
+      },
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_e",
+          "at": [
+            6,
+            6
+          ],
+          "text": "IT WAS *OPEN*|ALL ALONG.",
+          "reach_at": [
+            60,
+            128
+          ]
+        }
+      ]
+    },
+    {
+      "id": "note",
+      "rect": [
+        16,
+        168,
+        592,
+        176
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "notes": [
+        {
+          "at": [
+            24,
+            24
+          ],
+          "text": "LAY IT OUT RIGHT."
+        }
+      ],
+      "props": [
+        {
+          "type": "ghost_nib",
+          "at": [
+            300,
+            90
+          ]
+        }
+      ]
+    }
+  ]
+}

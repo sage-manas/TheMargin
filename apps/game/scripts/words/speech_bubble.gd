@@ -75,6 +75,12 @@ func _redraw() -> void:
 	_loose.queue_redraw()
 
 
+## The caption or bubble's drawn area, in its panel's coordinates.
+func footprint() -> Rect2:
+	var a := _area()
+	return Rect2(position + a.position, a.size)
+
+
 ## Room for the bubble and its tail, which reaches toward the speaker or,
 ## fallen, out to the left along the floor.
 func _area() -> Rect2:

@@ -152,6 +152,12 @@ func _shown_text() -> String:
 
 ## The caption's area for its baked drawing: the box, with room for a
 ## strike-through and the artist's larger, uneven lettering.
+## The caption or bubble's drawn area, in its panel's coordinates.
+func footprint() -> Rect2:
+	var a := _area()
+	return Rect2(position + a.position, a.size)
+
+
 func _area() -> Rect2:
 	var scale := 2 if style == "artist" else 1
 	var lines := ComicFont.split_lines(text)

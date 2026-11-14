@@ -3,7 +3,7 @@ extends Node
 ## window, so run without --headless):
 ##   godot --path apps/game res://tests/tools/capture.tscn -- <out_dir>
 ## Captures the page start state and the solved positions of pages 1 and 3–8, and
-## the sandboxes (mechanics, weight, eraser, ink, platforms, scenes, close-ups).
+## the sandboxes (mechanics, weight, eraser, ink, platforms, scenes, close-ups, swap, stretch).
 
 func _ready() -> void:
 	WordLibrary.load_words()
@@ -30,6 +30,14 @@ func _ready() -> void:
 	await _shot(out, "p08_start", "ch01_p08", {})
 	await _shot(out, "p08_erased", "ch01_p08", {"fired": ["from_the_top"]}, [300, 144])
 	await _shot(out, "p08_risen", "ch01_p08", {"panels": {"l": [16, 16]}, "fired": ["from_the_top"]}, [120, 144])
+	await _shot(out, "c2p1", "ch02_p01", {})
+	await _shot(out, "c2p2", "ch02_p02", {"sizes": {"a": [304, 144]}}, [200, 144])
+	await _shot(out, "c2p3", "ch02_p03", {})
+	await _shot(out, "c2p4", "ch02_p04", {})
+	await _shot(out, "c2p5", "ch02_p05", {"sizes": {"n": [200, 328]}, "scenes": {"later": "n"}})
+	await _shot(out, "c2p6", "ch02_p06", {"panels": {"lever_room": [216, 16], "empty": [16, 16]}, "controls": {"lever1": true}})
+	await _shot(out, "c2p7", "ch02_p07", {})
+	await _shot(out, "c2p8", "ch02_p08", {})
 	await _shot(out, "sb_start", "sb_mechanics", {})
 	await _shot(out, "sb_risen", "sb_mechanics", {"slots": {"cap_s1:0": null, "c1:label": "UP"}, "objects": {"c1": [172, 16]}}, [200, 32])
 	await _shot(out, "sb_lowered", "sb_mechanics", {"panels": {"s2": [320, 112]}, "slots": {"cap_s1:0": null, "c1:label": "UP", "cap_s2:0": null}, "objects": {"c1": [172, 16]}}, [450, 200], "HEAVY")
@@ -50,6 +58,10 @@ func _ready() -> void:
 	await _shot(out, "sbs_moved", "sb_scenes", {"scenes": {"later": "b", "night": "n"}}, [200, 208])
 	await _shot(out, "sbc_start", "sb_closeups", {})
 	await _shot(out, "sbc_ready", "sb_closeups", {"panels": {"h": [216, 16]}, "controls": {"lever1": true, "safe": "410"}}, [420, 328])
+	await _shot(out, "sbw2_start", "sb_swap", {})
+	await _shot(out, "sbw2_swapped", "sb_swap", {"panels": {"door_room": [416, 16], "hall": [16, 16], "start": [216, 16]}})
+	await _shot(out, "sbt_start", "sb_stretch", {})
+	await _shot(out, "sbt_stretched", "sb_stretch", {"sizes": {"a": [304, 144]}}, [200, 144])
 	await _erase_shot(out)
 	await _turn_shot(out)
 	get_tree().quit()

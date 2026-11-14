@@ -73,3 +73,8 @@ test("api: requests normalise and validate", async () => {
   assert.ok(!RegisterRequestSchema.safeParse({ email: "x", password: "short", displayName: "" }).success);
   assert.ok(ErrorEnvelopeSchema.safeParse({ error: { code: "SAVE_CONFLICT", message: "m" } }).success);
 });
+
+test("the game's chapter list matches the catalogue", () => {
+  const game = JSON.parse(readFileSync(join(import.meta.dirname, "../../../apps/game/data/chapters.json"), "utf8")) as { id: string; number: number; title: string }[];
+  assert.deepEqual(game.map((c) => [c.id, c.number, c.title]), CHAPTERS.map((c) => [c.id, c.number, c.title]));
+});

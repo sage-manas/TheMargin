@@ -8,4 +8,5 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { code: "WONT_SHUT", title: "Won't Shut", description: "Give a shut door a better word." },
   // Awarded by the API when a chapter is completed, not sent by the game.
   { code: "CH01_COMPLETE", title: "The End of the Page", description: "Finish Chapter 1.", chapterId: "ch01" },
+  { code: "CH02_COMPLETE", title: "Outside the Lines", description: "Finish Chapter 2.", chapterId: "ch02" },
 ];

@@ -15,6 +15,8 @@ var hud: Hud
 var page: ComicPage
 
 var _busy := false
+## The first page of the next chapter, while its chapter card is up.
+var _next_page := ""
 var _reset_hold := 0.0
 
 
@@ -39,8 +41,6 @@ func _ready() -> void:
 	ui.add_child(pause_menu)
 	pause_menu.chosen.connect(_on_pause_choice)
 	end_card = Overlay.new()
-	end_card.title = "END OF CHAPTER 1"
-	end_card.subtitle = "CHAPTER 2 IS STILL BEING DRAWN.|THANK YOU FOR PLAYING THE MARGIN."
 	end_card.dim = 0.2
 	ui.add_child(end_card)
 	end_card.chosen.connect(_on_end_choice)
@@ -82,7 +82,7 @@ func _play_sandbox(id: String) -> void:
 
 func _show_title() -> void:
 	var s := SaveManager.load_save()
-	title.refresh(not s.is_empty())
+	title.refresh(not s.is_empty(), str((s if not s.is_empty() else SaveManager.empty_save())["progress"]["chapter"]))
 	# Warm up the music for where play will resume while the title is up.
 	var resume: String = (s if not s.is_empty() else SaveManager.empty_save())["progress"]["page"]
 	Audio.prepare_music(Audio.track_for_page(ComicPage.load_def(resume)))
@@ -148,21 +148,42 @@ func _on_page_exit() -> void:
 	if next == "":
 		_on_end_reached()
 		return
+	var chapter: String = page.def.get("chapter", "")
+	var next_chapter: String = ComicPage.load_def(next).get("chapter", chapter)
+	if next_chapter != chapter:
+		_on_end_reached(next)
+		return
 	await _load_page(next, true)
 
 
-func _on_end_reached() -> void:
+## The end of a chapter: it is recorded (and the site told), then a card
+## offers the next chapter's first page, or says the next isn't drawn yet.
+func _on_end_reached(next := "") -> void:
 	var chapter: String = page.def.get("chapter", "")
 	if chapter != "" and not GameState.sandbox:
 		GameState.complete_chapter(chapter)
 		WebBridge.send("CHAPTER_COMPLETED", {"chapterId": chapter})
+	if next != "":
+		# Play resumes at the next chapter's first page.
+		GameState.set_current_page(next)
 	GameState.commit_now()
 	Audio.play("chime")
 	page.player.input_locked = true
-	end_card.open([{"label": "BACK TO TITLE", "action": "title"}])
+	_next_page = next
+	end_card.title = "END OF CHAPTER %d" % int(Chapters.info(chapter)["number"])
+	if next != "":
+		end_card.subtitle = "NEXT: " + Chapters.heading(ComicPage.load_def(next).get("chapter", ""))
+		end_card.open([{"label": "TURN THE PAGE", "action": "next_chapter"}, {"label": "BACK TO TITLE", "action": "title"}])
+	else:
+		end_card.subtitle = "CHAPTER %d IS STILL BEING DRAWN.|THANK YOU FOR PLAYING THE MARGIN." % (int(Chapters.info(chapter)["number"]) + 1)
+		end_card.open([{"label": "BACK TO TITLE", "action": "title"}])
 
 
 func _on_end_choice(action: String) -> void:
+	if action == "next_chapter":
+		end_card.close()
+		await _load_page(_next_page, true)
+		return
 	if action == "title":
 		end_card.close()
 		_quit_to_title()

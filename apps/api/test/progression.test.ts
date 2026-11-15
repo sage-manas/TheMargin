@@ -42,9 +42,12 @@ describe("progression", () => {
     assert.equal(again.body.completedAt, done.body.completedAt);
     const list = (await c.req("GET", "/progression")).body;
     assert.equal(list[0].status, "completed");
-    // Chapter 2 now follows a completed chapter, but isn't released yet.
-    assert.equal(list[1].status, "locked");
-    assert.equal((await c.req("POST", "/progression/ch02/complete")).status, 403);
+    // Chapter 2 is released and now follows a completed chapter: open.
+    assert.equal(list[1].status, "available");
+    assert.equal(list[2].status, "locked");
+    // Chapter 3 isn't released, even once Chapter 2 is done.
+    assert.equal((await c.req("POST", "/progression/ch02/complete")).status, 200);
+    assert.equal((await c.req("POST", "/progression/ch03/complete")).status, 403);
     const ach = AchievementListSchema.parse((await c.req("GET", "/achievements")).body);
     assert.ok(ach.find((a) => a.code === "CH01_COMPLETE")?.unlockedAt);
   });
@@ -54,7 +57,7 @@ describe("achievements", () => {
   test("anyone can list the definitions; unlocks are per player and idempotent", async () => {
     const anon = new Client(api);
     const defs = AchievementListSchema.parse((await anon.req("GET", "/achievements")).body);
-    assert.deepEqual(defs.map((d) => d.code).sort(), ["CH01_COMPLETE", "FIRST_SLIDE", "FIRST_WORD", "WONT_SHUT"]);
+    assert.deepEqual(defs.map((d) => d.code).sort(), ["CH01_COMPLETE", "CH02_COMPLETE", "FIRST_SLIDE", "FIRST_WORD", "WONT_SHUT"]);
     assert.ok(defs.every((d) => d.unlockedAt === null));
 
     const c = await player();

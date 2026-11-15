@@ -49,7 +49,7 @@ The character slowly realises someone outside is helping. The artist slowly real
 
 **Why this isn't a gimmick:** the level geometry *is* the panel layout. The puzzle is the composition of the page.
 
-**Later (Ch 2):** resizing panels (squash a room until its ceiling meets a ledge), swapping panel positions, borderless panels that are open to the gutter, gutters as walkable space, tilted panels.
+**Chapter 2:** swapping panel positions (§4.9) and stretching borders (§4.10). **Later:** borderless panels open to the gutter, gutters as walkable space (Chapter 7), tilted panels.
 
 ### 4.2 Words (Chapters 1 and 3)
 
@@ -130,6 +130,22 @@ Playtest feedback (2026-11-12): every Chapter 1 page was "slide a room, carry a 
 - **Switches drive the page:** features with `when: "<switch>"` (a gate lifts, a bridge appears), doors wired to a switch (`button: "<switch>"`, like a pressure plate), and story triggers (`switch_changed`).
 - Saves store each control's position or digits (`pages.<id>.controls`).
 
+### 4.9 Swapping panels (Chapter 2)
+
+- Comics are read in order: what is in the next panel happens next. Some panels are **swappable**: a ⇄ badge sits on their top border. Panels in the same swap group are the same size.
+- The reader's hand drags a swappable panel (it lifts and follows the hand) and drops it on another panel of its group: the two **trade places**. Dropped anywhere else, it goes back. Keyboard: Q selects it; an arrow key swaps it with the nearest panel of its group that way.
+- Everything inside travels with its panel, Nib included, as when a panel slides. Links re-form at once: a swap can join a corridor to a door, or cut Nib off from one.
+- **Refusals:** not while Nib is in a gutter; never with a pinned panel (HEAVY or STOP on its caption pins it, as in Chapter 1).
+- Saves store panel positions as they do for sliding; a restored set must be a rearrangement of where the group's panels started.
+
+### 4.10 Stretching borders (Chapter 2)
+
+- Some panels have a **stretchable right border**, drawn with a grip (three short lines across it) and its range dashed on the page like a lane. The reader drags the border to make the room wider or narrower, a grid step at a time.
+- What is in the room stays where it is drawn; the floor runs to the border wherever the border is. Openings in the right border move with it.
+- Stretching is how a room reaches across a gap too wide for a link, or narrows to make room for a lifted panel to slide past.
+- **Refusals:** a border never crosses anything in the room (Nib, a crate, a feature, a character): it stops short. It never comes closer than a gutter to another panel, and not while Nib is in a gutter.
+- Saves store panel widths (`pages.<id>.sizes`).
+
 ## 5. Chapter structure (evaluated)
 
 I checked the proposed structure against two failure modes: a first chapter with nothing to *do*, and a mid-game where each chapter feels like a separate game.
@@ -209,6 +225,32 @@ Page 1.2 turns to 1.3 with the story action `turn_page`. The end card follows 1.
 - **1.7 "The Long Night".** The set-piece. Nib takes **OPEN** from THE DOOR BEHIND WAS LEFT OPEN. The middle room has a pit, a drawbridge raised, and ice that is melted only while LATER. is there. The bridge's lever is in a lifted room below, and a close-up across the page looks at the spot that room must slide to. Lever pulled, bridge down, Nib crosses while it is LATER in the middle room, then moves LATER on to the last room, where a vine grows to the exit door's ledge (refreezing the ice behind). Up the vine, OPEN onto the door labelled **SHUT**. Moving LATER too soon freezes the ice in Nib's way: put it back. The pencil panel asks CUT THIS PAGE?
 - **1.8 "From the Top".** The little room from page 1.1, the same layout and the same caption, but the rest of the page is already rubbed out. When Nib steps wholly into the next room, the artist's eraser rubs the little room out, row by row (story action `erase_panel`), and writes FROM THE TOP. The narrator's AND THAT WAS ALL THERE WAS. becomes AND THEN, THERE WASN'T. The erasure is also the way out. Lifted L, below, couldn't rise past the little room before. Now it can rise into the space it left (THERE WAS ROOM AFTER ALL.), meet the next room, and carry Nib down to the exit (AND SO THE STORY WENT ON.). The end card closes Chapter 1. This seeds Chapter 6: the artist's corrections are tools.
 
+## 6b. Chapter 2: "The Border"
+
+Chapter 2 takes the page layout itself apart. Chapter 1's tools stay (sliding, words, caption cards, close-ups) and two hand verbs join them: **swap** (§4.9) and **stretch** (§4.10). Story: someone outside is moving the panels; the artist starts to push back. Palette: newsprint grey with cyan (`news`, `news_cyan`); music: "Gutters" (D Dorian, 96 bpm). Page 1.8 turns to 2.1 through a chapter card (END OF CHAPTER 1, NEXT: CHAPTER 2: THE BORDER, TURN THE PAGE); the end card follows 2.8.
+
+The same rule as Chapter 1's rework: every page has one main verb and one goal, and neighbouring pages never share both.
+
+| Page | Main verb | Goal |
+|---|---|---|
+| 2.1 Reading Order | Swap (introduced) | Put the door after Nib's room, and walk through |
+| 2.2 Stretch | Stretch (introduced) | Reach a room across a gap too wide to link (arriving turns the page) |
+| 2.3 Make Room | Narrow one room so another can slide past | Bring the exit room up to Nib |
+| 2.4 Someone Outside | Swap against the artist, who swaps back | Get next to the door in a way the artist can't undo |
+| 2.5 Room for Later | Stretch a room wide enough to hold a caption card | Climb out |
+| 2.6 Close Shave | Swap a close-up's subject under its ring | Lower the bridge |
+| 2.7 Page Layout | Slide, a word and a swap together | Give the last door the right word |
+| 2.8 The Border | Stretch the box the artist draws round Nib | Break out |
+
+- **2.1 "Reading Order".** Three swappable rooms in a row: THEN, A DOOR. / FIRST, A ROOM. / AND A HALL. The door comes first, so it opens onto nothing. Swapping it to the end puts it right after Nib's room. The pencil panel: PANELS ARE READ LEFT TO RIGHT. Entering the door's room: THEN, AT LAST, A DOOR. (Swapping the hall instead carries Nib if they are in it; any order with Nib's room just before the door works.)
+- **2.2 "Stretch".** THE ROOM WAS TOO SMALL. Its right border has a grip, and its reach is dashed across the gap to THE WORLD WAS FURTHER AWAY. Stretched all the way, its floor reaches the gutter and the rooms link. Arriving turns the page (AND THEN, IT WASN'T.).
+- **2.3 "Make Room".** Nib's room takes the whole top row, so the lifted exit room below can only rise a little before it meets it. Narrowing the room clears the lane; the exit room rises, and its opening meets the narrowed border exactly a gutter away. (Narrowing further leaves a gap; the risen room then stops the border at the right width.)
+- **2.4 "Someone Outside".** Nib's room, a wall, the door: all swappable. Swapping the wall and the door brings the door next to Nib, but the artist puts them back: LEAVE THEM WHERE I PUT THEM. Swapping Nib's own room past the wall works, because the artist won't move a room with Nib in it: ...NOT WHILE THEY'RE IN IT. (Story action `swap_back`; Chapter 1's "move the room you're in" returns as the answer.)
+- **2.5 "Room for Later".** A seed room only 48 units wide: too narrow to hold LATER. (a card needs room beside the caption), and too narrow to reach the way out. Stretched to its widest it links to the room with the door and has room for the card; LATER grows the vine to the ledge that runs to the border.
+- **2.6 "Close Shave".** The close-up's ring is over the wrong one of two swappable rooms; the lever is in the other (THE LEVER WAS IN THE WRONG ROOM.). Swapping them puts the lever in view; pulling it lowers the bridge across the pit in the room below (THE BRIDGE WAS ALWAYS UP. becomes UNTIL IT WASN'T.).
+- **2.7 "Page Layout".** THE LAST DOOR, labelled **SHUT**, comes before Nib's room; a lifted room on the right holds IT WAS **OPEN** ALL ALONG. but sits too far away. Slide it in, take OPEN, come back, swap Nib's room before the door, and give the door OPEN.
+- **2.8 "The Border".** The artist draws a box round Nib (STAY IN YOUR BOX., and the box shakes). The box's border stretches: wide enough, it links to THE STORY WENT ON. (...FINE. GO ON, THEN.) The end card: END OF CHAPTER 2.
+
 ## 7. Puzzle checklist (every page)
 
 - **Objective:** the goal is visible from the start: an exit (door or linked opening) or a person to reach. Pages vary the goal and the main verb (§6); no two neighbouring pages share both.
@@ -239,7 +281,7 @@ Page 1.2 turns to 1.3 with the story action `turn_page`. The end card follows 1.
 - **Pencil:** graphite grey, thin. The artist's sketches and notes.
 - **Lettering:** `ComicFont`, an original single-stroke hand-lettering font in capitals (comics are lettered in capitals). Bold = emphasis = loose. Key prompts show a keycap and the verb.
 - **Characters:** Nib is a round white figure with a pen-nib cap, a face that looks where Nib is going, a red scarf that streams behind, and legs that stride. The neighbour wears a hat and a long blue coat.
-- **Palettes:** Ch 1 warm cream with a red accent; Ch 2 newsprint and cyan; Ch 3 pulp yellow; Ch 4 graphite greys; Ch 5 ink blues; Ch 6 red-pencil corrections; Ch 7 near-white.
+- **Palettes:** Ch 1 warm cream with a red accent; Ch 2 newsprint and cyan (panel styles `news`, `news_cyan`); Ch 3 pulp yellow; Ch 4 graphite greys; Ch 5 ink blues; Ch 6 red-pencil corrections; Ch 7 near-white.
 
 ## 10. Audio direction (summary)
 

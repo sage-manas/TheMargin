@@ -62,7 +62,7 @@ test.beforeEach(async ({ page }) => {
 test("the landing page leads to /play and offers to continue a save", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("The Margin");
-  await expect(page.getByRole("link", { name: "Play chapter 1" })).toHaveAttribute("href", "/play");
+  await expect(page.getByRole("link", { name: "Start reading" })).toHaveAttribute("href", "/play");
 
   await seed(page, { [LOCAL_SAVE_KEY]: save({ page: "ch01_p04", completedPages: ["ch01_p01", "ch01_p02", "ch01_p03"] }) });
   await page.reload();
@@ -76,7 +76,8 @@ test("the chapters page shows this browser's progress", async ({ page }) => {
   await expect(ch1).toHaveAttribute("data-status", "in-progress");
   await expect(ch1).toContainText("3 of 8 pages. On page 1.4.");
   await expect(ch1.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "3");
-  await expect(page.locator('[data-chapter="ch02"]')).toContainText("Still being drawn.");
+  await expect(page.locator('[data-chapter="ch02"]')).toContainText("8 pages. Not started.");
+  await expect(page.locator('[data-chapter="ch03"]')).toContainText("Still being drawn.");
 });
 
 test("/play launches the game, which takes the site's settings", async ({ page }, info) => {

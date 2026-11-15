@@ -1,0 +1,184 @@
+{
+  "id": "ch02_p06",
+  "chapter": "ch02",
+  "number": 6,
+  "next": "ch02_p07",
+  "spawn": [
+    40,
+    328
+  ],
+  "closeups": [
+    {
+      "id": "view",
+      "at": [
+        520,
+        76
+      ],
+      "r": 34,
+      "focus": [
+        312,
+        76
+      ]
+    }
+  ],
+  "panels": [
+    {
+      "id": "lever_room",
+      "rect": [
+        16,
+        16,
+        192,
+        120
+      ],
+      "bg": "news",
+      "swap": "pair",
+      "solids": [
+        [
+          0,
+          104,
+          192,
+          16
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_l",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE LEVER WAS|IN THE WRONG ROOM."
+        }
+      ],
+      "objects": [
+        {
+          "type": "lever",
+          "id": "lever1",
+          "at": [
+            96,
+            60
+          ]
+        }
+      ]
+    },
+    {
+      "id": "empty",
+      "rect": [
+        216,
+        16,
+        192,
+        120
+      ],
+      "bg": "news",
+      "swap": "pair",
+      "solids": [
+        [
+          0,
+          104,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            80,
+            30
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_e",
+          "at": [
+            6,
+            6
+          ],
+          "text": "NOTHING TO|SEE HERE."
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "rect": [
+        16,
+        152,
+        608,
+        192
+      ],
+      "bg": "news_cyan",
+      "solids": [
+        [
+          0,
+          176,
+          200,
+          16
+        ],
+        [
+          392,
+          176,
+          216,
+          16
+        ]
+      ],
+      "features": [
+        {
+          "id": "bridge",
+          "kind": "bridge",
+          "rect": [
+            200,
+            176,
+            192,
+            6
+          ],
+          "when": "lever1"
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_b",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE BRIDGE WAS|ALWAYS UP."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door26",
+          "at": [
+            560,
+            144
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "down",
+      "on": "switch_changed",
+      "when": {
+        "switch": "lever1",
+        "on": true
+      },
+      "do": [
+        {
+          "action": "wait",
+          "sec": 0.5
+        },
+        {
+          "action": "rewrite_caption",
+          "caption": "cap_b",
+          "text": "UNTIL IT|WASN'T."
+        }
+      ]
+    }
+  ]
+}

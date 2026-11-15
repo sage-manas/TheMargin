@@ -171,15 +171,17 @@ func test_page_5_solution(t) -> void:
 	await _free(t, page)
 
 
-## The chapter runs 1.1 → 1.8, and the end card follows 1.8.
+## The story runs 1.1 → 1.8 → 2.1 → 2.8, and the end card follows 2.8.
 func test_chapter_runs_in_order(t) -> void:
 	var id := "ch01_p01"
 	var seen := []
 	while id != "" and not seen.has(id):
 		seen.append(id)
 		id = ComicPage.load_def(id).get("next", "")
-	t.eq(seen.size(), 8, "eight pages")
-	t.eq(seen[-1], "ch01_p08", "ending on the finale")
+	t.eq(seen.slice(0, 8), ["ch01_p01", "ch01_p02", "ch01_p03", "ch01_p04", "ch01_p05", "ch01_p06", "ch01_p07", "ch01_p08"], "Chapter 1 runs 1.1 to 1.8")
+	t.eq(seen.size(), 16, "then Chapter 2's eight pages")
+	t.eq(seen[8], "ch02_p01", "1.8 turns to 2.1")
+	t.eq(seen[-1], "ch02_p08", "ending on 2.8")
 	t.eq(id, "", "which leads to the end card")
 
 

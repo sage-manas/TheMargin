@@ -43,4 +43,7 @@ const PANEL_STYLES := {
 	"room_blue": {"paper": Color("e4e6df"), "dot": BLUE_LIGHT, "top": 0.6, "bottom": 0.0, "spacing": 4.0},
 	"plain": {"paper": Color("f5eedb"), "dot": PAGE_FIBER, "top": 0.0, "bottom": 0.25, "spacing": 6.0},
 	"sketch": {"paper": PAGE, "dot": PAGE, "top": 0.0, "bottom": 0.0, "spacing": 4.0},
+	# Chapter 2 (GDD §9): newsprint grey and cyan.
+	"news": {"paper": Color("ebe8de"), "dot": Color("b9c9c9"), "top": 0.0, "bottom": 0.5, "spacing": 4.0},
+	"news_cyan": {"paper": Color("e2eced"), "dot": Color("8fb8c2"), "top": 0.55, "bottom": 0.0, "spacing": 4.0},
 }

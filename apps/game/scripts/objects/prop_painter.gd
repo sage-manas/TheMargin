@@ -6,6 +6,12 @@ extends RefCounted
 ## like something Nib could use (GDD §9).
 
 const LINE := Ink.W_SCENERY
+## How wide each prop is drawn, so a stretching border stops short of it.
+const WIDTHS := {"bed": 44.0, "window": 32.0, "frame": 20.0, "lamp": 16.0, "table": 30.0, "rug": 44.0, "stool": 12.0, "plant": 16.0, "stairs_sketch": 116.0, "ghost_nib": 20.0, "ghost_neighbor": 28.0}
+
+
+static func width(type: String) -> float:
+	return WIDTHS.get(type, 16.0)
 
 
 static func paint(ci: CanvasItem, prop: Dictionary) -> void:

@@ -23,8 +23,15 @@ var size := Vector2i.ZERO
 var openings: Array = []
 ## {} when fixed; otherwise {axis: "x"|"y", min, max} in page coordinates.
 var track: Dictionary = {}
+## Swap group (GDD §4.9): panels in the same group trade places. "" = none.
+var swap_group := ""
+## {} or {min, max}: widths the right border can be stretched to (GDD §4.10).
+var stretch: Dictionary = {}
 var pencil := false
 var solids: Array[Rect2i] = []
+## Solids as written in data; a width of -1 runs to the right border.
+var _solid_defs: Array = []
+var _bg: ColorRect
 var props: Array = []
 var notes: Array = []
 ## Currently linked border gaps, from PanelLinks.gaps_for.
@@ -64,14 +71,16 @@ func setup(def: Dictionary) -> void:
 	size = Vector2i(int(r[2]), int(r[3]))
 	openings = def.get("openings", [])
 	track = def.get("track", {})
+	swap_group = def.get("swap", "")
+	stretch = def.get("stretch", {})
 	pencil = def.get("pencil", false)
 	props = def.get("props", [])
 	notes = def.get("notes", [])
-	for s: Array in def.get("solids", []):
-		solids.append(Rect2i(int(s[0]), int(s[1]), int(s[2]), int(s[3])))
+	_solid_defs = def.get("solids", [])
+	_resolve_solids()
 	_time = randf() * 10.0
 
-	if is_lifted():
+	if is_lifted() or is_swappable():
 		_shadow = DrawLayer.make(_draw_shadow, -1)
 		add_child(_shadow)
 
@@ -80,14 +89,14 @@ func setup(def: Dictionary) -> void:
 	add_child(_border_body)
 	_solid_body = StaticBody2D.new()
 	_solid_body.name = "SolidBody"
-	for s in solids:
-		_add_box(_solid_body, Rect2(s))
 	add_child(_solid_body)
+	_rebuild_solids()
 
 	visual = Node2D.new()
 	visual.name = "Visual"
 	add_child(visual)
 	var bg := ColorRect.new()
+	_bg = bg
 	bg.size = Vector2(size)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style: Dictionary = Palette.PANEL_STYLES.get(def.get("bg", "room_warm"), Palette.PANEL_STYLES["room_warm"])
@@ -118,6 +127,79 @@ func setup(def: Dictionary) -> void:
 
 func is_lifted() -> bool:
 	return not track.is_empty() and not erased
+
+
+func is_swappable() -> bool:
+	return swap_group != "" and not erased and not pencil
+
+
+func is_stretchable() -> bool:
+	return not stretch.is_empty() and not erased
+
+
+func _resolve_solids() -> void:
+	solids.clear()
+	for sd: Array in _solid_defs:
+		var w := int(sd[2])
+		if w < 0:
+			w = size.x - int(sd[0])
+		solids.append(Rect2i(int(sd[0]), int(sd[1]), w, int(sd[3])))
+
+
+func _rebuild_solids() -> void:
+	for c in _solid_body.get_children():
+		_solid_body.remove_child(c)
+		c.queue_free()
+	for sr in solids:
+		_add_box(_solid_body, Rect2(sr))
+
+
+## Sets the width (the right border moves; everything drawn stays put, and
+## floors written to the border follow it). The page checks it is allowed.
+func set_width(w: int) -> void:
+	if w == size.x:
+		return
+	size.x = w
+	_resolve_solids()
+	_rebuild_solids()
+	_rebuild_border()
+	_bg.size = Vector2(size)
+	(_bg.material as ShaderMaterial).set_shader_parameter("size", Vector2(size))
+	_ground.refresh(Rect2(Vector2.ZERO, Vector2(size)))
+	_ink.refresh(Rect2(Vector2(-10, -10), Vector2(size) + Vector2(20, 20)))
+	if _shadow:
+		_shadow.queue_redraw()
+
+
+## The rightmost point (panel-local) of anything drawn in the room that the
+## border must not cut through: solids of fixed width, features, objects,
+## characters, captions, bubbles and props.
+func content_right() -> float:
+	var right := 0.0
+	for i in _solid_defs.size():
+		if int(_solid_defs[i][2]) >= 0:
+			right = maxf(right, float(solids[i].end.x))
+	for n in content.get_children():
+		if n is Feature:
+			right = maxf(right, (n as Feature).rect.end.x)
+		elif n is Caption:
+			right = maxf(right, (n as Caption).footprint().end.x)
+		elif n is SpeechBubble:
+			right = maxf(right, (n as SpeechBubble).footprint().end.x)
+		elif n is Door:
+			right = maxf(right, n.position.x + Door.SIZE.x + 8.0)
+		elif n is Crate:
+			right = maxf(right, n.position.x + Crate.SIZE.x)
+		elif n is PlateButton:
+			right = maxf(right, n.position.x + PlateButton.SIZE.x + 2.0)
+		elif n is Platform:
+			right = maxf(right, n.position.x + (n as Platform).size.x)
+		elif n is Node2D:
+			right = maxf(right, (n as Node2D).position.x + 8.0)
+	for p: Dictionary in props:
+		var at: Array = p["at"]
+		right = maxf(right, float(at[0]) + PropPainter.width(p["type"]))
+	return right
 
 
 ## A lifted panel obeys the words written on it (GDD §4.2): a heavy one
@@ -220,10 +302,11 @@ func _process(delta: float) -> void:
 	if _shake_t > 0.0:
 		_shake_t -= delta
 		visual.position = Vector2(roundf(sin(_time * 70.0) * 2.0), 0) if _shake_t > 0.0 else Vector2.ZERO
-	if is_lifted():
+	if is_lifted() or is_swappable() or is_stretchable():
 		# The shadow bobs every frame (one rect); the border only redraws
 		# when the hand's state on it changes.
-		_shadow.queue_redraw()
+		if _shadow:
+			_shadow.queue_redraw()
 		var look := [hovered, selected, dragging, is_pinned()]
 		if look != _look:
 			_look = look
@@ -403,6 +486,10 @@ func _draw_ink(ci: CanvasItem) -> void:
 				Ink.dashed(ci, from, seg[1] - seg[0], spec[0], b, color, 3.5, 2.5)
 	if is_lifted() and not dragging and not is_pinned():
 		_draw_track_arrows(ci)
+	if is_swappable() and not is_pinned():
+		_draw_swap_badge(ci)
+	if is_stretchable():
+		_draw_grip(ci)
 
 
 func _ink_segment(ci: CanvasItem, spec: Array, a: int, z: int, color: Color) -> void:
@@ -427,3 +514,25 @@ func _draw_track_arrows(ci: CanvasItem) -> void:
 		for k in 2:
 			var tip := base + d * (2.5 + k * 3.0)
 			Ink.stroke(ci, PackedVector2Array([tip - d * 2.5 + n * 3.0, tip, tip - d * 2.5 - n * 3.0]), col, 1.2)
+
+
+## A ⇄ badge on the top border: this panel trades places (GDD §4.9).
+func _draw_swap_badge(ci: CanvasItem) -> void:
+	var col := Palette.RED if (hovered or selected or dragging) else Palette.INK
+	var c := Vector2(size.x / 2.0, 0.0)
+	Ink.rounded_box(ci, Rect2(c - Vector2(9, 5), Vector2(18, 10)), Palette.BUBBLE, col, 3.0, 1.0)
+	Ink.line(ci, c + Vector2(-5, -1.5), c + Vector2(4, -1.5), col, 1.0)
+	Ink.arrowhead(ci, c + Vector2(6, -1.5), Vector2(1, 0), 2.5, col)
+	Ink.line(ci, c + Vector2(-4, 1.8), c + Vector2(5, 1.8), col, 1.0)
+	Ink.arrowhead(ci, c + Vector2(-6, 1.8), Vector2(-1, 0), 2.5, col)
+
+
+## A grip across the stretchable right border (GDD §4.10).
+func _draw_grip(ci: CanvasItem) -> void:
+	var col := Palette.RED if (hovered or selected or dragging) else Palette.INK
+	var x := float(size.x)
+	var y := size.y / 2.0
+	Ink.rounded_box(ci, Rect2(Vector2(x - 4, y - 10), Vector2(8, 20)), Palette.BUBBLE, col, 2.0, 1.0)
+	for k in 3:
+		Ink.line(ci, Vector2(x - 2, y - 5 + k * 5), Vector2(x + 2, y - 5 + k * 5), col, 1.0)
+

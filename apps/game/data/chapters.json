@@ -1,0 +1,37 @@
+[
+  {
+    "id": "ch01",
+    "number": 1,
+    "title": "The Page"
+  },
+  {
+    "id": "ch02",
+    "number": 2,
+    "title": "The Border"
+  },
+  {
+    "id": "ch03",
+    "number": 3,
+    "title": "The Words"
+  },
+  {
+    "id": "ch04",
+    "number": 4,
+    "title": "The Eraser"
+  },
+  {
+    "id": "ch05",
+    "number": 5,
+    "title": "The Ink"
+  },
+  {
+    "id": "ch06",
+    "number": 6,
+    "title": "The Artist"
+  },
+  {
+    "id": "ch07",
+    "number": 7,
+    "title": "Beyond the Margin"
+  }
+]

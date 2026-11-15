@@ -11,6 +11,7 @@ var menu: ComicMenu
 var has_save := false
 var _art: BakedLayer
 var _figure: Control
+var _chapter := "ch01"
 var _time := 0.0
 
 
@@ -37,8 +38,10 @@ func _ready() -> void:
 	refresh(false)
 
 
-func refresh(save_exists: bool) -> void:
+func refresh(save_exists: bool, chapter := "ch01") -> void:
 	has_save = save_exists
+	_chapter = chapter
+	_art.refresh()
 	var items := []
 	if has_save:
 		items.append({"label": "CONTINUE", "action": "continue"})
@@ -68,7 +71,7 @@ func _paint(ci: CanvasItem) -> void:
 	ComicFont.draw_centered(ci, 320, 82, "THE MARGIN", Palette.INK, true, 4)
 	Ink.line(ci, Vector2(160, 119), Vector2(480, 119), Palette.INK, Ink.W_BORDER)
 	ComicFont.draw_centered(ci, 320, 132, "ESCAPE THE DRAWING.", Palette.RED)
-	ComicFont.draw(ci, Vector2(128, 178), "CHAPTER 1: THE PAGE", Palette.PENCIL)
+	ComicFont.draw(ci, Vector2(128, 178), Chapters.heading(_chapter), Palette.PENCIL)
 	ComicFont.draw(ci, Vector2(16, 344), "PLAYTEST BUILD", Palette.PENCIL)
 
 

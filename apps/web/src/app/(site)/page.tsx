@@ -79,8 +79,8 @@ export default function Home() {
           </tbody>
         </table>
         <p className="note">
-          Plays in desktop Chrome, Edge, Firefox and Safari 17 or later. Chapter 1 is about a 10 MB download, and your
-          progress is saved in this browser.
+          Plays in desktop Chrome, Edge, Firefox and Safari 17 or later. Chapters 1 and 2 are about a 10 MB download,
+          and your progress is saved in this browser.
         </p>
       </section>
     </>

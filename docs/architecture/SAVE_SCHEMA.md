@@ -40,6 +40,7 @@
       "collected": ["drop"],                     // ink pickups collected (optional); crumbs and ink are derived
       "scenes": { "later": "a" },                // scene card id -> panel holding it (optional, GDD §4.7)
       "controls": { "lever1": true, "safe": "417" }, // close-up controls: lever position or dial digits (optional, GDD §4.8)
+      "sizes": { "a": [304, 144] },               // stretched panels' sizes (optional, GDD §4.10); swapped panels use "panels"
       "fired":  ["caption_doubt"]                // once-triggers already fired
     }
   }

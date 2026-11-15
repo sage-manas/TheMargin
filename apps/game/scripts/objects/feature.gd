@@ -192,12 +192,17 @@ func _draw_bridge() -> void:
 	var angle := lerpf(-PI / 2.0, 0.0, _shown)
 	var along := Vector2.from_angle(angle)
 	var across := Vector2(-along.y, along.x)
-	var plank := PackedVector2Array([hinge, hinge + along * rect.size.x, hinge + along * rect.size.x + across * rect.size.y, hinge + across * rect.size.y])
+	# Raised, a long plank is drawn only as tall as the room above its hinge.
+	var length := lerpf(minf(rect.size.x, rect.position.y - 6.0), rect.size.x, _shown)
+	var plank := PackedVector2Array([hinge, hinge + along * length, hinge + along * length + across * rect.size.y, hinge + across * rect.size.y])
 	Ink.shape(self, plank, Palette.OCHRE, Palette.INK, Ink.W_THING)
-	for k in range(1, int(rect.size.x / 12.0)):
+	for k in range(1, int(length / 12.0)):
 		var a := hinge + along * (k * 12.0)
 		Ink.line(self, a, a + across * rect.size.y, Palette.WOOD_DARK, 0.6)
-	Ink.line(self, hinge + along * rect.size.x, hinge + Vector2(0, -rect.size.x * 0.9), Palette.SCENERY, 0.7)
+	# The chain that holds it up, only while it is (partly) raised.
+	if _shown < 0.99:
+		var post := hinge + Vector2(0, -minf(rect.size.x, rect.position.y - 6.0) * 0.9)
+		Ink.line(self, hinge + along * length, post, Color(Palette.SCENERY, 1.0 - _shown), 0.7)
 	Ink.dot(self, hinge, 1.4, Palette.INK)
 
 

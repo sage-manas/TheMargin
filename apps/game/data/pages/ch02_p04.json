@@ -1,0 +1,195 @@
+{
+  "id": "ch02_p04",
+  "chapter": "ch02",
+  "number": 4,
+  "next": "ch02_p05",
+  "spawn": [
+    100,
+    144
+  ],
+  "panels": [
+    {
+      "id": "s",
+      "rect": [
+        16,
+        16,
+        192,
+        144
+      ],
+      "bg": "news",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "right",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "window",
+          "at": [
+            110,
+            40
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_s",
+          "at": [
+            6,
+            6
+          ],
+          "text": "SOMEONE WAS|MOVING THINGS."
+        }
+      ]
+    },
+    {
+      "id": "wall",
+      "rect": [
+        216,
+        16,
+        192,
+        144
+      ],
+      "bg": "news",
+      "swap": "row",
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "props": [
+        {
+          "type": "bed",
+          "at": [
+            70,
+            112
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "cap_w",
+          "at": [
+            6,
+            6
+          ],
+          "text": "A WALL. JUST|A WALL."
+        }
+      ]
+    },
+    {
+      "id": "door_room",
+      "rect": [
+        416,
+        16,
+        192,
+        144
+      ],
+      "bg": "news_cyan",
+      "swap": "row",
+      "openings": [
+        {
+          "side": "left",
+          "from": 104,
+          "to": 128
+        }
+      ],
+      "solids": [
+        [
+          0,
+          128,
+          192,
+          16
+        ]
+      ],
+      "captions": [
+        {
+          "id": "cap_d",
+          "at": [
+            6,
+            6
+          ],
+          "text": "THE WAY ON."
+        }
+      ],
+      "objects": [
+        {
+          "type": "door",
+          "id": "door24",
+          "at": [
+            130,
+            96
+          ],
+          "label": "OPEN",
+          "loose": false,
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "desk",
+      "rect": [
+        16,
+        168,
+        592,
+        176
+      ],
+      "bg": "sketch",
+      "pencil": true,
+      "props": [
+        {
+          "type": "ghost_nib",
+          "at": [
+            480,
+            90
+          ]
+        }
+      ],
+      "captions": [
+        {
+          "id": "artist",
+          "at": [
+            24,
+            24
+          ],
+          "text": "",
+          "style": "artist"
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "put_back",
+      "on": "panels_swapped",
+      "once": false,
+      "persist": false,
+      "do": [
+        {
+          "action": "wait",
+          "sec": 0.7
+        },
+        {
+          "action": "swap_back",
+          "caption": "artist",
+          "text": "LEAVE THEM WHERE|I PUT THEM.",
+          "refused_text": "...NOT WHILE|THEY'RE IN IT."
+        }
+      ]
+    }
+  ]
+}

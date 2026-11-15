@@ -1,0 +1,29 @@
+{
+  "id": "sb_stretch",
+  "chapter": "sandbox",
+  "number": 0,
+  "next": "",
+  "hint": "SANDBOX   DRAG THE GRIP ON THE BORDER TO STRETCH THE ROOM (OR Q)",
+  "spawn": [60, 144],
+  "panels": [
+    {
+      "id": "a",
+      "rect": [16, 16, 200, 144],
+      "bg": "room_warm",
+      "stretch": { "min": 120, "max": 304 },
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, -1, 16]],
+      "props": [{ "type": "lamp", "at": [120, 96] }],
+      "captions": [{ "id": "cap_a", "at": [6, 6], "text": "THE ROOM WAS|TOO SMALL." }]
+    },
+    {
+      "id": "b",
+      "rect": [328, 16, 296, 144],
+      "bg": "room_blue",
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 296, 16]],
+      "captions": [{ "id": "cap_b", "at": [6, 6], "text": "THE WORLD WAS|FURTHER AWAY." }],
+      "objects": [{ "type": "door", "id": "door_b", "at": [240, 96], "label": "OPEN", "loose": false, "exit": true }]
+    }
+  ]
+}

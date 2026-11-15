@@ -6,7 +6,7 @@ extends Node
 ## triggers are saved (unless persist=false) and their lasting effects are
 ## re-applied instantly on load instead of replaying.
 
-const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed"]
+const EVENTS := ["page_entered", "link_formed", "word_taken", "word_placed", "door_opened", "panel_released", "panel_entered", "button_pressed", "button_released", "eraser_found", "sketch_erased", "sketch_restored", "ink_collected", "sketch_inked", "scene_changed", "switch_changed", "panels_swapped"]
 
 ## The artist's hand shaking a panel quiets the music this long (GDD §10).
 const SHAKE_DUCK_SEC := 1.5
@@ -41,6 +41,7 @@ func setup(owner_page: ComicPage, trigger_defs: Array, fired_ids: Array) -> void
 	EventBus.sketch_inked.connect(func(s: String) -> void: _on("sketch_inked", {"sketch": s}))
 	EventBus.scene_changed.connect(func(p: String, sc: String) -> void: _on("scene_changed", {"panel": p, "scene": sc}))
 	EventBus.switch_changed.connect(func(id: String, on: bool) -> void: _on("switch_changed", {"switch": id, "on": on}))
+	EventBus.panels_swapped.connect(func(a: String, b: String) -> void: _on("panels_swapped", {"a": a, "b": b}))
 
 
 ## The `erase_panel` actions of fired triggers, so a page can free their
@@ -108,6 +109,13 @@ func _run(actions: Array) -> void:
 				page.end_reached.emit()
 			"turn_page":
 				page.turn()
+			"swap_back":
+				# The artist undoes the reader's last swap, and says so;
+				# with Nib in one of the rooms, they can't, and say that.
+				var undone := page.swap_back()
+				var line: String = a.get("text", "") if undone else a.get("refused_text", "")
+				if line != "" and page.captions.has(a.get("caption", "")):
+					await page.captions[a["caption"]].write(line)
 			"erase_panel":
 				await page.erase_panel(a["panel"], true, a.get("respawn"))
 			_:

@@ -40,7 +40,7 @@ test("chapter status", () => {
   assert.deepEqual(chapterProgress(prog(), ch1), { status: "not-started" });
   assert.deepEqual(chapterProgress(prog({ page: "ch01_p05", completedPages: ["ch01_p01", "ch01_p02", "ch01_p03", "ch01_p04"] }), ch1), { status: "in-progress", pagesDone: 4, currentPage: "ch01_p05" });
   assert.deepEqual(chapterProgress(prog({ completedChapters: ["ch01"] }), ch1), { status: "completed" });
-  assert.deepEqual(chapterProgress(prog(), CHAPTERS[1]), { status: "unreleased" });
+  assert.deepEqual(chapterProgress(prog(), CHAPTERS[2]), { status: "unreleased" });
 });
 
 test("continue label", () => {

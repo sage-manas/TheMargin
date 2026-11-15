@@ -26,6 +26,8 @@ export const PageStateSchema = z.object({
   collected: z.array(z.string()).default([]),
   // Scene cards (GDD §4.7): card id -> the panel whose corner holds it.
   scenes: z.record(z.string(), z.string()).default({}),
+  // Stretchable panels' sizes (GDD §4.10): panel id -> [width, height].
+  sizes: z.record(z.string(), pagePoint).default({}),
   // Close-up controls (GDD §4.8): a lever's position, or a dial's digits.
   controls: z.record(z.string(), z.union([z.boolean(), z.string().regex(/^\d{1,8}$/)])).default({}),
   fired: z.array(z.string()).default([]),

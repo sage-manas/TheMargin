@@ -4,10 +4,13 @@ extends Node2D
 ##   Lifted panels: drag to slide (GDD §4.1).
 ##   Scene cards: drag to another panel's corner (GDD §4.7).
 ##   Close-ups: click the control inside (GDD §4.8).
+##   Swappable panels: drag onto another of their group to trade places (§4.9).
+##   Stretchable panels: drag the grip on the right border (§4.10).
 ## Keyboard (panel mode): Q selects the next thing the hand can work (lifted
-## panels, then cards, then close-ups); direction keys slide a panel, hop a
-## card to the next panel that way, or pick and turn a close-up's control
-## (E pulls a lever); Q again (or Esc) puts it down.
+## panels, swappable and stretchable panels, then cards, then close-ups);
+## direction keys slide a panel, swap it with its neighbour that way, stretch
+## or narrow it, hop a card to the next panel, or pick and turn a close-up's
+## control (E pulls a lever); Q again (or Esc) puts it down.
 
 var page: ComicPage
 var dragging: ComicPanel
@@ -16,6 +19,14 @@ var selected: Node
 var _hovered: Node
 var _grab := Vector2.ZERO
 var _card: SceneCard
+## A swappable panel being carried, and where its ghost is drawn.
+var _swapping: ComicPanel
+var _ghost := Vector2.ZERO
+var _stretching: ComicPanel
+
+
+func _ready() -> void:
+	z_index = 7
 
 
 func panel_mode_active() -> bool:
@@ -32,6 +43,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_drag_to(m)
 		elif _card:
 			_card.drag_pos = m - _grab
+		elif _swapping:
+			_ghost = m - _grab
+			queue_redraw()
+		elif _stretching:
+			page.stretch_panel_toward(_stretching, int(round(m.x - _stretching.position.x)))
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var m := get_global_mouse_position()
 		if event.pressed:
@@ -43,9 +59,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif thing is SceneCard:
 				_begin_card(thing)
 				get_viewport().set_input_as_handled()
+			elif thing is ComicPanel and _on_grip(thing, m):
+				_begin_stretch(thing)
+				get_viewport().set_input_as_handled()
+			elif thing is ComicPanel and (thing as ComicPanel).is_swappable():
+				_begin_swap(thing, m)
+				get_viewport().set_input_as_handled()
 			elif thing is ComicPanel:
 				_begin_drag(thing)
 				get_viewport().set_input_as_handled()
+		elif _swapping:
+			_drop_swap(m)
+			get_viewport().set_input_as_handled()
+		elif _stretching:
+			_end_stretch()
+			get_viewport().set_input_as_handled()
 		elif dragging:
 			_end_drag()
 			get_viewport().set_input_as_handled()
@@ -76,7 +104,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		if dir == Vector2i.ZERO:
 			return
 		get_viewport().set_input_as_handled()
-		if selected is ComicPanel:
+		if selected is ComicPanel and (selected as ComicPanel).is_swappable():
+			var sp: ComicPanel = selected
+			var other := _swap_partner_toward(sp, Vector2(dir))
+			if other == null or not page.swap_panels(sp, other):
+				_refuse(sp)
+		elif selected is ComicPanel and (selected as ComicPanel).is_stretchable():
+			var tp: ComicPanel = selected
+			if dir.x == 0 or page.stretch_panel_toward(tp, tp.size.x + dir.x * PageConst.GRID) == 0:
+				_refuse(tp)
+		elif selected is ComicPanel:
 			var p: ComicPanel = selected
 			var target := Vector2i(p.position) + dir * PageConst.GRID
 			if page.move_panel_toward(p, target) == 0:
@@ -111,7 +148,19 @@ func _thing_at(point: Vector2) -> Node:
 	for card: SceneCard in page.cards.values():
 		if card.rect().has_point(point):
 			return card
+	for i in range(page.panel_list.size() - 1, -1, -1):
+		var p: ComicPanel = page.panel_list[i]
+		if (p.is_stretchable() and _on_grip(p, point)) or (p.is_swappable() and Rect2(p.rect()).has_point(point)):
+			return p
 	return _lifted_at(point)
+
+
+## Within reach of a stretchable panel's right border.
+func _on_grip(p: ComicPanel, point: Vector2) -> bool:
+	if not p.is_stretchable():
+		return false
+	var r := Rect2(p.rect())
+	return Rect2(Vector2(r.end.x - 6.0, r.position.y), Vector2(12.0, r.size.y)).has_point(point)
 
 
 ## The inked panel whose rect contains `point`, for dropping a card.
@@ -158,7 +207,9 @@ func _update_hover(m: Vector2) -> void:
 
 
 func _set_cursor() -> void:
-	if dragging or _card:
+	if _stretching or (_hovered is ComicPanel and (_hovered as ComicPanel).is_stretchable()):
+		Input.set_default_cursor_shape(Input.CURSOR_HSIZE)
+	elif dragging or _card or _swapping:
 		Input.set_default_cursor_shape(Input.CURSOR_DRAG)
 	elif _hovered:
 		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
@@ -197,6 +248,86 @@ func _end_drag() -> void:
 	Audio.play("tick", 0.0, -3.0)
 	dragging = null
 	_set_cursor()
+
+
+# --- swapping and stretching ------------------------------------------------------
+
+func _begin_swap(p: ComicPanel, m: Vector2) -> void:
+	if page.is_player_in_gutter() or p.is_pinned():
+		_refuse(p)
+		return
+	_swapping = p
+	p.dragging = true
+	_grab = m - p.position
+	_ghost = p.position
+	Audio.play("grab")
+	_set_cursor()
+	queue_redraw()
+
+
+## Dropped on another panel of its group, the carried panel trades places
+## with it; anywhere else it stays.
+func _drop_swap(m: Vector2) -> void:
+	var p := _swapping
+	_swapping = null
+	p.dragging = false
+	var target: ComicPanel = null
+	for q in page.panel_list:
+		if q != p and q.is_swappable() and q.swap_group == p.swap_group and Rect2(q.rect()).has_point(m):
+			target = q
+	if target and not page.swap_panels(p, target):
+		_refuse(target)
+	elif target == null:
+		Audio.play("tick", 0.0, -3.0)
+	_set_cursor()
+	queue_redraw()
+
+
+func _swap_partner_toward(p: ComicPanel, d: Vector2) -> ComicPanel:
+	var from := Rect2(p.rect()).get_center()
+	var best: ComicPanel = null
+	var best_score := INF
+	for q in page.panel_list:
+		if q == p or not q.is_swappable() or q.swap_group != p.swap_group:
+			continue
+		var v := Rect2(q.rect()).get_center() - from
+		var along := v.dot(d)
+		if along <= 0.0:
+			continue
+		var score := along + absf(v.dot(Vector2(-d.y, d.x))) * 2.0
+		if score < best_score:
+			best_score = score
+			best = q
+	return best
+
+
+func _begin_stretch(p: ComicPanel) -> void:
+	if page.is_player_in_gutter():
+		_refuse(p)
+		return
+	_stretching = p
+	p.dragging = true
+	Audio.play("grab")
+	_set_cursor()
+
+
+func _end_stretch() -> void:
+	_stretching.dragging = false
+	_stretching = null
+	Audio.play("tick", 0.0, -3.0)
+	_set_cursor()
+
+
+## The carried swappable panel's ghost: a dashed outline following the hand.
+func _draw() -> void:
+	if _swapping == null:
+		return
+	var r := Rect2(_ghost, Vector2(_swapping.size))
+	draw_rect(r, Color(Palette.PAPER, 0.35))
+	Ink.dashed(self, r.position, r.size.x, 0, 1.5, Palette.RED, 6.0, 4.0)
+	Ink.dashed(self, Vector2(r.position.x, r.end.y - 1.5), r.size.x, 0, 1.5, Palette.RED, 6.0, 4.0)
+	Ink.dashed(self, r.position, r.size.y, 1, 1.5, Palette.RED, 6.0, 4.0)
+	Ink.dashed(self, Vector2(r.end.x - 1.5, r.position.y), r.size.y, 1, 1.5, Palette.RED, 6.0, 4.0)
 
 
 # --- scene cards ---------------------------------------------------------------
@@ -255,7 +386,7 @@ func _refuse(p: ComicPanel) -> void:
 # --- panel mode -----------------------------------------------------------------
 
 func _cycle_selection() -> void:
-	var things: Array = page.panel_list.filter(func(p: ComicPanel) -> bool: return p.is_lifted())
+	var things: Array = page.panel_list.filter(func(p: ComicPanel) -> bool: return p.is_lifted() or p.is_swappable() or p.is_stretchable())
 	things.append_array(page.cards.values())
 	things.append_array(page.closeups.values())
 	if things.is_empty():
@@ -280,6 +411,12 @@ func _select(thing: Node) -> void:
 
 func release_all() -> void:
 	_end_drag()
+	if _swapping:
+		_swapping.dragging = false
+		_swapping = null
+		queue_redraw()
+	if _stretching:
+		_end_stretch()
 	if _card:
 		_card.dragging = false
 		_card = null

@@ -1,0 +1,41 @@
+{
+  "id": "sb_swap",
+  "chapter": "sandbox",
+  "number": 0,
+  "next": "",
+  "hint": "SANDBOX   DRAG A PANEL WITH THE BADGE ONTO ANOTHER TO SWAP THEM (OR Q)",
+  "spawn": [300, 144],
+  "panels": [
+    {
+      "id": "door_room",
+      "rect": [16, 16, 192, 144],
+      "bg": "room_warm",
+      "swap": "row",
+      "openings": [{ "side": "left", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "captions": [{ "id": "cap_d", "at": [6, 6], "text": "THEN, A DOOR." }],
+      "objects": [{ "type": "door", "id": "door_s", "at": [120, 96], "label": "OPEN", "loose": false, "exit": true }]
+    },
+    {
+      "id": "start",
+      "rect": [216, 16, 192, 144],
+      "bg": "room_warm",
+      "swap": "row",
+      "openings": [{ "side": "right", "from": 104, "to": 128 }],
+      "solids": [[0, 128, 192, 16]],
+      "captions": [{ "id": "cap_s", "at": [6, 6], "text": "FIRST, A ROOM." }]
+    },
+    {
+      "id": "hall",
+      "rect": [416, 16, 192, 144],
+      "bg": "room_blue",
+      "swap": "row",
+      "openings": [
+        { "side": "left", "from": 104, "to": 128 },
+        { "side": "right", "from": 104, "to": 128 }
+      ],
+      "solids": [[0, 128, 192, 16]],
+      "captions": [{ "id": "cap_h", "at": [6, 6], "text": "AND A HALL." }]
+    }
+  ]
+}

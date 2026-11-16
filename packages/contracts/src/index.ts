@@ -1,3 +1,4 @@
+import "./zod-config.ts";
 export * from "./save.ts";
 export * from "./bridge.ts";
 export * from "./settings.ts";

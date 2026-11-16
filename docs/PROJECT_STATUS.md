@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-14: Chapter 2 "The Border" built (swap, stretch, pages 2.1–2.8); its playtest is next._
+_Last updated: 2026-11-14: Chapter 2 "The Border" built (swap, stretch, pages 2.1–2.8); its playtest is next, using [the walkthrough](playtest/CHAPTER_02_WALKTHROUGH.md)._
 
 ## Current phase
 

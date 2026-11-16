@@ -13,7 +13,7 @@ Scores are likelihood × impact on a 1–3 scale each (max 9). Reviewed at the e
 | R7 | Scope creep: seven chapters with distinct mechanics | 3 | 3 | **9** | Ship Chapter 1 complete before starting Chapter 2; every new mechanic needs a GDD entry with ≥ 3 puzzle uses | Director + Architect |
 | R8 | The art is hard to read, or the identity is weak | 2 | 2 | 4 | **Feedback (2026-11-12): pixel props and scenes were often not understandable.** Moved to hand-inked vector art at full resolution with readability rules: heavy ink for usable things, grey scenery, red for where the reader can act, visible lanes for movable panels (ADR-0013, GDD §9). Recheck in the Chapter 1 playtest; a further art pass is budgeted in Phase 7 | Art |
 | R9 | Licensing contamination (fonts, SFX, music) | 1 | 3 | 3 | Everything original or synthesised; `docs/ASSETS.md` licence ledger for anything added | Architect |
-| R10 | Auth/session vulnerabilities | 1 | 3 | 3 | Opaque hashed sessions, Argon2id, CSRF double-submit, rate limits, security review in Phase 8 | Backend |
+| R10 | Auth/session vulnerabilities | 1 | 3 | 3 | Opaque hashed sessions, Argon2id, CSRF double-submit, rate limits. Security review done 2026-11-17 (TDD §6): API reachable only through the site's proxy, per-account sign-in limit, session cap, site CSP, zod 4. Still open: password reset (needs an email provider) | Backend |
 | R11 | Tooling drift (Godot version, export templates) between dev machines and CI | 2 | 1 | 2 | Pin 4.7.2 in `.godot-version`; CI downloads that exact version; export script asserts the version | DevOps |
 | R12 | Accessibility gaps (mouse-only panel moving) | 2 | 2 | 4 | Keyboard panel mode in the prototype; reduced-motion setting from day one | Frontend + Godot |
 

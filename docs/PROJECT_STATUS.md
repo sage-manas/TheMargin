@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-14: Chapter 2 "The Border" built (swap, stretch, pages 2.1–2.8); its playtest is next, using [the walkthrough](playtest/CHAPTER_02_WALKTHROUGH.md)._
+_Last updated: 2026-11-17: Phase 8 security review done (TDD §6). Chapter 2 "The Border" is merged; its playtest is next, using [the walkthrough](playtest/CHAPTER_02_WALKTHROUGH.md)._
 
 ## Current phase
 
@@ -158,16 +158,24 @@ _Last updated: 2026-11-14: Chapter 2 "The Border" built (swap, stretch, pages 2.
   - **Look and sound:** Chapter 2 palette (`news`, `news_cyan`) and music, "Gutters" (D Dorian, 96 bpm).
   - **Site and API:** Chapter 2 is released in the catalogue (chapters page, progression: available once Chapter 1 is done); a `CH02_COMPLETE` achievement; landing copy updated.
 
+- **Phase 8 (2026-11-17): security review (R10, TDD §6).**
+  - **API only through the site:** the site's Proxy (`apps/web/src/proxy.ts`) adds a shared secret and the client IP to `/v1` requests; with `PROXY_SECRET` set, the API refuses anything else (403, health check exempt) and rate-limits by that IP. Closes the known gap where calling Fly directly could forge `X-Forwarded-For`.
+  - **Sign-ins:** 20 failures per account per 15 minutes, then that account is refused before the password is checked; each user keeps their newest 10 sessions.
+  - **Site CSP:** no third-party scripts, no `eval`, `frame-ancestors 'none'`. The game's bridge drained its inbox with `JavaScriptBridge.eval`; it now uses the interface.
+  - **Dependencies:** zod 3.24 → 4.6.7 (high advisory `GHSA-mrhx-c7xc-m3w5`); no code changes needed.
+  - Accepted risks recorded in TDD §6. Still open for Phase 8: monitoring, password reset (needs an email provider), production.
+  - Chapter 2's testing walkthrough (`docs/playtest/`) was pushed after PR #17 merged, so it lands here.
+
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
 | Godot unit + integration (incl. real-physics playthroughs of pages 1.1, 1.3–1.8 and 2.1–2.8, scene captions, close-ups, swap, stretch, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 105 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge, settings, chapter catalogue vs the game's pages, storage key vs the game, achievements vs the game, API schemas, scene and control state) | `pnpm --filter @the-margin/contracts test` | 16 passed |
-| API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 28 passed (local Postgres 14, IST timezone; CI Postgres 17) |
+| API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 33 passed (local Postgres 14, IST timezone; CI Postgres 17) |
 | Site unit tests (bridge, progress, settings mirror, save sync incl. offline and conflicts) | `pnpm --filter @the-margin/web test` | 18 passed |
 | Lighthouse, landing page (production build) | `pnpm web:lighthouse` | Performance 99, accessibility 100 with the header's session check (earlier 98 and 100). Best practices 96 when no API is running, because the failed session request is logged |
-| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save; the site (landing, chapters, `/play` launch with settings, missing build); accounts and cloud saves (second browser, offline→online, conflict) | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS; needs Postgres, or `E2E_CLOUD=0`) | Chromium 12/12, WebKit 12/12 on macOS (2026-11-07 with the cloud specs). Earlier: Chromium 9/9, WebKit 9/9 with the site specs. Earlier: Chromium 5/5, WebKit 5/5 (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save; the site (landing, chapters, `/play` launch with settings, missing build); accounts and cloud saves (second browser, offline→online, conflict) | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS; needs Postgres, or `E2E_CLOUD=0`) | Chromium 13/13, WebKit 13/13 on macOS (2026-11-17, with the proxy secret and CSP on; the new check: direct API callers refused, CSP sent). Earlier: Chromium 12/12, WebKit 12/12 (2026-11-07 with the cloud specs). Earlier: Chromium 9/9, WebKit 9/9 with the site specs. Earlier: Chromium 5/5, WebKit 5/5 (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 

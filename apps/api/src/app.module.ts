@@ -1,6 +1,6 @@
 import { Module, type DynamicModule, type ExecutionContext } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
-import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { CONFIG, type Config } from "./config.js";
 import { ErrorFilter } from "./common/error.filter.js";
 import { PrismaService } from "./common/prisma.service.js";
@@ -8,6 +8,8 @@ import { AuthController } from "./auth/auth.controller.js";
 import { AuthService } from "./auth/auth.service.js";
 import { CsrfGuard, SessionGuard } from "./auth/guards.js";
 import { SessionsService } from "./auth/sessions.service.js";
+import { LoginFailures } from "./auth/login-failures.js";
+import { ClientThrottlerGuard, ProxyGuard } from "./auth/proxy.guard.js";
 import { SavesController } from "./saves/saves.controller.js";
 import { SavesService } from "./saves/saves.service.js";
 import { ProgressionController } from "./progression/progression.controller.js";
@@ -39,12 +41,14 @@ export class AppModule {
         { provide: CONFIG, useValue: config },
         PrismaService,
         SessionsService,
+        LoginFailures,
         AuthService,
         SavesService,
         AchievementsService,
         ProgressionService,
-        // Guards run in this order: rate limit, CSRF, then session lookup.
-        { provide: APP_GUARD, useClass: ThrottlerGuard },
+        // Guards run in this order: the site's proxy, rate limit, CSRF, then session lookup.
+        { provide: APP_GUARD, useClass: ProxyGuard },
+        { provide: APP_GUARD, useClass: ClientThrottlerGuard },
         { provide: APP_GUARD, useClass: CsrfGuard },
         { provide: APP_GUARD, useClass: SessionGuard },
         { provide: APP_FILTER, useClass: ErrorFilter },

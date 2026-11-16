@@ -88,6 +88,12 @@ test("/play launches the game, which takes the site's settings", async ({ page }
 
   const errors: string[] = [];
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  // CSP violations, even caught ones (only Firefox logs those to the console).
+  await page.addInitScript(() => {
+    const w = window as unknown as { __csp: string[] };
+    w.__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) => w.__csp.push(`${e.violatedDirective} ${e.blockedURI} ${e.sourceFile}`));
+  });
   await page.goto("/play");
   await expect(page.getByRole("progressbar", { name: "Loading the game" })).toBeVisible();
   await waitFor(page, (m) => m.type === "GAME_READY");
@@ -107,6 +113,7 @@ test("/play launches the game, which takes the site's settings", async ({ page }
   await page.waitForTimeout(500);
   await page.screenshot({ path: info.outputPath("play.png") });
   expect(errors).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
 
   // The game's settings echo kept the site's mirror current.
   const mirror = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null"), SETTINGS_KEY);

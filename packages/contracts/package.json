@@ -4,7 +4,6 @@
   "private": true,
   "description": "Source of truth for game\u2194web bridge messages and the save envelope.",
   "type": "module",
-  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
     "./chapters": "./src/chapters.ts",

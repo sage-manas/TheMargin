@@ -215,7 +215,7 @@ Settings belong to the game (`user://settings.json`). The site keeps a mirror fr
 
 - The host page defines `window.TheMarginBridge = { onGameMessage(json) {}, _inbox: [] }` **before** loading the engine.
 - **Game → web:** `web_bridge.gd` gets the bridge with `JavaScriptBridge.get_interface("TheMarginBridge")` and calls `onGameMessage(json)` on it (no `eval`: no string-escaping risk). If the interface is missing, the game sends nothing, so the export also runs standalone.
-- **Web → game:** on start, the game registers a callback (`JavaScriptBridge.create_callback`) as `window.TheMarginBridge.deliver`, then drains `_inbox` for messages queued before it was ready. The adapter calls `deliver(json)` after that.
+- **Web → game:** on start, the game registers a callback (`JavaScriptBridge.create_callback`) as `window.TheMarginBridge.deliver`, then drains `_inbox` (with `shift()` through the interface, never `eval`, so the site's CSP can forbid it) for messages queued before it was ready. The adapter calls `deliver(json)` after that.
 - Both sides validate: the web side with Zod; the game side checks `v`, `type` and the payload shape, and ignores unknown types.
 - No WebSockets. Cloud sync is plain HTTPS from the web app; the game never makes network requests.
 
@@ -287,6 +287,11 @@ Playwright runs against the actual export served locally: boot, `GAME_READY` rec
 
 - Sessions use an opaque random token in an `HttpOnly; Secure; SameSite=Lax` cookie, stored **hashed** in Postgres (ADR-0007). CSRF uses the double-submit token for state-changing requests plus an Origin check.
 - Argon2id password hashing, rate limiting on auth routes, Helmet headers, a strict CORS allowlist, and Zod validation with payload size limits (saves ≤ 64 KB).
+- **Only through the site.** Browsers reach the API at the site's `/v1`, never directly. The site's Proxy (`apps/web/src/proxy.ts`) stamps each request with `x-margin-proxy` (a secret the site and API share, `PROXY_SECRET`) and `x-margin-client-ip` (the browser's IP as the platform saw it), dropping any a browser sent. With the secret set, the API refuses every other caller (403; the health check is exempt) and rate-limits by that IP, so `X-Forwarded-For` can't be forged to dodge the limits.
+- **Per-account sign-in limit.** After 20 failed sign-ins for one email in 15 minutes, that account's sign-ins are refused (429) before the password is checked, whatever the IP. Counts are in memory (one API machine). The trade-off: someone can lock an account for 15 minutes; IP limits are per minute, so that takes 20+ IPs.
+- **Sessions per user:** the newest 10 are kept; signing in again drops the oldest.
+- **Content-Security-Policy** on the site: scripts only from the site (plus a CDN game build if configured), `'wasm-unsafe-eval'` for the engine, no `eval` (the game drains the bridge inbox without it, §4.2; Zod runs `jitless` in browsers, since Firefox reports even its caught `new Function` probe), `frame-ancestors 'none'`, `object-src 'none'`. Inline scripts stay allowed for Next's hydration payloads.
+- **Security review (Phase 8, 2026-11-17).** The above came out of it, plus: zod 3 → 4.6.7 (`GHSA-mrhx-c7xc-m3w5`, memory exhaustion on oversized collections; bodies were already capped at 68 KB). Accepted risks: register says when an email is taken (409; rate-limited, and there is no email verification to hide behind); the client can claim achievements and chapter completions (no leaderboards, so nothing to protect beyond the order check).
 - All client game state is treated as untrusted. The server validates progression transitions (no completing chapter N+1 before N) but does not attempt anti-cheat.
 - No secrets in `NEXT_PUBLIC_*` or game assets.
 

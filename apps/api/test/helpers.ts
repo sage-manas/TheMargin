@@ -38,6 +38,8 @@ export class Client {
   cookies = new Map<string, string>();
   csrf = "";
   origin: string | null = ORIGIN;
+  /** Sent with every request (e.g. what the site's proxy adds). */
+  headers: Record<string, string> = {};
 
   readonly api: Api;
 
@@ -46,7 +48,7 @@ export class Client {
   }
 
   async req(method: string, path: string, body?: unknown, opts: { csrf?: string | null; raw?: string } = {}): Promise<{ status: number; body: any; headers: Headers }> {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = { ...this.headers };
     if (this.cookies.size) headers.cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
     if (this.origin) headers.origin = this.origin;
     const csrf = opts.csrf === undefined ? this.csrf : opts.csrf;

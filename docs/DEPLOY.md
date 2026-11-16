@@ -33,6 +33,8 @@ These need your accounts. Type secrets into the commands yourself; don't paste t
    fly auth login
    fly apps create the-margin-api-staging
    fly secrets set -a the-margin-api-staging DATABASE_URL='postgresql://…?sslmode=require'
+   openssl rand -base64 48            # the proxy secret: use the same value in step 3
+   fly secrets set -a the-margin-api-staging PROXY_SECRET='…'
    fly deploy . --config apps/api/fly.toml --dockerfile apps/api/Dockerfile   # the first deploy, by hand
    fly tokens create deploy -a the-margin-api-staging                         # for CI: FLY_API_TOKEN
    ```
@@ -44,6 +46,7 @@ These need your accounts. Type secrets into the commands yourself; don't paste t
    In the project settings set **Root Directory** to `apps/web` (framework: Next.js). Then point the proxy at the API:
    ```sh
    vercel env add API_ORIGIN production     # https://the-margin-api-staging.fly.dev
+   vercel env add PROXY_SECRET production   # the value from step 2
    ```
    Create a token at vercel.com/account/tokens. The org and project ids are in `.vercel/project.json` (gitignored).
 4. **GitHub.** Create an environment named `staging` with secrets `FLY_API_TOKEN`, `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`. Then set the repository variable `STAGING_URL` (`https://the-margin-staging.vercel.app`). It switches the workflow on: until it exists, deploys are skipped.
@@ -62,6 +65,6 @@ These need your accounts. Type secrets into the commands yourself; don't paste t
 
 ## Known gaps
 
-- `TRUST_PROXY=2` takes the client IP from `X-Forwarded-For`. Someone calling `the-margin-api-staging.fly.dev` directly, bypassing the site, can forge it and dodge the rate limits. The Phase 8 security review should restrict the API to the site's proxy (a shared secret header added by a route handler, or Fly private networking).
+- With `PROXY_SECRET` set, the API answers only requests that came through the site's `/v1` (TDD §6); the Fly health check is exempt. Without it (a forgotten secret), the API still works but trusts `X-Forwarded-For` (`TRUST_PROXY=2`), which a direct caller can forge. To rotate the secret, set the new value on Vercel and Fly together and redeploy both; requests fail with 403 in between.
 - Game files have no content hashes, so they are served with revalidation (`max-age=0`) rather than immutable caching. Repeat visits cost a 304 per file, not a re-download.
 - There is no production environment yet. It will be the same shape with its own Fly app, Neon project and Vercel project.

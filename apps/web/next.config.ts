@@ -13,6 +13,28 @@ const gameDevOrigin = process.env.GAME_DEV_ORIGIN ?? "http://localhost:8060";
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "/v1").replace(/\/$/, "");
 const apiOrigin = (process.env.API_ORIGIN ?? process.env.API_DEV_ORIGIN ?? "http://localhost:4000").replace(/\/$/, "");
 
+// Content-Security-Policy (TDD §6). Next's hydration payloads
+// are inline scripts, so script-src keeps 'unsafe-inline';
+// what it rules out is script from anywhere else, and eval: the game runs
+// WebAssembly ('wasm-unsafe-eval') and never calls eval (web_bridge.gd).
+const originOf = (url: string): string | null => (/^https?:\/\//.test(url) ? new URL(url).origin : null);
+const extra = [originOf(gameBuildUrl), originOf(apiUrl)].filter((o): o is string => o !== null);
+const dev = process.env.NODE_ENV === "development";
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${dev ? " 'unsafe-eval'" : ""} ${extra.join(" ")}`.trim(),
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  `connect-src 'self' ${extra.join(" ")}${dev ? " ws:" : ""}`.trim(),
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -29,6 +51,7 @@ const config: NextConfig = {
       {
         source: "/:path*",
         headers: [
+          { key: "Content-Security-Policy", value: csp },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "DENY" },

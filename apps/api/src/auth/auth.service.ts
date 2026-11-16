@@ -6,6 +6,7 @@ import { CONFIG, type Config } from "../config.js";
 import { ApiError } from "../common/errors.js";
 import { PrismaService } from "../common/prisma.service.js";
 import { Prisma } from "../generated/prisma/client.js";
+import { LoginFailures } from "./login-failures.js";
 import { SessionsService, type SessionUser } from "./sessions.service.js";
 
 @Injectable()
@@ -16,6 +17,7 @@ export class AuthService implements OnModuleInit {
   constructor(
     private readonly db: PrismaService,
     private readonly sessions: SessionsService,
+    private readonly failures: LoginFailures,
     @Inject(CONFIG) private readonly config: Config,
   ) {}
 
@@ -45,8 +47,11 @@ export class AuthService implements OnModuleInit {
   }
 
   async login(input: z.infer<typeof LoginRequestSchema>, userAgent?: string): Promise<{ user: SessionUser; token: string }> {
+    this.failures.check(input.email);
     const u = await this.db.user.findUnique({ where: { email: input.email }, include: { profile: true } });
     const ok = await verify(u?.passwordHash ?? this.dummyHash, input.password).catch(() => false);
+    if (!u || !ok) this.failures.failed(input.email);
+    else this.failures.succeeded(input.email);
     if (!u || !ok) throw new ApiError("UNAUTHENTICATED", "That email and password don't match an account.");
     const token = await this.sessions.create(u.id, userAgent);
     return { user: { id: u.id, email: u.email, displayName: u.profile?.displayName ?? "", avatar: u.profile?.avatar ?? null }, token };

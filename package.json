@@ -19,6 +19,7 @@
     "web:lighthouse": "node infrastructure/scripts/lighthouse.mjs",
     "api:dev": "pnpm --filter @the-margin/api build && pnpm --filter @the-margin/api start",
     "api:test": "pnpm --filter @the-margin/api test",
+    "api:errors": "node apps/api/scripts/errors.mjs",
     "db:up": "docker compose -f infrastructure/docker/compose.yml up -d"
   }
 }

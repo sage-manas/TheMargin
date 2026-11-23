@@ -2,7 +2,8 @@
 // stored only as its SHA-256. Expiry slides to 30 days, refreshed at most
 // once a day so most requests don't write.
 import { createHash, randomBytes } from "node:crypto";
-import { Injectable, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
+import { CONFIG, type Config } from "../config.js";
 import { PrismaService } from "../common/prisma.service.js";
 import { SESSION_TTL_MS } from "./cookies.js";
 
@@ -18,7 +19,10 @@ export const newToken = (): string => randomBytes(32).toString("base64url");
 export class SessionsService implements OnModuleInit, OnModuleDestroy {
   private sweeper?: NodeJS.Timeout;
 
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    @Inject(CONFIG) private readonly config: Config,
+  ) {}
 
   onModuleInit(): void {
     this.sweeper = setInterval(() => void this.sweep(), 24 * 3600 * 1000);
@@ -34,6 +38,9 @@ export class SessionsService implements OnModuleInit, OnModuleDestroy {
     await this.db.session.create({
       data: { userId, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + SESSION_TTL_MS), userAgent: userAgent?.slice(0, 256) },
     });
+    // Each sign-in is a row; keep only the newest few per user.
+    const stale = await this.db.session.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, skip: this.config.sessionsPerUser, select: { id: true } });
+    if (stale.length) await this.db.session.deleteMany({ where: { id: { in: stale.map((s) => s.id) } } });
     return token;
   }
 

@@ -29,12 +29,14 @@ func _ready() -> void:
 	_bridge.deliver = _deliver_cb
 	available = true
 	Settings.changed.connect(_send_settings)
-	var queued: Variant = JavaScriptBridge.eval("JSON.stringify((window.TheMarginBridge._inbox || []).splice(0))", true)
-	if queued is String:
-		var list: Variant = JSON.parse_string(queued)
-		if list is Array:
-			for raw: Variant in list:
-				_handle(raw if raw is String else JSON.stringify(raw))
+	# Messages the site queued before the game was up, oldest first. Read
+	# through the interface, never `eval`, so the site's CSP can forbid it.
+	var inbox: Variant = _bridge._inbox
+	if inbox is JavaScriptObject:
+		while int(inbox.length) > 0:
+			var raw: Variant = inbox.shift()
+			if raw is String:
+				_handle(raw)
 	_send_settings()
 
 

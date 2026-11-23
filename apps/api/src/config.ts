@@ -9,9 +9,19 @@ export type Config = {
   cookieSecure: boolean;
   /** Hops of reverse proxy to trust for the client IP (rate limits). */
   trustProxy: number;
-  rateLimits: { default: number; register: number; login: number; windowMs: number };
+  rateLimits: { default: number; register: number; login: number; reports: number; windowMs: number };
   /** Argon2id cost (OWASP minimum by default: 19 MiB, 2 passes). */
   argon2: { memoryCost: number; timeCost: number };
+  /**
+   * Shared with the site's proxy (apps/web/src/proxy.ts). When set, every
+   * request but the health check must carry it, and the client IP for rate
+   * limits comes from the proxy, not from X-Forwarded-For (TDD §6).
+   */
+  proxySecret: string | null;
+  /** Failed sign-ins allowed per account per window, from any number of IPs. */
+  loginFailures: { limit: number; windowMs: number };
+  /** Sessions kept per user; signing in again drops the oldest. */
+  sessionsPerUser: number;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -27,10 +37,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       default: Number(env.RATE_LIMIT_DEFAULT ?? 120),
       register: Number(env.RATE_LIMIT_REGISTER ?? 5),
       login: Number(env.RATE_LIMIT_LOGIN ?? 10),
+      // Error reports: a broken page can send a burst; past this they are dropped.
+      reports: Number(env.RATE_LIMIT_REPORTS ?? 30),
       windowMs: 60_000,
     },
     argon2: { memoryCost: 19_456, timeCost: 2 },
+    proxySecret: proxySecret(env.PROXY_SECRET),
+    loginFailures: { limit: Number(env.LOGIN_FAILURE_LIMIT ?? 20), windowMs: 15 * 60_000 },
+    sessionsPerUser: 10,
   };
 }
 
 export const CONFIG = Symbol("CONFIG");
+
+function proxySecret(v: string | undefined): string | null {
+  if (!v) return null;
+  if (v.length < 32) throw new Error("PROXY_SECRET must be at least 32 characters");
+  return v;
+}

@@ -59,7 +59,12 @@
 ### Now (Phase 7)
 31. Chapter 2 mechanics: swapping panels and stretching borders (GDD §4.9, §4.10), with sandboxes and tests ✅.
 32. Chapter 2 pages 2.1–2.8 (GDD §6b), each solved through real physics; palette (newsprint and cyan) and music ✅; chapter cards between chapters ✅.
-33. Chapter 2 playtest (same bar as Chapter 1). Next.
+33. Chapter 2 playtest (same bar as Chapter 1), with the walkthrough in `docs/playtest/`. Next (yours). Chapter 3 "The Words" is designed after it, as Chapter 2 was after Chapter 1's.
+
+### Now (Phase 8, alongside the playtest)
+34. Security review (R10) ✅ (2026-11-17, TDD §6): the API answers only through the site's proxy (shared `PROXY_SECRET`, real client IP for rate limits), a per-account sign-in limit, 10 sessions per user, a CSP on the site (the game no longer uses `eval`), zod 3 → 4.6.7 for a high advisory.
+35. Monitoring ✅ (2026-11-24, TDD §6b, ADR-0014): browser error reports from the site, engine and game grouped in Postgres (`pnpm api:errors`), JSON request logs with request ids, a scheduled uptime check on staging.
+36. Next: password reset (needs an email provider account), then the production environment.
 
 ### Later
 26. Pages 1.3–1.8 and the chapter finale ✅. 1.3–1.5 (`ch01_p03`–`ch01_p05`; 1.2 now turns to 1.3) and 1.6–1.8 (`ch01_p06`–`ch01_p08`: fallen bubbles, `erase_panel`, `panel_entered`; the end card follows 1.8), each with a real-physics solution test. Finishing the chapter records `completedChapters` and sends `CHAPTER_COMPLETED`; the browser e2e plays the finale from a seeded save. **Reworked (2026-11-12)** after playtest feedback: hand-inked art (ADR-0013), scene captions and close-ups (GDD §4.7, §4.8), and pages 1.3–1.7 rebuilt with a different verb and goal each. Next: the Chapter 1 playtest (Phase 4 exit bar).

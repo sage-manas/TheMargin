@@ -14,7 +14,7 @@ export async function startApi(overrides: (c: Config) => Config = (c) => c): Pro
   const { createApp } = (await import(new URL("../dist/app.js", import.meta.url).href)) as AppModule;
   const { loadConfig } = (await import(new URL("../dist/config.js", import.meta.url).href)) as ConfigModule;
   const base = loadConfig({ DATABASE_URL: process.env.DATABASE_URL, WEB_ORIGINS: ORIGIN, COOKIE_SECURE: "false" });
-  const config = overrides({ ...base, rateLimits: { ...base.rateLimits, default: 10_000, register: 10_000, login: 10_000 }, argon2: { memoryCost: 1024, timeCost: 1 } });
+  const config = overrides({ ...base, rateLimits: { ...base.rateLimits, default: 10_000, register: 10_000, login: 10_000, reports: 10_000 }, argon2: { memoryCost: 1024, timeCost: 1 } });
   const app = await createApp(config, { logger: false });
   await app.listen(0, "127.0.0.1");
   const url = `${await app.getUrl()}/v1`.replace("[::1]", "127.0.0.1");
@@ -38,6 +38,8 @@ export class Client {
   cookies = new Map<string, string>();
   csrf = "";
   origin: string | null = ORIGIN;
+  /** Sent with every request (e.g. what the site's proxy adds). */
+  headers: Record<string, string> = {};
 
   readonly api: Api;
 
@@ -46,7 +48,7 @@ export class Client {
   }
 
   async req(method: string, path: string, body?: unknown, opts: { csrf?: string | null; raw?: string } = {}): Promise<{ status: number; body: any; headers: Headers }> {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = { ...this.headers };
     if (this.cookies.size) headers.cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
     if (this.origin) headers.origin = this.origin;
     const csrf = opts.csrf === undefined ? this.csrf : opts.csrf;

@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { MAX_SAVE_BYTES } from "@the-margin/contracts";
 import { AppModule } from "./app.module.js";
+import { requestId, requestLog } from "./common/request-log.js";
 import type { Config } from "./config.js";
 
 /** Builds the API (shared by main.ts and the integration tests). */
@@ -12,6 +13,8 @@ export async function createApp(config: Config, opts: { logger?: false } = {}): 
   const app = await NestFactory.create<NestExpressApplication>(AppModule.forConfig(config), { bodyParser: false, ...opts });
   app.set("trust proxy", config.trustProxy);
   app.setGlobalPrefix("v1");
+  app.use(requestId);
+  if (opts.logger !== false) app.use(requestLog);
   app.use(helmet());
   app.use(cookieParser());
   // A save (≤ 64 KB) plus its envelope; anything bigger is refused unread.

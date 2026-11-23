@@ -6,6 +6,8 @@ const API_PORT = 4000;
 // The API needs Postgres; E2E_CLOUD=0 runs without it (cloud.spec.ts skips).
 const cloud = process.env.E2E_CLOUD !== "0";
 
+const PROXY_SECRET = "e2e-proxy-secret-".padEnd(48, "x");
+
 export default defineConfig({
   testDir: "./specs",
   timeout: 120_000,
@@ -17,6 +19,8 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     trace: "retain-on-failure",
   },
+  // The site's proxy and the API share a secret, as in staging: the API
+  // refuses anything that didn't come through /v1 on the site.
   webServer: [
     {
       command: `node ../../infrastructure/scripts/serve-game.mjs ../../apps/game/build/web ${PORT}`,
@@ -29,6 +33,7 @@ export default defineConfig({
       port: WEB_PORT,
       reuseExistingServer: true,
       timeout: 240_000,
+      env: { ...(process.env as Record<string, string>), ...(cloud ? { PROXY_SECRET } : {}) },
     },
     // The API behind the site's /v1 proxy (specs/cloud.spec.ts), on its own
     // database, migrated and seeded first.
@@ -46,6 +51,7 @@ export default defineConfig({
               PORT: String(API_PORT),
               WEB_ORIGINS: `http://localhost:${WEB_PORT}`,
               COOKIE_SECURE: "false",
+              PROXY_SECRET,
               // Every test signs up from the same IP.
               RATE_LIMIT_REGISTER: "1000",
               RATE_LIMIT_LOGIN: "1000",

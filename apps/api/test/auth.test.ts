@@ -161,7 +161,7 @@ describe("hardening", () => {
 
 describe("rate limits (the real ones)", () => {
   let strict: Api;
-  before(async () => (strict = await startApi((c) => ({ ...c, rateLimits: { default: 120, register: 5, login: 10, windowMs: 60_000 } }))));
+  before(async () => (strict = await startApi((c) => ({ ...c, rateLimits: { default: 120, register: 5, login: 10, reports: 30, windowMs: 60_000 } }))));
   after(() => strict.close());
 
   test("register allows 5 a minute per IP, login 10", async () => {
@@ -178,5 +178,87 @@ describe("rate limits (the real ones)", () => {
     assert.equal(logins.at(-1), 429);
     // Other routes have their own, larger budget.
     assert.equal((await c.req("GET", "/me")).status, 200);
+  });
+});
+
+describe("only through the site's proxy (PROXY_SECRET)", () => {
+  const SECRET = "s".repeat(40);
+  let proxied: Api;
+  before(async () => (proxied = await startApi((c) => ({ ...c, proxySecret: SECRET, rateLimits: { default: 120, register: 5, login: 3, reports: 30, windowMs: 60_000 } }))));
+  after(() => proxied.close());
+  beforeEach(() => proxied.reset());
+
+  const via = (ip: string) => {
+    const c = new Client(proxied);
+    c.headers = { "x-margin-proxy": SECRET, "x-margin-client-ip": ip };
+    return c;
+  };
+
+  test("a direct caller is refused; the health check is not", async () => {
+    const direct = new Client(proxied);
+    const r = await direct.req("GET", "/auth/session");
+    assert.equal(r.status, 403);
+    assert.equal(r.body.error.code, "FORBIDDEN");
+    direct.headers = { "x-margin-proxy": "x".repeat(40) };
+    assert.equal((await direct.req("GET", "/auth/session")).status, 403);
+    assert.equal((await fetch(proxied.url + "/health")).status, 200);
+    assert.equal((await via("203.0.113.1").session()).status, 200);
+  });
+
+  test("rate limits follow the proxy's client IP, not X-Forwarded-For", async () => {
+    const a = via("203.0.113.1");
+    await a.session();
+    const codes: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      a.headers["x-forwarded-for"] = `198.51.100.${i}`;
+      codes.push((await a.req("POST", "/auth/login", { email: "x@example.com", password: "wrong horse battery" })).status);
+    }
+    assert.deepEqual(codes, [401, 401, 401, 429]);
+    const b = via("203.0.113.2");
+    await b.session();
+    assert.equal((await b.req("POST", "/auth/login", { email: "x@example.com", password: "wrong horse battery" })).status, 401);
+  });
+});
+
+describe("failed sign-ins per account", () => {
+  let locked: Api;
+  before(async () => (locked = await startApi((c) => ({ ...c, loginFailures: { limit: 3, windowMs: 60_000 } }))));
+  after(() => locked.close());
+  beforeEach(() => locked.reset());
+
+  test("after the limit, even the right password is refused until the window passes; other accounts are untouched", async () => {
+    await new Client(locked).register("nib@example.com");
+    await new Client(locked).register("ink@example.com");
+    const c = new Client(locked);
+    await c.session();
+    for (let i = 0; i < 3; i++) assert.equal((await c.req("POST", "/auth/login", { email: "nib@example.com", password: "wrong horse battery" })).status, 401);
+    const r = await c.req("POST", "/auth/login", { email: "nib@example.com", password: "correct horse battery" });
+    assert.equal(r.status, 429);
+    assert.equal(r.body.error.code, "RATE_LIMITED");
+    assert.equal((await c.req("POST", "/auth/login", { email: "ink@example.com", password: "correct horse battery" })).status, 200);
+  });
+
+  test("a successful sign-in clears the count", async () => {
+    await new Client(locked).register("pen@example.com");
+    const c = new Client(locked);
+    await c.session();
+    for (let i = 0; i < 2; i++) await c.req("POST", "/auth/login", { email: "pen@example.com", password: "wrong horse battery" });
+    assert.equal((await c.req("POST", "/auth/login", { email: "pen@example.com", password: "correct horse battery" })).status, 200);
+    for (let i = 0; i < 2; i++) assert.equal((await c.req("POST", "/auth/login", { email: "pen@example.com", password: "wrong horse battery" })).status, 401);
+  });
+});
+
+describe("sessions per user", () => {
+  test("signing in again keeps only the newest 10 sessions", async () => {
+    const first = new Client(api);
+    await first.register("nib@example.com");
+    for (let i = 0; i < 10; i++) {
+      const c = new Client(api);
+      await c.session();
+      assert.equal((await c.req("POST", "/auth/login", { email: "nib@example.com", password: "correct horse battery" })).status, 200);
+    }
+    const { rows } = await api.db.query("SELECT count(*)::int AS n FROM sessions");
+    assert.equal(rows[0].n, 10);
+    assert.equal((await first.req("GET", "/me")).status, 401);
   });
 });

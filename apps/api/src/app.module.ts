@@ -1,6 +1,6 @@
 import { Module, type DynamicModule, type ExecutionContext } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
-import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { CONFIG, type Config } from "./config.js";
 import { ErrorFilter } from "./common/error.filter.js";
 import { PrismaService } from "./common/prisma.service.js";
@@ -8,6 +8,8 @@ import { AuthController } from "./auth/auth.controller.js";
 import { AuthService } from "./auth/auth.service.js";
 import { CsrfGuard, SessionGuard } from "./auth/guards.js";
 import { SessionsService } from "./auth/sessions.service.js";
+import { LoginFailures } from "./auth/login-failures.js";
+import { ClientThrottlerGuard, ProxyGuard } from "./auth/proxy.guard.js";
 import { SavesController } from "./saves/saves.controller.js";
 import { SavesService } from "./saves/saves.service.js";
 import { ProgressionController } from "./progression/progression.controller.js";
@@ -17,6 +19,8 @@ import { AchievementsService } from "./achievements/achievements.service.js";
 import { SettingsController } from "./settings/settings.controller.js";
 import { MeController } from "./me/me.controller.js";
 import { HealthController } from "./health/health.controller.js";
+import { ClientErrorsController } from "./client-errors/client-errors.controller.js";
+import { ClientErrorsService } from "./client-errors/client-errors.service.js";
 
 /** Applies a named limit only to routes marked with @RateLimit(name). */
 const only = (name: string) => (ctx: ExecutionContext) => Reflect.getMetadata("rateLimit", ctx.getHandler()) !== name;
@@ -32,19 +36,23 @@ export class AppModule {
           { name: "default", ttl, limit: limits.default },
           { name: "register", ttl, limit: limits.register, skipIf: only("register") },
           { name: "login", ttl, limit: limits.login, skipIf: only("login") },
+          { name: "reports", ttl, limit: limits.reports, skipIf: only("reports") },
         ]),
       ],
-      controllers: [HealthController, AuthController, MeController, SavesController, ProgressionController, AchievementsController, SettingsController],
+      controllers: [HealthController, AuthController, MeController, SavesController, ProgressionController, AchievementsController, SettingsController, ClientErrorsController],
       providers: [
         { provide: CONFIG, useValue: config },
         PrismaService,
         SessionsService,
+        LoginFailures,
         AuthService,
         SavesService,
         AchievementsService,
         ProgressionService,
-        // Guards run in this order: rate limit, CSRF, then session lookup.
-        { provide: APP_GUARD, useClass: ThrottlerGuard },
+        ClientErrorsService,
+        // Guards run in this order: the site's proxy, rate limit, CSRF, then session lookup.
+        { provide: APP_GUARD, useClass: ProxyGuard },
+        { provide: APP_GUARD, useClass: ClientThrottlerGuard },
         { provide: APP_GUARD, useClass: CsrfGuard },
         { provide: APP_GUARD, useClass: SessionGuard },
         { provide: APP_FILTER, useClass: ErrorFilter },

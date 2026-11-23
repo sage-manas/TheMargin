@@ -10,7 +10,7 @@ Base path `/v1`. JSON only. Implemented in `apps/api` (Phase 6); request and res
 { "error": { "code": "SAVE_CONFLICT", "message": "Human readable", "details": {} } }
 ```
 
-Codes: `VALIDATION_FAILED` (400, or 413 for a body over the limit; `details.issues` lists `{path, message}`), `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `EMAIL_TAKEN` (409), `SAVE_CONFLICT` (409), `UNSUPPORTED_SAVE_VERSION` (422), `RATE_LIMITED` (429), `INTERNAL` (500). Internal details are never leaked.
+Codes: `VALIDATION_FAILED` (400, or 413 for a body over the limit; `details.issues` lists `{path, message}`), `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `EMAIL_TAKEN` (409), `SAVE_CONFLICT` (409), `UNSUPPORTED_SAVE_VERSION` (422), `RATE_LIMITED` (429), `INTERNAL` (500). Internal details are never leaked. Deployed, the API is reached only through the site's `/v1` proxy; any other caller gets 403 `FORBIDDEN` (TDD §6).
 
 ## Endpoints
 
@@ -18,7 +18,7 @@ Codes: `VALIDATION_FAILED` (400, or 413 for a body over the limit; `details.issu
 |---|---|---|---|
 | GET | `/health` | none | Liveness + DB ping |
 | POST | `/auth/register` | none | `{email, password, displayName}` → 201, sets session. Rate limited 5/min/IP. |
-| POST | `/auth/login` | none | `{email, password}` → 200, sets session. Rate limited 10/min/IP; constant-time failures. |
+| POST | `/auth/login` | none | `{email, password}` → 200, sets session. Rate limited 10/min/IP, and 20 failures per account per 15 min (then 429 for that account, even with the right password); constant-time failures. Signing in keeps the user's newest 10 sessions. |
 | POST | `/auth/logout` | session | Revokes the session, clears cookies |
 | GET | `/auth/session` | optional | `{user | null, csrfToken}` |
 | GET | `/me` | session | Account + profile |
@@ -32,6 +32,7 @@ Codes: `VALIDATION_FAILED` (400, or 413 for a body over the limit; `details.issu
 | POST | `/achievements/:code/unlock` | session | Idempotent. 403 for chapter achievements, which only the server awards |
 | GET | `/settings` | session | Settings payload (the defaults until first set) |
 | PUT | `/settings` | session | Full replace, validated against the settings schema |
+| POST | `/client-errors` | none, no CSRF token | `{reports: [{source: "site"\|"engine"\|"game", message ≤500, stack? ≤4000, path (no query), release}]}` (1–10) → 204. Origin checked; 30/min/IP. Grouped and counted, no user identity stored (TDD §6b) |
 
 ## Versioning
 

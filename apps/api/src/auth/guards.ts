@@ -12,6 +12,8 @@ export type AuthedRequest = Request & { session?: ActiveSession | null };
 /** `@Auth("required")` (401 without a session) or `@Auth("optional")`. Routes without it never look. */
 export const Auth = (mode: "required" | "optional") => SetMetadata("auth", mode);
 
+/** A POST that changes nothing a user owns (error reports). The Origin check still runs. */
+export const NoCsrf = () => SetMetadata("noCsrf", true);
 export const CurrentSession = createParamDecorator((_: unknown, ctx: ExecutionContext) => ctx.switchToHttp().getRequest<AuthedRequest>().session ?? null);
 
 @Injectable()
@@ -43,13 +45,17 @@ const SAFE = new Set(["GET", "HEAD", "OPTIONS"]);
  */
 @Injectable()
 export class CsrfGuard implements CanActivate {
-  constructor(@Inject(CONFIG) private readonly config: Config) {}
+  constructor(
+    private readonly reflector: Reflector,
+    @Inject(CONFIG) private readonly config: Config,
+  ) {}
 
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest<Request>();
     if (SAFE.has(req.method)) return true;
     const origin = req.headers.origin;
     if (origin && !this.config.webOrigins.includes(origin)) throw new ApiError("FORBIDDEN", "Requests must come from the site.");
+    if (this.reflector.getAllAndOverride<boolean>("noCsrf", [ctx.getHandler(), ctx.getClass()])) return true;
     const cookie: unknown = req.cookies?.[CSRF_COOKIE];
     const header = req.headers[CSRF_HEADER];
     if (typeof cookie !== "string" || typeof header !== "string" || !cookie || cookie.length !== header.length || !timingSafeEqual(Buffer.from(cookie), Buffer.from(header))) {

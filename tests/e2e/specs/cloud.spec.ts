@@ -179,3 +179,15 @@ test("a conflict with more progress elsewhere loads the cloud save into the game
   // The game reloaded onto the winning page.
   await waitFor(page, (m) => m.type === "SAVE_UPDATED" && m.payload.save.progress.page === "ch01_p03", 15_000);
 });
+
+// R10: the API answers only through the site's proxy, and the site sends a CSP.
+test("the API refuses direct callers; the site's /v1 proxy gets through", async ({ request }) => {
+  const direct = await request.get("http://localhost:4000/v1/auth/session");
+  expect(direct.status()).toBe(403);
+  expect((await request.get("http://localhost:4000/v1/health")).status()).toBe(200);
+  const proxied = await request.get("/v1/auth/session", { headers: { "x-margin-proxy": "forged" } });
+  expect(proxied.status()).toBe(200);
+  const csp = (await request.get("/")).headers()["content-security-policy"];
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp).not.toContain("'unsafe-eval'");
+});

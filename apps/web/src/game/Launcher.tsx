@@ -8,6 +8,7 @@ import { installBridge, type GameBridge, type HostBridge } from "./bridge.ts";
 import { readSettings, writeSettings } from "@/lib/settings.ts";
 import { browserStorage } from "@/lib/storage.ts";
 import { connectCloud, type CloudStatus } from "@/sync/cloud.ts";
+import { GameErrorLines, reporter, reportError } from "@/lib/report.ts";
 
 type GodotEngine = {
   init(basePath: string): Promise<void>;
@@ -132,12 +133,21 @@ export function Launcher() {
         }
         const fileSizes: Record<string, number> = {};
         for (const [file, size] of Object.entries(manifest.fileSizes)) fileSizes[`${BUILD_URL}/${file}`] = size;
+        const gameErrors = new GameErrorLines((message, stack) => reporter().report("game", message, stack));
         const engine = new Engine({
           canvas: canvas.current,
           canvasResizePolicy: 0,
           executable: exe,
           fileSizes,
           focusCanvas: true,
+          // The game's errors (GDScript and engine), reported; warnings are not.
+          onPrintError: (...parts: unknown[]) => {
+            console.error(...parts);
+            gameErrors.line(parts.map(String).join(" "));
+          },
+          onExit: (code: number) => {
+            if (code !== 0) reportError("engine", new Error(`The engine exited with code ${code}.`));
+          },
           onProgress: (current: number, total: number) => {
             if (total > 0) setPhase((p) => (p.name === "loading" ? { name: "loading", progress: Math.min(1, current / total) } : p));
           },
@@ -147,6 +157,7 @@ export function Launcher() {
         await engine.start({ args: ["--main-pack", "index.pck"] });
       } catch (err) {
         console.error(err);
+        reportError("engine", err);
         setPhase({ name: "error", message: err instanceof Error ? err.message : String(err) });
       }
     })();

@@ -24,6 +24,8 @@ erDiagram
   users ||--o{ player_achievements : unlocks
   achievements ||--o{ player_achievements : "unlocked as"
   users ||--o| player_settings : has
+  client_errors { char fingerprint UK
+                  int count }
 
   users { uuid id PK
           citext email UK
@@ -86,6 +88,7 @@ erDiagram
 - All FKs to `users` use `ON DELETE CASCADE` (account deletion = full erasure, which supports GDPR requests).
 - Seeds: chapters `ch01`–`ch07` (`ch01` and `ch02` released) and the initial achievement set (`FIRST_SLIDE`, `FIRST_WORD`, `WONT_SHUT`, `CH01_COMPLETE`, `CH02_COMPLETE`).
 
+- `client_errors` (browser error reports, TDD §6b) stands alone: no user link by design. `fingerprint UNIQUE` (SHA-256 of source, release, message with digits folded, first stack line); index `(last_seen)`; rows unseen for 30 days are swept daily, and new fingerprints stop being stored past 2000 rows.
 - `chapter_progress.status` is a Postgres enum, `chapter_status`.
 - Connections are pinned to `TimeZone=UTC` (`apps/api/src/common/db.ts`): with a non-UTC server timezone, Prisma 7's `pg` adapter read `timestamptz` values shifted by the offset. The test database is set to `Asia/Kolkata` so this stays caught on UTC machines.
 

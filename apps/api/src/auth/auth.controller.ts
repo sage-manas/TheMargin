@@ -10,7 +10,7 @@ import { Auth, CurrentSession } from "./guards.js";
 import { SessionsService, type ActiveSession } from "./sessions.service.js";
 
 /** Marks a route for its own rate limit (see app.module.ts). */
-export const RateLimit = (name: "register" | "login") => SetMetadata("rateLimit", name);
+export const RateLimit = (name: "register" | "login" | "reports") => SetMetadata("rateLimit", name);
 
 @Controller("auth")
 export class AuthController {

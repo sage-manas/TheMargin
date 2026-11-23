@@ -14,7 +14,7 @@ export async function startApi(overrides: (c: Config) => Config = (c) => c): Pro
   const { createApp } = (await import(new URL("../dist/app.js", import.meta.url).href)) as AppModule;
   const { loadConfig } = (await import(new URL("../dist/config.js", import.meta.url).href)) as ConfigModule;
   const base = loadConfig({ DATABASE_URL: process.env.DATABASE_URL, WEB_ORIGINS: ORIGIN, COOKIE_SECURE: "false" });
-  const config = overrides({ ...base, rateLimits: { ...base.rateLimits, default: 10_000, register: 10_000, login: 10_000 }, argon2: { memoryCost: 1024, timeCost: 1 } });
+  const config = overrides({ ...base, rateLimits: { ...base.rateLimits, default: 10_000, register: 10_000, login: 10_000, reports: 10_000 }, argon2: { memoryCost: 1024, timeCost: 1 } });
   const app = await createApp(config, { logger: false });
   await app.listen(0, "127.0.0.1");
   const url = `${await app.getUrl()}/v1`.replace("[::1]", "127.0.0.1");

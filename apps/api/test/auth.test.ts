@@ -161,7 +161,7 @@ describe("hardening", () => {
 
 describe("rate limits (the real ones)", () => {
   let strict: Api;
-  before(async () => (strict = await startApi((c) => ({ ...c, rateLimits: { default: 120, register: 5, login: 10, windowMs: 60_000 } }))));
+  before(async () => (strict = await startApi((c) => ({ ...c, rateLimits: { default: 120, register: 5, login: 10, reports: 30, windowMs: 60_000 } }))));
   after(() => strict.close());
 
   test("register allows 5 a minute per IP, login 10", async () => {
@@ -184,7 +184,7 @@ describe("rate limits (the real ones)", () => {
 describe("only through the site's proxy (PROXY_SECRET)", () => {
   const SECRET = "s".repeat(40);
   let proxied: Api;
-  before(async () => (proxied = await startApi((c) => ({ ...c, proxySecret: SECRET, rateLimits: { default: 120, register: 5, login: 3, windowMs: 60_000 } }))));
+  before(async () => (proxied = await startApi((c) => ({ ...c, proxySecret: SECRET, rateLimits: { default: 120, register: 5, login: 3, reports: 30, windowMs: 60_000 } }))));
   after(() => proxied.close());
   beforeEach(() => proxied.reset());
 

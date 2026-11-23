@@ -71,3 +71,20 @@ export const AchievementListSchema = z.array(
 );
 
 export const SettingsResponseSchema = SettingsSchema;
+
+/**
+ * Error reports from browsers (TDD §6b): the site's own errors, the engine
+ * failing to start, and the game's error lines. No user identity is sent or
+ * kept; the path has no query string.
+ */
+export const CLIENT_ERROR_SOURCES = ["site", "engine", "game"] as const;
+export const ClientErrorReportSchema = z.object({
+  source: z.enum(CLIENT_ERROR_SOURCES),
+  message: z.string().min(1).max(500),
+  stack: z.string().max(4000).optional(),
+  path: z.string().max(200).regex(/^\/[^?#]*$/),
+  release: z.string().max(40).regex(/^[\w.-]+$/),
+});
+export type ClientErrorReport = z.infer<typeof ClientErrorReportSchema>;
+export const ClientErrorsRequestSchema = z.object({ reports: z.array(ClientErrorReportSchema).min(1).max(10) });
+export type ClientErrorsRequest = z.infer<typeof ClientErrorsRequestSchema>;

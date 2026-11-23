@@ -52,6 +52,12 @@ These need your accounts. Type secrets into the commands yourself; don't paste t
 4. **GitHub.** Create an environment named `staging` with secrets `FLY_API_TOKEN`, `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`. Then set the repository variable `STAGING_URL` (`https://the-margin-staging.vercel.app`). It switches the workflow on: until it exists, deploys are skipped.
 5. If Vercel gives the site a different URL, change `WEB_ORIGINS` in `apps/api/fly.toml` to match. The API refuses writes from any other origin.
 
+## Monitoring (TDD §6b, ADR-0014)
+
+- **Errors players hit** (site, engine, game): `DATABASE_URL='<Neon direct URL>' pnpm api:errors --days 7` (add `--stack` for stacks, `--source game`, `--release <sha>`).
+- **API logs:** `fly logs -a the-margin-api-staging`, one JSON line per request. A 500's body has `details.requestId`; search the logs for it.
+- **Uptime:** the **Uptime** workflow runs the smoke test every 30 minutes once `STAGING_URL` is set. GitHub emails you when a scheduled run fails (Settings → Notifications → Actions, "failed workflows only" is the default).
+
 ## Rollback
 
 - **Site and game:** `vercel rollback` (or promote an earlier deployment in the dashboard). The game build is part of the deployment, so they roll back together.

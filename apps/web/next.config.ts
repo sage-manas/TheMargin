@@ -39,7 +39,8 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ["@the-margin/contracts"],
-  env: { NEXT_PUBLIC_GAME_BUILD_URL: gameBuildUrl, NEXT_PUBLIC_API_URL: apiUrl },
+  // RELEASE tags error reports: the commit on Vercel, else "dev".
+  env: { NEXT_PUBLIC_GAME_BUILD_URL: gameBuildUrl, NEXT_PUBLIC_API_URL: apiUrl, NEXT_PUBLIC_RELEASE: process.env.NEXT_PUBLIC_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev" },
   async rewrites() {
     return [
       ...(gameBuildUrl === "/game" && !gameBundled ? [{ source: "/game/:path*", destination: `${gameDevOrigin}/:path*` }] : []),

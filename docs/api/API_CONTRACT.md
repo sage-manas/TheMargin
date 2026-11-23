@@ -32,6 +32,7 @@ Codes: `VALIDATION_FAILED` (400, or 413 for a body over the limit; `details.issu
 | POST | `/achievements/:code/unlock` | session | Idempotent. 403 for chapter achievements, which only the server awards |
 | GET | `/settings` | session | Settings payload (the defaults until first set) |
 | PUT | `/settings` | session | Full replace, validated against the settings schema |
+| POST | `/client-errors` | none, no CSRF token | `{reports: [{source: "site"\|"engine"\|"game", message ≤500, stack? ≤4000, path (no query), release}]}` (1–10) → 204. Origin checked; 30/min/IP. Grouped and counted, no user identity stored (TDD §6b) |
 
 ## Versioning
 

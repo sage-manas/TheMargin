@@ -1,0 +1,29 @@
+# Uptime (TDD §6b): the post-deploy smoke checks, every 30 minutes, against
+# staging. A failed scheduled run emails whoever last changed this schedule
+# (GitHub's default for scheduled workflows). Off until STAGING_URL is set.
+name: Uptime
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    if: vars.STAGING_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: infrastructure/scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The API's machine stops when idle; the first request wakes it.
+      - run: node infrastructure/scripts/smoke.mjs "$STAGING_URL" || (sleep 20 && node infrastructure/scripts/smoke.mjs "$STAGING_URL")
+        env:
+          STAGING_URL: ${{ vars.STAGING_URL }}

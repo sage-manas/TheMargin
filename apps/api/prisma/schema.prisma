@@ -140,3 +140,23 @@ model PlayerSettings {
 
   @@map("player_settings")
 }
+
+/// Browser error reports, grouped: one row per fingerprint (source, release,
+/// message, first stack line), counted (TDD §6b). No user identity is kept;
+/// rows unseen for 30 days are swept.
+model ClientError {
+  id          String   @id @default(uuid()) @db.Uuid
+  fingerprint String   @unique @db.Char(64)
+  source      String   @db.VarChar(16)
+  release     String   @db.VarChar(40)
+  message     String   @db.VarChar(500)
+  stack       String?  @db.VarChar(4000)
+  path        String   @db.VarChar(200)
+  userAgent   String?  @map("user_agent") @db.VarChar(256)
+  count       Int      @default(1)
+  firstSeen   DateTime @default(now()) @map("first_seen") @db.Timestamptz(3)
+  lastSeen    DateTime @default(now()) @map("last_seen") @db.Timestamptz(3)
+
+  @@index([lastSeen])
+  @@map("client_errors")
+}

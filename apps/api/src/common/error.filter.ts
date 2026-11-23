@@ -2,6 +2,7 @@ import { Catch, HttpException, Logger, type ArgumentsHost, type ExceptionFilter 
 import type { Response } from "express";
 import type { ErrorCode } from "@the-margin/contracts";
 import { ApiError } from "./errors.js";
+import type { LoggedRequest } from "./request-log.js";
 
 const BY_STATUS: Record<number, [ErrorCode, string]> = {
   400: ["VALIDATION_FAILED", "The request isn't valid."],
@@ -30,7 +31,9 @@ export class ErrorFilter implements ExceptionFilter {
       res.status(status).json({ error: { code: known[0], message: known[1], details: {} } });
       return;
     }
-    this.log.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
-    res.status(500).json({ error: { code: "INTERNAL", message: "Something went wrong.", details: {} } });
+    const id = host.switchToHttp().getRequest<LoggedRequest>().requestId;
+    this.log.error(JSON.stringify({ id, error: err instanceof Error ? (err.stack ?? err.message) : String(err) }));
+    // The id lets a player's report be matched to this log line.
+    res.status(500).json({ error: { code: "INTERNAL", message: "Something went wrong.", details: { requestId: id } } });
   }
 }

@@ -19,6 +19,8 @@ import { AchievementsService } from "./achievements/achievements.service.js";
 import { SettingsController } from "./settings/settings.controller.js";
 import { MeController } from "./me/me.controller.js";
 import { HealthController } from "./health/health.controller.js";
+import { ClientErrorsController } from "./client-errors/client-errors.controller.js";
+import { ClientErrorsService } from "./client-errors/client-errors.service.js";
 
 /** Applies a named limit only to routes marked with @RateLimit(name). */
 const only = (name: string) => (ctx: ExecutionContext) => Reflect.getMetadata("rateLimit", ctx.getHandler()) !== name;
@@ -34,9 +36,10 @@ export class AppModule {
           { name: "default", ttl, limit: limits.default },
           { name: "register", ttl, limit: limits.register, skipIf: only("register") },
           { name: "login", ttl, limit: limits.login, skipIf: only("login") },
+          { name: "reports", ttl, limit: limits.reports, skipIf: only("reports") },
         ]),
       ],
-      controllers: [HealthController, AuthController, MeController, SavesController, ProgressionController, AchievementsController, SettingsController],
+      controllers: [HealthController, AuthController, MeController, SavesController, ProgressionController, AchievementsController, SettingsController, ClientErrorsController],
       providers: [
         { provide: CONFIG, useValue: config },
         PrismaService,
@@ -46,6 +49,7 @@ export class AppModule {
         SavesService,
         AchievementsService,
         ProgressionService,
+        ClientErrorsService,
         // Guards run in this order: the site's proxy, rate limit, CSRF, then session lookup.
         { provide: APP_GUARD, useClass: ProxyGuard },
         { provide: APP_GUARD, useClass: ClientThrottlerGuard },

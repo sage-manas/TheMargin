@@ -9,7 +9,7 @@ export type Config = {
   cookieSecure: boolean;
   /** Hops of reverse proxy to trust for the client IP (rate limits). */
   trustProxy: number;
-  rateLimits: { default: number; register: number; login: number; windowMs: number };
+  rateLimits: { default: number; register: number; login: number; reports: number; windowMs: number };
   /** Argon2id cost (OWASP minimum by default: 19 MiB, 2 passes). */
   argon2: { memoryCost: number; timeCost: number };
   /**
@@ -37,6 +37,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       default: Number(env.RATE_LIMIT_DEFAULT ?? 120),
       register: Number(env.RATE_LIMIT_REGISTER ?? 5),
       login: Number(env.RATE_LIMIT_LOGIN ?? 10),
+      // Error reports: a broken page can send a burst; past this they are dropped.
+      reports: Number(env.RATE_LIMIT_REPORTS ?? 30),
       windowMs: 60_000,
     },
     argon2: { memoryCost: 19_456, timeCost: 2 },

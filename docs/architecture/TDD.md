@@ -295,6 +295,13 @@ Playwright runs against the actual export served locally: boot, `GAME_READY` rec
 - All client game state is treated as untrusted. The server validates progression transitions (no completing chapter N+1 before N) but does not attempt anti-cheat.
 - No secrets in `NEXT_PUBLIC_*` or game assets.
 
+## 6b. Monitoring (ADR-0014)
+
+- **Browser errors.** `apps/web/src/lib/report.ts` reports, once per distinct error per page load (at most 20), batched and sent with `keepalive`: uncaught errors and rejections on every page (`ErrorReporter` in the root layout), pages that fail to render (`app/error.tsx`), the engine failing to load or exiting with a non-zero code (`engine`), and the game's `ERROR:`/`SCRIPT ERROR:` lines from Godot's `onPrintError` with their `at:` lines as the stack (`game`; warnings are skipped). Extension errors and ResizeObserver notices are dropped. Each report carries the release (`NEXT_PUBLIC_RELEASE`, the commit on Vercel) and the page path, never a query string or user id.
+- **Intake.** `POST /v1/client-errors` (API_CONTRACT.md) needs no session or CSRF token (it changes nothing a user owns), keeps the Origin check and the proxy secret, and is limited to 30 requests a minute per IP. Reports are grouped into `client_errors` (DATABASE.md). Read them with `DATABASE_URL=… pnpm api:errors [--days 7] [--source game] [--release abc1234] [--stack]`.
+- **API logs.** One JSON line per request (`t, level, msg, id, method, path, status, ms`; no query strings, cookies or bodies; health checks skipped). The id is Fly's request id when present, returned as `x-request-id`; an unhandled error logs it with the stack and returns it in the 500 body (`details.requestId`), so a player's report can be matched to the log line.
+- **Uptime.** `.github/workflows/uptime.yml` runs the deploy smoke test (`infrastructure/scripts/smoke.mjs`) against staging every 30 minutes, retrying once after 20 s to allow for a cold start. GitHub emails a failed scheduled run to whoever last changed the schedule. Fly's own health check restarts an unhealthy machine.
+
 ## 7. Performance budgets
 
 | Metric | Budget |

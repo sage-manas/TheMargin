@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-11-17: Phase 8 security review done (TDD §6). Chapter 2 "The Border" is merged; its playtest is next, using [the walkthrough](playtest/CHAPTER_02_WALKTHROUGH.md)._
+_Last updated: 2026-11-24: Phase 8 monitoring done (TDD §6b, ADR-0014), after the security review (TDD §6). Chapter 2 "The Border" is merged; its playtest is next, using [the walkthrough](playtest/CHAPTER_02_WALKTHROUGH.md)._
 
 ## Current phase
 
@@ -166,16 +166,23 @@ _Last updated: 2026-11-17: Phase 8 security review done (TDD §6). Chapter 2 "Th
   - Accepted risks recorded in TDD §6. Still open for Phase 8: monitoring, password reset (needs an email provider), production.
   - Chapter 2's testing walkthrough (`docs/playtest/`) was pushed after PR #17 merged, so it lands here.
 
+- **Phase 8 (2026-11-24): monitoring (TDD §6b, ADR-0014).**
+  - **Browser errors:** the site reports its uncaught errors and failed renders, the engine failing to start, and the game's `ERROR:` lines (from Godot's `onPrintError`), once per distinct error per page, tagged with the release. No user identity, no query strings.
+  - **Intake:** `POST /v1/client-errors` groups them by fingerprint into `client_errors` (new migration), counted, swept after 30 days; `pnpm api:errors` lists the top ones.
+  - **API logs:** one JSON line per request with a request id (`x-request-id`, and in 500 bodies).
+  - **Uptime:** a scheduled workflow runs the smoke test on staging every 30 minutes; GitHub emails failures.
+  - No hosted tracker: no new account, nothing third-party in the CSP. The trade-off is no alerting and no source maps (ADR-0014).
+
 ## Test status
 
 | Suite | Command | Result |
 |---|---|---|
 | Godot unit + integration (incl. real-physics playthroughs of pages 1.1, 1.3–1.8 and 2.1–2.8, scene captions, close-ups, swap, stretch, crate/panel-word, plate, platform, eraser, ink and music tests) | `pnpm game:test` | 105 passed |
 | Contracts (save schema incl. optional `objects`, `sketches` and `collected`, conflict resolution, bridge, settings, chapter catalogue vs the game's pages, storage key vs the game, achievements vs the game, API schemas, scene and control state) | `pnpm --filter @the-margin/contracts test` | 16 passed |
-| API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 33 passed (local Postgres 14, IST timezone; CI Postgres 17) |
-| Site unit tests (bridge, progress, settings mirror, save sync incl. offline and conflicts) | `pnpm --filter @the-margin/web test` | 18 passed |
+| API integration (auth, sessions, CSRF/Origin/CORS, rate limits, saves incl. races and conflicts, backups, progression, achievements, settings, isolation, cascade erasure; migration drift) | `pnpm api:test` (TEST_DATABASE_URL) | 39 passed (local Postgres 14, IST timezone; CI Postgres 17) |
+| Site unit tests (bridge, progress, settings mirror, save sync incl. offline and conflicts, error reporter) | `pnpm --filter @the-margin/web test` | 22 passed |
 | Lighthouse, landing page (production build) | `pnpm web:lighthouse` | Performance 99, accessibility 100 with the header's session check (earlier 98 and 100). Best practices 96 when no API is running, because the failed session request is logged |
-| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save; the site (landing, chapters, `/play` launch with settings, missing build); accounts and cloud saves (second browser, offline→online, conflict) | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS; needs Postgres, or `E2E_CLOUD=0`) | Chromium 13/13, WebKit 13/13 on macOS (2026-11-17, with the proxy secret and CSP on; the new check: direct API callers refused, CSP sent). Earlier: Chromium 12/12, WebKit 12/12 (2026-11-07 with the cloud specs). Earlier: Chromium 9/9, WebKit 9/9 with the site specs. Earlier: Chromium 5/5, WebKit 5/5 (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
+| Browser e2e: boot; solving page 1 and arriving on page 3; immediate-reload persistence; keyboard panel mode; the 1.8 finale and end card from a seeded save; the site (landing, chapters, `/play` launch with settings, missing build); accounts and cloud saves (second browser, offline→online, conflict) | `pnpm e2e` (+ `E2E_WEBKIT=1` on macOS; needs Postgres, or `E2E_CLOUD=0`) | Chromium 14/14, WebKit 14/14 on macOS (2026-11-24, with error reporting: an uncaught error reaches the API. In the first run one WebKit test failed once with "WebAssembly.Module doesn't parse… Code function's size … is too big" and passed in the full re-run: a WebKit flake to watch). Earlier: Chromium 13/13, WebKit 13/13 (2026-11-17, with the proxy secret and CSP on). Earlier: Chromium 12/12, WebKit 12/12 (2026-11-07 with the cloud specs). Earlier: Chromium 9/9, WebKit 9/9 with the site specs. Earlier: Chromium 5/5, WebKit 5/5 (2026-11-07 with the finale test; in the first full run WebKit's boot test failed once and then passed alone and in a full re-run, another timing flake to watch. Earlier 4/4 with pages 1.6–1.8, and earlier the same day with pages 1.3–1.5; earlier re-runs 2026-11-06 with music, and again with platforms, since Nib no longer takes platform velocity from floors. Earlier, after the eraser changes, one WebKit run of the page-1 solve failed once alongside the Firefox launch failures, then passed 4 times in a row, so it's a timing flake to watch). Firefox could not launch inside this session's macOS sandbox (an environment limit, not a game failure); CI covers Firefox on Linux |
 
 ## Known issues and limitations
 
